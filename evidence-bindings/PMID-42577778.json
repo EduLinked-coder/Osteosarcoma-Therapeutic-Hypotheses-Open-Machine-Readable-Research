@@ -1,0 +1,26 @@
+{
+  "evidence_binding_version": "1.0.0",
+  "evidence_id": "PMID-42577778",
+  "source_type": "pubmed",
+  "pmid": "42577778",
+  "canonical_source_url": "https://pubmed.ncbi.nlm.nih.gov/42577778/",
+  "citation": "Bone niche-driven antitumor immune failure in osteosarcoma: Mechanisms and therapeutic implications",
+  "publication_date": "2026",
+  "evidence_type": "narrative-review",
+  "evidence_maturity": "contextual",
+  "biological_model": "literature review",
+  "relationship_to_hypothesis": "LIMITS",
+  "hypothesis_components": [
+    "bone/pulmonary immune niche",
+    "immune-suppression layer"
+  ],
+  "finding": "The cited public record contextualises immune-niche mechanisms relevant to osteosarcoma research, but does not clinically validate the combined hypothesis.",
+  "independence_from_other_evidence": "Different cited public source from PMID-42574989; systematic independence assessment not complete.",
+  "replication_status": "not-applicable-review-source",
+  "provenance": {
+    "public_source": "PubMed",
+    "retrieval_date": "2026-09-13",
+    "binding_generated_for": "OS-TH-0001"
+  },
+  "clinical_use": false
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-09-13T00:58:00+10:00",
+  "source": "Canonical public hypothesis objects in /hypotheses/",
+  "clinical_use_boundary": "Research hypotheses only. Not medical advice, treatment recommendations, dosing instructions or claims of patient benefit.",
+  "hypothesis_count": 1,
+  "hypotheses_requiring_review": 1,
+  "hypotheses": [
+    {
+      "schema_version": "1.0.0",
+      "hypothesis_id": "OS-TH-0001",
+      "title": "CD44-mediated metastatic vulnerability combined with immune-niche intervention",
+      "plain_language_summary": "This research hypothesis asks whether targeting a CD44-linked metastatic process together with tumour-microenvironment immune suppression is worth testing as a combined osteosarcoma research strategy.",
+      "hypothesis_statement": "In metastatic osteosarcoma, suppressing a CD44-associated transendothelial and metastatic phenotype while separately reversing suppressive bone or pulmonary immune-niche conditions may warrant investigation as a combined research strategy rather than treating either biological layer as sufficient on its own.",
+      "evidence_stage": "preclinical",
+      "review_state": {
+        "status": "human-review-required",
+        "scientific_review_required": true,
+        "publication_class": "public-research-candidate"
+      },
+      "publication_path": "hypotheses/OS-TH-0001/",
+      "canonical_object_path": "hypotheses/OS-TH-0001/hypothesis.json",
+      "evidence_binding_paths": [
+        "evidence-bindings/PMID-42574989.json",
+        "evidence-bindings/PMID-42577778.json"
+      ],
+      "last_evidence_update": "2026-09-13T00:00:00+10:00",
+      "clinical_use": false
+    }
+  ]
+}
