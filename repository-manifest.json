@@ -8,7 +8,8 @@
     "discovery_rule": "Authorised agents must resolve the canonical EduLinked repository ecosystem registry and existing Universal Research Engine federation capability before creating new research, evidence, provenance or publication machinery.",
     "private_routing_rule": "Private repository topology and restricted source content are intentionally not embedded in this public manifest. Resolve private/source-owned routing only through authorised ecosystem systems.",
     "authority_rule": "Candidate evidence generation, export success, validation success and generated projections do not transfer scientific-review, clinical-use or publication authority.",
-    "automation_readiness": "CROSS_REPOSITORY_PUBLICATION_BLOCKED_UNTIL_ATTRIBUTABLE_SOURCE_OWNER_AND_PUBLIC_SAFE_HANDOFF_ARE_RESOLVED"
+    "source_routing_state": "DOMAIN_SOURCE_RESOLVABLE_THROUGH_AUTHORISED_ECOSYSTEM_ROUTING",
+    "automation_readiness": "CROSS_REPOSITORY_PUBLICATION_BLOCKED_UNTIL_OBJECT_LINEAGE_DISCLOSURE_AUTHORITY_AND_PUBLIC_SAFE_HANDOFF_ARE_RESOLVED"
   },
   "canonical_object_locations": {
     "hypotheses": "hypotheses/{OS-TH-####}/hypothesis.json",
@@ -41,6 +42,8 @@
   },
   "publication_transaction_boundary": {
     "requires_public_or_release_authorised_source": true,
+    "requires_attributable_object_lineage": true,
+    "requires_disclosure_authority": true,
     "requires_public_evidence_binding": true,
     "requires_uncertainty_and_contradiction_preservation": true,
     "requires_public_safety_gate": true,
