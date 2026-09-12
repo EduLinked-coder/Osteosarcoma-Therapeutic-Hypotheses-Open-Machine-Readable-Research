@@ -57,8 +57,9 @@ const renderIndex = (items) => {
 
 const renderHypothesisPage = (h) => {
   const list = (items) => (items || []).map((item) => `<li>${esc(item)}</li>`).join('');
-  const evidence = (h.supporting_evidence || []).map((item) => `<li><a href="${esc(item.source_url)}">${esc(item.citation)}</a><br>${esc(item.finding)}</li>`).join('');
+  const evidence = (h.supporting_evidence || []).map((item) => `<li><strong>${esc(item.evidence_id)}</strong>: <a href="${esc(item.source_url)}">${esc(item.citation)}</a><br>${esc(item.finding)}<br><a href="../../evidence-bindings/${esc(item.evidence_id)}.json">Evidence binding JSON</a></li>`).join('');
   const validation = (h.validation_requirements || []).map((item) => `<li><strong>${esc(item.stage)}</strong> - ${esc(item.requirement)} <span class="pill">${esc(item.status)}</span></li>`).join('');
+  const contributionLinks = `<a href="../../docs/quickstart/">How to use this repository</a> | <a href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new?template=new-evidence.md">Propose evidence</a> | <a href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new?template=contradictory-evidence.md">Report contradiction</a> | <a href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new?template=failed-replication.md">Report failed replication</a>`;
   const score = h.ranking.score === null ? 'Pending recalculation' : `${esc(h.ranking.score)}/100`;
   return `<!doctype html>
 <html lang="en-AU">
@@ -67,7 +68,7 @@ const renderHypothesisPage = (h) => {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="generator" content="${generatedBy}">
 <title>${esc(h.hypothesis_id)} | Research hypothesis</title>
-<style>:root{--text:#172033;--muted:#42526e;--surface:#f7f5ff;--border:#c9c3e6;--gold:#dea93f}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);line-height:1.7}main{width:min(100% - 2rem,70rem);margin:auto;padding:3rem 0}header{padding:2.5rem;border-radius:1rem;background:linear-gradient(135deg,#fff,#f7f5ff,#fff7e8,#edf8ff);border:1px solid var(--border)}h1{font-size:clamp(2rem,6vw,3.5rem);line-height:1.1}.pill{display:inline-block;padding:.25rem .65rem;border:1px solid var(--border);border-radius:999px;background:var(--surface);font-weight:700;margin:.15rem}.warning{border-left:6px solid var(--gold);background:#fff9ec;padding:1.2rem;margin:2rem 0;border-radius:.6rem}section{border-top:1px solid var(--border);margin-top:2rem;padding-top:.5rem}li{margin:.65rem 0}a{color:#2349a6}</style>
+<style>:root{--text:#172033;--muted:#42526e;--surface:#f7f5ff;--border:#c9c3e6;--gold:#dea93f}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);line-height:1.7}main{width:min(100% - 2rem,70rem);margin:auto;padding:3rem 0}header{padding:2.5rem;border-radius:1rem;background:linear-gradient(135deg,#fff,#f7f5ff,#fff7e8,#edf8ff);border:1px solid var(--border)}h1{font-size:clamp(2rem,6vw,3.5rem);line-height:1.1}.pill{display:inline-block;padding:.25rem .65rem;border:1px solid var(--border);border-radius:999px;background:var(--surface);font-weight:700;margin:.15rem}.warning{border-left:6px solid var(--gold);background:#fff9ec;padding:1.2rem;margin:2rem 0;border-radius:.6rem}.actions{display:flex;gap:.6rem;flex-wrap:wrap}.actions a{display:inline-flex;min-height:44px;align-items:center;padding:.65rem .9rem;border-radius:999px;text-decoration:none;font-weight:800;background:#222830;color:#fff}section{border-top:1px solid var(--border);margin-top:2rem;padding-top:.5rem}li{margin:.65rem 0}a{color:#2349a6}</style>
 </head>
 <body>
 <main>
@@ -89,7 +90,7 @@ const renderHypothesisPage = (h) => {
 <section><h2>Novelty</h2><p>${esc(h.novelty.assessment)}</p></section>
 <section><h2>What would challenge or falsify it?</h2><ul>${list(h.falsifiability.falsification_conditions)}</ul><h3>Discriminating tests</h3><ul>${list(h.falsifiability.discriminating_tests)}</ul></section>
 <section><h2>Validation still required</h2><ul>${validation}</ul></section>
-<section><h2>Review and provenance</h2><p>Review state: <strong>${esc(h.review_state.status)}</strong>. Scientific review required: <strong>${esc(h.review_state.scientific_review_required)}</strong>.</p><p>Source authority: ${esc(h.provenance.source_authority)}</p><p><a href="hypothesis.json">Canonical JSON</a> | <a href="../../">Research portfolio</a></p></section>
+<section><h2>Review and provenance</h2><p>Review state: <strong>${esc(h.review_state.status)}</strong>. Scientific review required: <strong>${esc(h.review_state.scientific_review_required)}</strong>.</p><p>Source authority: ${esc(h.provenance.source_authority)}</p><p><a href="hypothesis.json">Canonical JSON</a> | <a href="../../">Research portfolio</a></p><div class="actions">${contributionLinks}</div></section>
 </main>
 </body>
 </html>
