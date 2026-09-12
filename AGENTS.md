@@ -16,7 +16,7 @@ Do not copy private repository topology, private research records, credentials, 
 
 Candidate evidence operations are not publication authority. If an upstream capability can discover sources or create candidate claims but cannot publish or approve claims, preserve that limitation here. Do not convert candidate evidence, export success, validator success or machine generation into publication or scientific-review authority.
 
-If the attributable source owner or disclosure authority for a research object is unresolved, fail closed on automated cross-repository publication. Continue safe public-repository engineering, but do not infer or expose the missing source authority.
+Authorised ecosystem routing may resolve a source-owned domain research system without exposing that private routing here. Automated cross-repository publication must still fail closed until the candidate has attributable object-level lineage, disclosure authority and an explicit public-safe release handoff. Continue safe public-repository engineering, but do not infer or expose private source details merely because a domain source exists.
 
 ## Public Safety Rules
 
