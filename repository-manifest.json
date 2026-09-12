@@ -13,7 +13,8 @@
     "quickstart": "docs/quickstart/",
     "quickstart_source": "docs/quickstart.md",
     "publication_lifecycle": "docs/publication-lifecycle.md",
-    "evidence_binding_examples": "examples/evidence-bindings/*.example.json"
+    "evidence_binding_examples": "examples/evidence-bindings/*.example.json",
+    "evidence_human_page": "evidence/"
   },
   "identifier_convention": "OS-TH-####",
   "evidence_model": "Evidence bindings classify public sources as SUPPORTS, CONTRADICTS, LIMITS, CONTEXTUALISES, FAILED_REPLICATION or SUCCESSOR_CONTEXT and preserve uncertainty, maturity, acceptance state and provenance.",
@@ -49,6 +50,8 @@
     "index.html",
     "README.md",
     "docs/quickstart/",
+    "evidence/",
+    "evidence/index.html",
     "docs/quickstart/index.html",
     "docs/quickstart.md",
     "docs/publication-lifecycle.md",
@@ -63,6 +66,7 @@
     "paths": [
       "index.html",
       "hypotheses/{OS-TH-####}/index.html",
+      "evidence/index.html",
       "indexes/hypotheses.json",
       "sitemap.xml"
     ]
