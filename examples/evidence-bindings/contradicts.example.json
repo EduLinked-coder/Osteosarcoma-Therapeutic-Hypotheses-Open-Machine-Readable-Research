@@ -1,0 +1,31 @@
+{
+  "evidence_binding_version": "1.0.0",
+  "evidence_id": "PMID-00000001",
+  "source_type": "pubmed",
+  "pmid": "00000001",
+  "canonical_source_url": "https://pubmed.ncbi.nlm.nih.gov/00000001/",
+  "citation": "Example public study title that may contradict a hypothesis component",
+  "publication_date": "2026",
+  "evidence_type": "animal-model",
+  "evidence_maturity": "preclinical",
+  "biological_model": "example independent osteosarcoma model",
+  "relationship_to_hypothesis": "CONTRADICTS",
+  "hypothesis_components": [
+    "example mechanism component"
+  ],
+  "finding": "Public source appears to contradict or weaken a bounded component of the research hypothesis.",
+  "independence_from_other_evidence": "Different model or source group from the existing supporting evidence; full independence not yet assessed.",
+  "replication_status": "mixed",
+  "acceptance_state": {
+    "status": "candidate-public-evidence",
+    "meaning": "Presence in this repository records a public evidence relationship; it does not establish accepted evidence or clinical benefit.",
+    "reviewed_at": null,
+    "review_note": "Example only; contradictory evidence requires scientific review before hypothesis status changes."
+  },
+  "provenance": {
+    "public_source": "PubMed",
+    "retrieval_date": "2026-09-13",
+    "binding_generated_for": "OS-TH-0001"
+  },
+  "clinical_use": false
+}
