@@ -8,10 +8,14 @@
     "human_pages": "hypotheses/{OS-TH-####}/index.html",
     "schema": "schemas/therapeutic-hypothesis.schema.json",
     "index": "indexes/hypotheses.json",
-    "evidence_bindings": "evidence-bindings/{evidence_id}.json"
+    "evidence_bindings": "evidence-bindings/{evidence_id}.json",
+    "evidence_binding_schema": "schemas/evidence-binding.schema.json",
+    "quickstart": "docs/quickstart.md",
+    "publication_lifecycle": "docs/publication-lifecycle.md",
+    "evidence_binding_examples": "examples/evidence-bindings/*.example.json"
   },
   "identifier_convention": "OS-TH-####",
-  "evidence_model": "Evidence bindings classify public sources as SUPPORTS, CONTRADICTS, LIMITS or NEUTRAL and preserve uncertainty, maturity and provenance.",
+  "evidence_model": "Evidence bindings classify public sources as SUPPORTS, CONTRADICTS, LIMITS, CONTEXTUALISES, FAILED_REPLICATION or SUCCESSOR_CONTEXT and preserve uncertainty, maturity, acceptance state and provenance.",
   "lifecycle_model": [
     "PUBLIC_RESEARCH_CANDIDATE",
     "SCIENTIFIC_REVIEW",
@@ -31,7 +35,32 @@
     "repository-manifest.json",
     "indexes/hypotheses.json",
     "schemas/therapeutic-hypothesis.schema.json",
-    "hypotheses/OS-TH-0001/hypothesis.json"
+    "schemas/evidence-binding.schema.json",
+    "hypotheses/OS-TH-0001/hypothesis.json",
+    "evidence-bindings/PMID-42574989.json",
+    "evidence-bindings/PMID-42577778.json",
+    "examples/evidence-bindings/supports.example.json",
+    "examples/evidence-bindings/contradicts.example.json",
+    "examples/evidence-bindings/failed-replication.example.json"
   ],
-  "licensing": "Not yet established in repository metadata."
+  "licensing": "Not yet established in repository metadata.",
+  "human_entry_points": [
+    "index.html",
+    "README.md",
+    "docs/quickstart.md",
+    "docs/publication-lifecycle.md",
+    ".github/ISSUE_TEMPLATE/new-evidence.md",
+    ".github/ISSUE_TEMPLATE/contradictory-evidence.md",
+    ".github/ISSUE_TEMPLATE/failed-replication.md",
+    ".github/ISSUE_TEMPLATE/safety-privacy-review.md"
+  ],
+  "generated_outputs": {
+    "generated_by": "scripts/render-public-research.js",
+    "check_command": "node scripts/render-public-research.js --check",
+    "paths": [
+      "hypotheses/{OS-TH-####}/index.html",
+      "indexes/hypotheses.json",
+      "sitemap.xml"
+    ]
+  }
 }

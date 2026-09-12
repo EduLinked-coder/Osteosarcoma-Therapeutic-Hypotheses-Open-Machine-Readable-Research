@@ -1,0 +1,32 @@
+{
+  "evidence_binding_version": "1.0.0",
+  "evidence_id": "PMID-00000000",
+  "source_type": "pubmed",
+  "pmid": "00000000",
+  "doi": "10.0000/example.supports",
+  "canonical_source_url": "https://pubmed.ncbi.nlm.nih.gov/00000000/",
+  "citation": "Example public study title that may support a hypothesis component",
+  "publication_date": "2026",
+  "evidence_type": "in-vivo",
+  "evidence_maturity": "preclinical",
+  "biological_model": "example osteosarcoma preclinical model",
+  "relationship_to_hypothesis": "SUPPORTS",
+  "hypothesis_components": [
+    "example mechanism component"
+  ],
+  "finding": "Public source appears to support a bounded component of the research hypothesis in a preclinical context.",
+  "independence_from_other_evidence": "Independence from existing repository evidence has not yet been assessed.",
+  "replication_status": "single-source-only",
+  "acceptance_state": {
+    "status": "candidate-public-evidence",
+    "meaning": "Presence in this repository records a public evidence relationship; it does not establish accepted evidence or clinical benefit.",
+    "reviewed_at": null,
+    "review_note": "Example only; replace with review note for a real source."
+  },
+  "provenance": {
+    "public_source": "PubMed",
+    "retrieval_date": "2026-09-13",
+    "binding_generated_for": "OS-TH-0001"
+  },
+  "clinical_use": false
+}

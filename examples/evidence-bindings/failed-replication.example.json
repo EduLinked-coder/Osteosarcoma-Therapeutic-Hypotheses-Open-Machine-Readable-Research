@@ -1,0 +1,30 @@
+{
+  "evidence_binding_version": "1.0.0",
+  "evidence_id": "SOURCE-FAILED-REPLICATION-EXAMPLE",
+  "source_type": "other-public-source",
+  "canonical_source_url": "https://example.org/public-failed-replication-record",
+  "citation": "Example public failed replication record",
+  "publication_date": "2026-09-13",
+  "evidence_type": "other",
+  "evidence_maturity": "preclinical",
+  "biological_model": "example replication model",
+  "relationship_to_hypothesis": "FAILED_REPLICATION",
+  "hypothesis_components": [
+    "example mechanism component"
+  ],
+  "finding": "Public replication attempt did not reproduce the expected effect under the reported conditions.",
+  "independence_from_other_evidence": "Independent replication status should be described here using public source details.",
+  "replication_status": "failed-replication",
+  "acceptance_state": {
+    "status": "candidate-public-evidence",
+    "meaning": "Presence in this repository records a public evidence relationship; it does not establish accepted evidence or clinical benefit.",
+    "reviewed_at": null,
+    "review_note": "Example only; failed replication should trigger review rather than automatic withdrawal."
+  },
+  "provenance": {
+    "public_source": "Public replication record",
+    "retrieval_date": "2026-09-13",
+    "binding_generated_for": "OS-TH-0001"
+  },
+  "clinical_use": false
+}

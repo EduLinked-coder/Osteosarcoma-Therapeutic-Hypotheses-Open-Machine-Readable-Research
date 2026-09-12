@@ -18,14 +18,24 @@ Lifecycle:
 
 Transitions are evidence gates, not automatic claims of efficacy.
 
+## Quickstart
+
+- Start with `docs/quickstart.md` for the human and machine entry points.
+- Browse current public hypotheses from the GitHub Pages site or `indexes/hypotheses.json`.
+- Use `.github/ISSUE_TEMPLATE/` to propose evidence, contradictions, failed replications, successor hypotheses or safety/privacy review.
+- Copy `examples/evidence-bindings/*.example.json` when creating governed evidence bindings.
+
 ## Machine discovery
 
 - `repository-manifest.json` — repository identity and discovery contract
 - `AGENTS.md` — instructions for AI/research agents
 - `schemas/therapeutic-hypothesis.schema.json` — hypothesis object schema
+- `schemas/evidence-binding.schema.json` — evidence binding schema
 - `hypotheses/` — durable hypothesis objects
 - `indexes/hypotheses.json` — machine-readable discovery index
 - `evidence-bindings/` — public evidence bindings used by hypothesis objects
+- `examples/evidence-bindings/` — copyable candidate evidence-binding examples
+- `docs/publication-lifecycle.md` — fail-closed publication authority and safety rules
 
 ## First publication cycle
 
