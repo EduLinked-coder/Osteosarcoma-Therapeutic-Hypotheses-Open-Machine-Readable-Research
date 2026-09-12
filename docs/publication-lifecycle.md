@@ -16,7 +16,7 @@ Upstream research operations may produce candidate evidence packets or exports w
 
 The public repository must not contain private repository topology or private source material solely to support automation. Private/source-owned routing remains in authorised internal systems. Only a deliberately public-safe release projection may cross into this repository.
 
-If the attributable source owner, disclosure authority or public-safe handoff for a candidate is unresolved, automated private-to-public publication is blocked. Do not guess the source owner, copy private material for convenience or infer publication authority from technical success.
+Authorised ecosystem routing may resolve a source-owned osteosarcoma research system without making that private routing part of this public repository. For each public candidate, object-level lineage, disclosure authority and a public-safe release handoff must still be established. If any of those are unresolved, automated private-to-public publication is blocked. Do not copy private material for convenience or infer publication authority from domain ownership or technical success.
 
 ## Publication transaction
 
