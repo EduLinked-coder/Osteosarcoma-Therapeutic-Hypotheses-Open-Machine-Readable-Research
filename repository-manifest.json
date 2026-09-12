@@ -3,6 +3,13 @@
   "repository": "EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research",
   "purpose": "Public, machine-readable and human-readable discovery layer for governed osteosarcoma therapeutic research hypotheses.",
   "public_boundary": "This repository publishes research hypotheses only. It must not publish private clinical context, patient information, credentials, restricted evidence, medical advice or treatment recommendations.",
+  "ecosystem_integration": {
+    "role": "PUBLIC_RESEARCH_PROJECTION_AND_DISCOVERY_CONSUMER",
+    "discovery_rule": "Authorised agents must resolve the canonical EduLinked repository ecosystem registry and existing Universal Research Engine federation capability before creating new research, evidence, provenance or publication machinery.",
+    "private_routing_rule": "Private repository topology and restricted source content are intentionally not embedded in this public manifest. Resolve private/source-owned routing only through authorised ecosystem systems.",
+    "authority_rule": "Candidate evidence generation, export success, validation success and generated projections do not transfer scientific-review, clinical-use or publication authority.",
+    "automation_readiness": "CROSS_REPOSITORY_PUBLICATION_BLOCKED_UNTIL_ATTRIBUTABLE_SOURCE_OWNER_AND_PUBLIC_SAFE_HANDOFF_ARE_RESOLVED"
+  },
   "canonical_object_locations": {
     "hypotheses": "hypotheses/{OS-TH-####}/hypothesis.json",
     "human_pages": "hypotheses/{OS-TH-####}/index.html",
@@ -31,6 +38,17 @@
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
     "superseded": "Retained historical object replaced by a successor interpretation.",
     "withdrawn": "Retained historical object no longer appropriate for active publication."
+  },
+  "publication_transaction_boundary": {
+    "requires_public_or_release_authorised_source": true,
+    "requires_public_evidence_binding": true,
+    "requires_uncertainty_and_contradiction_preservation": true,
+    "requires_public_safety_gate": true,
+    "private_source_copy_allowed": false,
+    "source_owner_inference_allowed": false,
+    "scientific_review_authority_transferred": false,
+    "clinical_use_authority_transferred": false,
+    "cross_repository_automation_ready": false
   },
   "clinical_use": false,
   "machine_entry_points": [
