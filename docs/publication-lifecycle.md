@@ -6,6 +6,18 @@ This repository is a public research projection. It is not the private research 
 
 Private or restricted material must fail closed. If material is not clearly public-safe and publication-authorised, it must not be committed into canonical objects, evidence bindings, generated pages, indexes or the sitemap.
 
+## Source-owned research integration
+
+Cross-repository publication starts outside this public repository.
+
+Authorised agents must first resolve the canonical EduLinked repository ecosystem registry and the existing Universal Research Engine federation capability. Reuse source-owned research, evidence, provenance, screening, review and human-interface capabilities rather than creating a second research engine or evidence store here.
+
+Upstream research operations may produce candidate evidence packets or exports without possessing publication authority. A successful candidate-evidence build, MR3 export, validation report, renderer run or other machine receipt does **not** by itself authorise public release, scientific acceptance or clinical interpretation.
+
+The public repository must not contain private repository topology or private source material solely to support automation. Private/source-owned routing remains in authorised internal systems. Only a deliberately public-safe release projection may cross into this repository.
+
+If the attributable source owner, disclosure authority or public-safe handoff for a candidate is unresolved, automated private-to-public publication is blocked. Do not guess the source owner, copy private material for convenience or infer publication authority from technical success.
+
 ## Publication transaction
 
 A publication transaction moves material from candidate research intelligence into public repository state only when every gate below is satisfied.
