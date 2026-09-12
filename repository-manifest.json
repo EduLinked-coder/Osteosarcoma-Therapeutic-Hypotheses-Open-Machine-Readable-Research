@@ -1,0 +1,37 @@
+{
+  "manifest_version": "1.0.0",
+  "repository": "EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research",
+  "purpose": "Public, machine-readable and human-readable discovery layer for governed osteosarcoma therapeutic research hypotheses.",
+  "public_boundary": "This repository publishes research hypotheses only. It must not publish private clinical context, patient information, credentials, restricted evidence, medical advice or treatment recommendations.",
+  "canonical_object_locations": {
+    "hypotheses": "hypotheses/{OS-TH-####}/hypothesis.json",
+    "human_pages": "hypotheses/{OS-TH-####}/index.html",
+    "schema": "schemas/therapeutic-hypothesis.schema.json",
+    "index": "indexes/hypotheses.json",
+    "evidence_bindings": "evidence-bindings/{evidence_id}.json"
+  },
+  "identifier_convention": "OS-TH-####",
+  "evidence_model": "Evidence bindings classify public sources as SUPPORTS, CONTRADICTS, LIMITS or NEUTRAL and preserve uncertainty, maturity and provenance.",
+  "lifecycle_model": [
+    "PUBLIC_RESEARCH_CANDIDATE",
+    "SCIENTIFIC_REVIEW",
+    "REVIEWED_PUBLIC_HYPOTHESIS",
+    "SUPERSEDED",
+    "WITHDRAWN"
+  ],
+  "update_mechanism": "Canonical hypothesis objects and discovery indexes are validated by scripts/validate-public-research.js before publication deployment.",
+  "publication_status_semantics": {
+    "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
+    "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
+    "superseded": "Retained historical object replaced by a successor interpretation.",
+    "withdrawn": "Retained historical object no longer appropriate for active publication."
+  },
+  "clinical_use": false,
+  "machine_entry_points": [
+    "repository-manifest.json",
+    "indexes/hypotheses.json",
+    "schemas/therapeutic-hypothesis.schema.json",
+    "hypotheses/OS-TH-0001/hypothesis.json"
+  ],
+  "licensing": "Not yet established in repository metadata."
+}
