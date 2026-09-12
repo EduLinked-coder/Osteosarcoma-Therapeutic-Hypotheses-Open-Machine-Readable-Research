@@ -10,7 +10,7 @@
     "index": "indexes/hypotheses.json",
     "evidence_bindings": "evidence-bindings/{evidence_id}.json",
     "evidence_binding_schema": "schemas/evidence-binding.schema.json",
-    "quickstart": "docs/quickstart.md",
+    "quickstart": "docs/quickstart/",
     "publication_lifecycle": "docs/publication-lifecycle.md",
     "evidence_binding_examples": "examples/evidence-bindings/*.example.json"
   },
@@ -47,12 +47,13 @@
   "human_entry_points": [
     "index.html",
     "README.md",
-    "docs/quickstart.md",
+    "docs/quickstart/",
     "docs/publication-lifecycle.md",
     ".github/ISSUE_TEMPLATE/new-evidence.md",
     ".github/ISSUE_TEMPLATE/contradictory-evidence.md",
     ".github/ISSUE_TEMPLATE/failed-replication.md",
-    ".github/ISSUE_TEMPLATE/safety-privacy-review.md"
+    ".github/ISSUE_TEMPLATE/safety-privacy-review.md",
+    "docs/quickstart/index.html"
   ],
   "generated_outputs": {
     "generated_by": "scripts/render-public-research.js",

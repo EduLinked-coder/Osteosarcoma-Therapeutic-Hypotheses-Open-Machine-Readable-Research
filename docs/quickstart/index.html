@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Use the osteosarcoma research repository</title>
+<style>
+:root{--text:#172033;--muted:#42526e;--surface:#f7f5ff;--border:#c9c3e6;--gold:#dea93f;--dark:#222830}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.0625rem;line-height:1.65}
+main{width:min(100% - 2rem,76rem);margin:auto;padding:3rem 0}
+.hero{padding:2.5rem;border:1px solid var(--border);border-radius:1rem;background:linear-gradient(135deg,#fff,#f7f5ff,#fff7e8)}
+.eyebrow{font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:clamp(2rem,6vw,3.6rem);line-height:1.1;margin:.5rem 0}
+.lead{font-size:1.2rem;color:var(--muted);max-width:70ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:1rem;margin-top:1.5rem}
+.card,.callout{border:1px solid var(--border);border-radius:.75rem;background:#fff;padding:1.25rem}
+.card{border-left:6px solid var(--gold)}
+.callout{background:#fff9ec;margin:1.5rem 0}
+.button{display:inline-flex;min-height:44px;align-items:center;padding:.7rem 1rem;border-radius:999px;text-decoration:none;font-weight:900;background:var(--dark);color:#fff;margin:.2rem .2rem .2rem 0}
+.primary{background:linear-gradient(90deg,#8e44ad,#d6336c,#f39c12)}
+table{width:100%;border-collapse:collapse;margin-top:1rem}
+th,td{padding:.85rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+th{background:var(--surface)}
+code{background:var(--surface);padding:.1rem .25rem;border-radius:.25rem}
+pre{overflow:auto;background:#172033;color:#fff;padding:1rem;border-radius:.75rem}
+</style>
+</head>
+<body>
+<main>
+  <p><a href="../../">Back to research portfolio</a></p>
+  <section class="hero">
+    <p class="eyebrow">Human quickstart</p>
+    <h1>Use the open osteosarcoma research repository</h1>
+    <p class="lead">This page is for researchers, reviewers and agents who need to inspect the current public research state, propose evidence safely, or consume the machine-readable objects.</p>
+    <div>
+      <a class="button primary" href="../../#hypotheses">Browse hypotheses</a>
+      <a class="button" href="../../repository-manifest.json">Machine manifest</a>
+      <a class="button" href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new/choose">Contribute evidence</a>
+    </div>
+  </section>
+
+  <div class="callout"><strong>Research boundary:</strong> this repository publishes research hypotheses only. It is not medical advice, treatment guidance, dosing instruction or a claim of patient benefit.</div>
+
+  <section>
+    <h2>Start here</h2>
+    <table>
+      <thead><tr><th>Need</th><th>Human path</th><th>Machine path</th></tr></thead>
+      <tbody>
+        <tr><td>Browse hypotheses</td><td><a href="../../#hypotheses">Open the public site</a></td><td><code>indexes/hypotheses.json</code></td></tr>
+        <tr><td>Inspect the current object</td><td><a href="../../hypotheses/OS-TH-0001/">Open OS-TH-0001</a></td><td><code>hypotheses/OS-TH-0001/hypothesis.json</code></td></tr>
+        <tr><td>Check evidence bindings</td><td><a href="../../evidence-bindings/PMID-42574989.json">Open a binding</a></td><td><code>schemas/evidence-binding.schema.json</code></td></tr>
+        <tr><td>Propose new evidence</td><td><a href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new/choose">Use issue templates</a></td><td><code>examples/evidence-bindings/*.example.json</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Contribute safely</h2>
+    <div class="grid">
+      <article class="card"><h3>New public evidence</h3><p>Use this when a public source may support, limit or contextualise a hypothesis.</p><a class="button primary" href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new?template=new-evidence.md">Open template</a></article>
+      <article class="card"><h3>Contradictory evidence</h3><p>Use this when a public source may challenge a claim, mechanism or evidence relationship.</p><a class="button primary" href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new?template=contradictory-evidence.md">Open template</a></article>
+      <article class="card"><h3>Failed replication</h3><p>Use this when a public replication attempt is failed, mixed or inconclusive.</p><a class="button primary" href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new?template=failed-replication.md">Open template</a></article>
+      <article class="card"><h3>Safety or privacy review</h3><p>Use this when material may be private, unsafe, restricted or outside publication authority.</p><a class="button primary" href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new?template=safety-privacy-review.md">Open template</a></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>For agents</h2>
+    <p>Read <code>repository-manifest.json</code> first, then follow the index to canonical hypothesis JSON, evidence bindings, schemas and examples. Generated pages, indexes and sitemap must stay renderer-owned.</p>
+    <pre><code>node scripts/validate-schema.js
+node scripts/render-public-research.js --check
+node scripts/validate-public-research.js</code></pre>
+  </section>
+</main>
+</body>
+</html>
