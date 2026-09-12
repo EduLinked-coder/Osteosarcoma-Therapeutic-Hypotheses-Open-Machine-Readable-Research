@@ -24,8 +24,29 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - `AGENTS.md` — instructions for AI/research agents
 - `schemas/therapeutic-hypothesis.schema.json` — hypothesis object schema
 - `hypotheses/` — durable hypothesis objects
-- `indexes/hypotheses.json` — machine-readable discovery index
+- `indexes/hypotheses.json` — generated machine-readable discovery index
 - `evidence-bindings/` — public evidence bindings used by hypothesis objects
+
+## Deterministic public projections
+
+Canonical scientific state lives in `hypotheses/{OS-TH-####}/hypothesis.json`. Human pages, the discovery index and sitemap are generated projections and must not become independent scientific sources.
+
+Run:
+
+```bash
+node scripts/generate-projections.js
+```
+
+This regenerates:
+
+- `index.html`
+- `hypotheses/{OS-TH-####}/index.html`
+- `indexes/hypotheses.json`
+- `sitemap.xml`
+
+CI runs `node scripts/generate-projections.js --check` and fails if any generated projection is stale. `scripts/validate-public-research.js` then validates the canonical objects against the repository schema, checks evidence bindings and clinical-use boundaries, and verifies the generated human projection digest against its canonical object.
+
+Generated HTML includes a visible source link to the canonical JSON. Changes to scientific content must be made in the canonical object and regenerated rather than hand-edited into HTML or the discovery index.
 
 ## First publication cycle
 
