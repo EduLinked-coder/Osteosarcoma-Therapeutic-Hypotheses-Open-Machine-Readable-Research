@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/schemas/evidence-binding.schema.json",
+  "title": "Osteosarcoma Public Evidence Binding",
+  "description": "Governed public evidence binding for a therapeutic hypothesis. A binding records how a public source relates to a hypothesis; it is not an acceptance of clinical efficacy.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_binding_version",
+    "evidence_id",
+    "source_type",
+    "canonical_source_url",
+    "citation",
+    "publication_date",
+    "evidence_type",
+    "evidence_maturity",
+    "biological_model",
+    "relationship_to_hypothesis",
+    "hypothesis_components",
+    "finding",
+    "independence_from_other_evidence",
+    "replication_status",
+    "provenance",
+    "clinical_use"
+  ],
+  "properties": {
+    "evidence_binding_version": {
+      "const": "1.0.0"
+    },
+    "evidence_id": {
+      "type": "string",
+      "pattern": "^(PMID-[0-9]+|DOI-.+|SOURCE-[A-Z0-9-]+)$"
+    },
+    "source_type": {
+      "enum": [
+        "pubmed",
+        "doi",
+        "preprint",
+        "clinical-trial-registry",
+        "public-dataset",
+        "other-public-source"
+      ]
+    },
+    "pmid": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "doi": {
+      "type": "string",
+      "minLength": 3
+    },
+    "canonical_source_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "citation": {
+      "type": "string",
+      "minLength": 10
+    },
+    "publication_date": {
+      "type": "string",
+      "minLength": 4
+    },
+    "evidence_type": {
+      "enum": [
+        "computational",
+        "in-vitro",
+        "in-vivo",
+        "animal-model",
+        "patient-derived-model",
+        "observational-human",
+        "clinical-trial",
+        "systematic-review",
+        "narrative-review",
+        "multi-omics",
+        "other"
+      ]
+    },
+    "evidence_maturity": {
+      "enum": [
+        "computational",
+        "preclinical",
+        "contextual",
+        "clinical-observational",
+        "clinical-interventional",
+        "review-source",
+        "mixed"
+      ]
+    },
+    "biological_model": {
+      "type": "string",
+      "minLength": 3
+    },
+    "relationship_to_hypothesis": {
+      "enum": [
+        "SUPPORTS",
+        "CONTRADICTS",
+        "LIMITS",
+        "CONTEXTUALISES",
+        "FAILED_REPLICATION",
+        "SUCCESSOR_CONTEXT"
+      ]
+    },
+    "hypothesis_components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "finding": {
+      "type": "string",
+      "minLength": 15
+    },
+    "independence_from_other_evidence": {
+      "type": "string",
+      "minLength": 10
+    },
+    "replication_status": {
+      "enum": [
+        "not-yet-assessed",
+        "not-applicable-review-source",
+        "replicated",
+        "failed-replication",
+        "mixed",
+        "single-source-only"
+      ]
+    },
+    "acceptance_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "meaning"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "candidate-public-evidence",
+            "reviewed-public-evidence",
+            "rejected",
+            "superseded"
+          ]
+        },
+        "meaning": {
+          "const": "Presence in this repository records a public evidence relationship; it does not establish accepted evidence or clinical benefit."
+        },
+        "reviewed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "review_note": {
+          "type": "string"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "public_source",
+        "retrieval_date",
+        "binding_generated_for"
+      ],
+      "properties": {
+        "public_source": {
+          "type": "string",
+          "minLength": 3
+        },
+        "retrieval_date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "binding_generated_for": {
+          "type": "string",
+          "pattern": "^OS-TH-[0-9]{4}$"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "source_accessed_by": {
+          "type": "string"
+        }
+      }
+    },
+    "clinical_use": {
+      "const": false
+    }
+  }
+}
