@@ -4,6 +4,7 @@ const path = require('path');
 const root = process.cwd();
 const siteBase = 'https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/';
 const generatedBy = 'scripts/render-public-research.js';
+const staticSitemapEntries = ['docs/quickstart/'];
 
 const readJson = (file) => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 const writeFile = (file, content) => {
@@ -98,6 +99,7 @@ const renderHypothesisPage = (h) => {
 const renderSitemap = (items) => {
   const urls = [
     { loc: siteBase, lastmod: items.map(({ object }) => datePart(object.provenance.updated_at)).sort().at(-1) || datePart() },
+    ...staticSitemapEntries.map((entry) => ({ loc: siteBase + entry, lastmod: items.map(({ object }) => datePart(object.provenance.updated_at)).sort().at(-1) || datePart() })),
     ...items.map(({ object }) => ({ loc: `${siteBase}hypotheses/${object.hypothesis_id}/`, lastmod: datePart(object.provenance.updated_at) }))
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>
