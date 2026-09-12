@@ -45,9 +45,12 @@ Agents must not publish:
 
 The generated files are projections, not source authority:
 
+- `index.html`
 - `hypotheses/*/index.html`
 - `indexes/hypotheses.json`
 - `sitemap.xml`
+
+The homepage, portfolio cards, register, individual hypothesis pages, discovery index and sitemap must all derive from canonical hypothesis JSON rather than independently maintained scientific facts.
 
 After changing canonical hypothesis JSON, run:
 
