@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "OS-TH-0001",
+  "title": "CD44-mediated metastatic vulnerability combined with immune-niche intervention",
+  "plain_language_summary": "This research hypothesis asks whether targeting a CD44-linked metastatic process together with tumour-microenvironment immune suppression is worth testing as a combined osteosarcoma research strategy.",
+  "hypothesis_statement": "In metastatic osteosarcoma, suppressing a CD44-associated transendothelial and metastatic phenotype while separately reversing suppressive bone or pulmonary immune-niche conditions may warrant investigation as a combined research strategy rather than treating either biological layer as sufficient on its own.",
+  "mechanism": {
+    "summary": "The hypothesis combines a tumour-cell metastatic mechanism associated with CD44 with a distinct microenvironmental immune-suppression layer. The proposed research question is whether simultaneous or deliberately sequenced disruption of both layers produces a stronger experimental effect than either intervention class alone.",
+    "relationships": [
+      {"subject":"CD44-associated osteosarcoma state","predicate":"associated-with","object":"migration, endothelial-barrier disruption and pulmonary metastatic phenotype","evidence_refs":["PMID-42574989"]},
+      {"subject":"bone and pulmonary tumour microenvironment","predicate":"associated-with","object":"immune suppression and metastatic support","evidence_refs":["PMID-42577778"]}
+    ]
+  },
+  "targets_pathways": [
+    {"name":"CD44","kind":"receptor","role":"candidate metastatic vulnerability"},
+    {"name":"transendothelial migration","kind":"process","role":"candidate metastatic process"},
+    {"name":"bone/pulmonary immune niche","kind":"microenvironment","role":"candidate suppressive microenvironmental layer"}
+  ],
+  "evidence_stage": "preclinical",
+  "supporting_evidence": [
+    {"evidence_id":"PMID-42574989","citation":"Formononetin Antagonizes Osteosarcoma Metastasis by Targeting CD44: An Integrated Multi-Omics Study","pmid":"42574989","doi":"10.1016/j.phymed.2026.158612","evidence_type":"multi-omics","relationship":"supports","finding":"The study links CD44 with an osteosarcoma metastatic phenotype and reports experimental attenuation of that phenotype in preclinical models.","source_url":"https://pubmed.ncbi.nlm.nih.gov/42574989/"},
+    {"evidence_id":"PMID-42577778","citation":"Bone niche-driven antitumor immune failure in osteosarcoma: Mechanisms and therapeutic implications","pmid":"42577778","evidence_type":"narrative-review","relationship":"contextualises","finding":"The review describes bone-niche and pulmonary immune mechanisms as potentially important layers in osteosarcoma progression and therapeutic research.","source_url":"https://pubmed.ncbi.nlm.nih.gov/42577778/"}
+  ],
+  "contradictory_evidence": {
+    "status": "not-yet-assessed",
+    "items": [],
+    "assessment": "A systematic contradictory-evidence search has not yet been completed for the combined hypothesis. Absence of a listed contradiction must not be interpreted as evidence of absence."
+  },
+  "uncertainty": {
+    "level": "high",
+    "summary": "The combined strategy is a derived research hypothesis. The cited evidence does not establish that dual targeting improves outcomes in humans, and the optimal biological interaction, timing and experimental context remain unresolved.",
+    "open_questions": [
+      "Does perturbing the CD44-associated metastatic state alter sensitivity to immune-niche intervention?",
+      "Is concurrent or sequential intervention more informative in appropriate osteosarcoma models?",
+      "Which bone or pulmonary niche mechanism is the most causally relevant partner for testing?",
+      "Does the combined effect reproduce across independent models?"
+    ]
+  },
+  "ranking": {
+    "status": "pending-recalculation",
+    "score": null,
+    "scale": "0-100 research-priority score",
+    "meaning": "Research priority only; never expected patient benefit.",
+    "components": {"independent_evidence":null,"mechanistic_coherence":null,"replication":null,"translational_relevance":null,"osteosarcoma_specificity":null,"novelty":null,"testability":null,"uncertainty_quality":null}
+  },
+  "novelty": {
+    "status": "unverified",
+    "assessment": "The combination was generated as a cross-mechanism research hypothesis. An exhaustive prior-art and literature search for the exact combination has not yet established novelty."
+  },
+  "falsifiability": {
+    "falsification_conditions": [
+      "Independent models fail to show a reproducible CD44-linked metastatic phenotype relevant to the proposed mechanism.",
+      "Combined perturbation provides no reproducible advantage over the stronger single perturbation in appropriately controlled models.",
+      "The proposed niche mechanism is shown not to contribute causally in the selected metastatic model."
+    ],
+    "discriminating_tests": [
+      "Compare single and combined perturbations in independently replicated osteosarcoma metastasis models.",
+      "Measure metastatic behaviour and immune-state changes separately so a combined effect can be mechanistically attributed.",
+      "Predefine controls capable of distinguishing additive, synergistic and null interactions."
+    ]
+  },
+  "validation_requirements": [
+    {"stage":"evidence review","requirement":"Complete systematic supporting and contradictory evidence assessment for the exact combined hypothesis.","status":"required"},
+    {"stage":"independent replication","requirement":"Replicate key mechanistic relationships in independent osteosarcoma models.","status":"required"},
+    {"stage":"combination testing","requirement":"Directly compare combination and single-mechanism perturbations with appropriate controls.","status":"required"},
+    {"stage":"scientific review","requirement":"Human scientific review before classification as a reviewed public hypothesis.","status":"required"}
+  ],
+  "provenance": {
+    "source_authority": "governed osteosarcoma research estate",
+    "generated_from": ["PMID-42574989","PMID-42577778","governed hypothesis-generation cycle"],
+    "created_at": "2026-09-13T00:00:00+10:00",
+    "updated_at": "2026-09-13T00:00:00+10:00",
+    "source_version": "public-object-v1"
+  },
+  "review_state": {
+    "status": "human-review-required",
+    "scientific_review_required": true,
+    "publication_class": "public-research-candidate",
+    "reviewed_at": null,
+    "review_note": "Public candidate for transparent research inspection; not yet classified as a scientifically reviewed public hypothesis."
+  },
+  "supersession": {"status":"current","successor_id":null,"reason":null},
+  "clinical_use": false
+}
