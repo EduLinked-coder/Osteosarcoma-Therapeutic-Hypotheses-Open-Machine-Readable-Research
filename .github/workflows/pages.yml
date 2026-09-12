@@ -22,8 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate canonical hypothesis schema
-        run: node scripts/validate-schema.js
+      - name: Check deterministic public projections
+        run: node scripts/generate-projections.js --check
       - name: Validate public research boundary
         run: node scripts/validate-public-research.js
 
