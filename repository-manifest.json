@@ -11,6 +11,7 @@
     "evidence_bindings": "evidence-bindings/{evidence_id}.json",
     "evidence_binding_schema": "schemas/evidence-binding.schema.json",
     "quickstart": "docs/quickstart/",
+    "quickstart_source": "docs/quickstart.md",
     "publication_lifecycle": "docs/publication-lifecycle.md",
     "evidence_binding_examples": "examples/evidence-bindings/*.example.json"
   },
@@ -23,7 +24,7 @@
     "SUPERSEDED",
     "WITHDRAWN"
   ],
-  "update_mechanism": "Canonical hypothesis objects and discovery indexes are validated by scripts/validate-public-research.js before publication deployment.",
+  "update_mechanism": "Canonical hypothesis objects are rendered through scripts/render-public-research.js; CI verifies generated-output freshness and validates public research boundaries before deployment.",
   "publication_status_semantics": {
     "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
@@ -48,17 +49,19 @@
     "index.html",
     "README.md",
     "docs/quickstart/",
+    "docs/quickstart/index.html",
+    "docs/quickstart.md",
     "docs/publication-lifecycle.md",
     ".github/ISSUE_TEMPLATE/new-evidence.md",
     ".github/ISSUE_TEMPLATE/contradictory-evidence.md",
     ".github/ISSUE_TEMPLATE/failed-replication.md",
-    ".github/ISSUE_TEMPLATE/safety-privacy-review.md",
-    "docs/quickstart/index.html"
+    ".github/ISSUE_TEMPLATE/safety-privacy-review.md"
   ],
   "generated_outputs": {
     "generated_by": "scripts/render-public-research.js",
     "check_command": "node scripts/render-public-research.js --check",
     "paths": [
+      "index.html",
       "hypotheses/{OS-TH-####}/index.html",
       "indexes/hypotheses.json",
       "sitemap.xml"
