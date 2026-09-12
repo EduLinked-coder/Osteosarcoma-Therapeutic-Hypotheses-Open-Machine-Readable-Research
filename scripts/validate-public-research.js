@@ -92,7 +92,7 @@ for (const entry of index.hypotheses) {
   const htmlPath = 'hypotheses/' + entry.hypothesis_id + '/index.html';
   if (!fs.existsSync(path.join(root, htmlPath))) fail('Missing human projection: ' + htmlPath);
   const html = fs.readFileSync(path.join(root, htmlPath), 'utf8');
-  if (!html.includes("fetch('hypothesis.json')")) fail(htmlPath + ' must load its canonical JSON object.');
+  if (!html.includes('<meta name="generator" content="scripts/render-public-research.js">')) fail(htmlPath + ' must be generated from its canonical JSON object.');
 }
 
 const homepage = fs.readFileSync(path.join(root, 'index.html'), 'utf8');

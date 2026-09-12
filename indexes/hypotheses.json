@@ -1,6 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-09-13T00:58:00+10:00",
+  "generated_by": "scripts/render-public-research.js",
+  "generated_at": "2026-09-13T00:00:00+10:00",
   "source": "Canonical public hypothesis objects in /hypotheses/",
   "clinical_use_boundary": "Research hypotheses only. Not medical advice, treatment recommendations, dosing instructions or claims of patient benefit.",
   "hypothesis_count": 1,
@@ -16,7 +17,9 @@
       "review_state": {
         "status": "human-review-required",
         "scientific_review_required": true,
-        "publication_class": "public-research-candidate"
+        "publication_class": "public-research-candidate",
+        "reviewed_at": null,
+        "review_note": "Public candidate for transparent research inspection; not yet classified as a scientifically reviewed public hypothesis."
       },
       "publication_path": "hypotheses/OS-TH-0001/",
       "canonical_object_path": "hypotheses/OS-TH-0001/hypothesis.json",
