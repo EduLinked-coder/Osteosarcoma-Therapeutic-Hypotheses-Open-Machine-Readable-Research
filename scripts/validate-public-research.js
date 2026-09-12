@@ -59,9 +59,24 @@ const validateNode = (schemaRoot, schema, value, where) => {
 };
 
 const schema = readJson('schemas/therapeutic-hypothesis.schema.json');
+const evidenceSchema = readJson('schemas/evidence-binding.schema.json');
 const index = readJson('indexes/hypotheses.json');
 if (!Array.isArray(index.hypotheses) || index.hypotheses.length === 0) {
   fail('indexes/hypotheses.json must list at least one canonical hypothesis.');
+}
+
+const evidenceDir = path.join(root, 'evidence-bindings');
+const evidenceFiles = fs.readdirSync(evidenceDir)
+  .filter((file) => file.endsWith('.json'))
+  .sort();
+if (evidenceFiles.length === 0) fail('evidence-bindings/ must contain at least one governed evidence binding.');
+for (const file of evidenceFiles) {
+  const relativePath = 'evidence-bindings/' + file;
+  const binding = readJson(relativePath);
+  validateNode(evidenceSchema, evidenceSchema, binding, relativePath);
+  if (file !== binding.evidence_id + '.json') fail(relativePath + ' filename must match evidence_id.');
+  if (binding.clinical_use !== false) fail(relativePath + ' must explicitly set clinical_use:false.');
+  if (binding.acceptance_state && binding.acceptance_state.status !== 'candidate-public-evidence') fail(relativePath + ' must remain candidate evidence until reviewed.');
 }
 
 const seen = new Set();
