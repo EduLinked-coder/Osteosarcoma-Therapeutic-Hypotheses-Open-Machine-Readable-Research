@@ -10,7 +10,8 @@
     "index": "indexes/hypotheses.json",
     "evidence_bindings": "evidence-bindings/{evidence_id}.json",
     "evidence_binding_schema": "schemas/evidence-binding.schema.json",
-    "quickstart": "docs/quickstart.md",
+    "quickstart": "docs/quickstart/",
+    "quickstart_source": "docs/quickstart.md",
     "publication_lifecycle": "docs/publication-lifecycle.md",
     "evidence_binding_examples": "examples/evidence-bindings/*.example.json"
   },
@@ -47,6 +48,8 @@
   "human_entry_points": [
     "index.html",
     "README.md",
+    "docs/quickstart/",
+    "docs/quickstart/index.html",
     "docs/quickstart.md",
     "docs/publication-lifecycle.md",
     ".github/ISSUE_TEMPLATE/new-evidence.md",
