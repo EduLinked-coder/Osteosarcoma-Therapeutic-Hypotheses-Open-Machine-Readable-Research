@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Search hypotheses | Open osteosarcoma research</title>
+<meta name="description" content="Search and filter public osteosarcoma research hypotheses directly from canonical repository objects.">
+<style>
+:root{color-scheme:light dark;--bg:#fff;--text:#172033;--muted:#526079;--surface:#f7f5ff;--border:#c9c3e6;--accent:#2349a6;--focus:#8a4fff;--warning:#7a5200}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;background:var(--bg);color:var(--text)}main{width:min(100% - 2rem,78rem);margin:auto;padding:2rem 0 4rem}a{color:var(--accent)}h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.1}.lede{max-width:70ch;font-size:1.15rem;color:var(--muted)}.boundary{border-left:6px solid #d9a52f;background:#fff8e7;color:#342400;padding:1rem 1.25rem;border-radius:.5rem;margin:1.5rem 0}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:1rem;padding:1.25rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface);margin:2rem 0}.field{display:flex;flex-direction:column;gap:.35rem}.wide{grid-column:1/-1}label{font-weight:800}input,select,button{font:inherit;min-height:44px;border:1px solid var(--border);border-radius:.6rem;padding:.6rem .75rem;background:var(--bg);color:var(--text)}button{cursor:pointer;font-weight:800}.actions{display:flex;gap:.75rem;align-items:end;flex-wrap:wrap}.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:1.25rem}.card{border:1px solid var(--border);border-radius:1rem;padding:1.25rem;background:var(--bg)}.meta,.status{color:var(--muted);font-size:.95rem}.chips{display:flex;flex-wrap:wrap;gap:.45rem;margin:.75rem 0}.chip{display:inline-block;border:1px solid var(--border);background:var(--surface);padding:.25rem .55rem;border-radius:999px;font-size:.9rem}.count{font-weight:800;margin-bottom:1rem}.empty{padding:2rem;border:1px dashed var(--border);border-radius:1rem}.loading{padding:1rem 0}.error{color:#8b1a1a;font-weight:700}.skip{position:absolute;left:-9999px}.skip:focus{left:1rem;top:1rem;background:#fff;color:#111;padding:.75rem;z-index:10}*:focus-visible{outline:3px solid var(--focus);outline-offset:2px}@media(prefers-color-scheme:dark){:root{--bg:#131722;--text:#f2f4fb;--muted:#c1c8da;--surface:#1d2230;--border:#4a5268;--accent:#9ab7ff}.boundary{background:#2c260e;color:#fff0b3}}
+</style>
+</head>
+<body>
+<a class="skip" href="#results">Skip to results</a>
+<main>
+<nav aria-label="Repository"><a href="../">Research portfolio</a> · <a href="../evidence/">Evidence</a> · <a href="../docs/quickstart/">Quickstart</a></nav>
+<h1>Search public research hypotheses</h1>
+<p class="lede">This interface loads the generated hypothesis index, then reads each canonical <code>hypothesis.json</code> object. Filters are projections of those objects; this page does not maintain a second scientific database.</p>
+<div class="boundary"><strong>Research boundary:</strong> results are research hypotheses for investigation, not medical advice, treatment recommendations, dosing instructions or claims of patient benefit.</div>
+<form class="controls" id="filters" role="search" aria-label="Filter research hypotheses">
+<div class="field wide"><label for="query">Search text</label><input id="query" type="search" autocomplete="off" placeholder="Title, mechanism, target, pathway, summary…"></div>
+<div class="field"><label for="target">Target or pathway</label><select id="target"><option value="">All targets/pathways</option></select></div>
+<div class="field"><label for="evidence-stage">Evidence stage</label><select id="evidence-stage"><option value="">All stages</option></select></div>
+<div class="field"><label for="publication-class">Publication class</label><select id="publication-class"><option value="">All classes</option></select></div>
+<div class="field"><label for="review-state">Review state</label><select id="review-state"><option value="">All review states</option></select></div>
+<div class="field"><label for="uncertainty">Uncertainty</label><select id="uncertainty"><option value="">All levels</option></select></div>
+<div class="field"><label for="novelty">Novelty</label><select id="novelty"><option value="">All novelty states</option></select></div>
+<div class="field"><label for="ranking">Ranking state</label><select id="ranking"><option value="">All ranking states</option></select></div>
+<div class="field"><label for="sort">Sort</label><select id="sort"><option value="updated-desc">Most recently updated</option><option value="title-asc">Title A–Z</option><option value="ranking-desc">Highest research-priority score</option></select></div>
+<div class="actions wide"><button type="reset">Reset filters</button></div>
+</form>
+<p id="loading" class="loading">Loading canonical research objects…</p>
+<p id="count" class="count" aria-live="polite"></p>
+<div id="results" class="results" tabindex="-1"></div>
+<noscript><p class="error">JavaScript is required for this client-side search interface. The canonical machine index remains available at <a href="../indexes/hypotheses.json">indexes/hypotheses.json</a>.</p></noscript>
+</main>
+<script>
+(() => {
+  'use strict';
+  const indexPath = '../indexes/hypotheses.json';
+  const safeCanonicalPath = /^hypotheses\/OS-TH-[0-9]{4}\/hypothesis\.json$/;
+  const form = document.getElementById('filters');
+  const resultsNode = document.getElementById('results');
+  const countNode = document.getElementById('count');
+  const loadingNode = document.getElementById('loading');
+  const controls = {
+    query: document.getElementById('query'),
+    target: document.getElementById('target'),
+    evidenceStage: document.getElementById('evidence-stage'),
+    publicationClass: document.getElementById('publication-class'),
+    reviewState: document.getElementById('review-state'),
+    uncertainty: document.getElementById('uncertainty'),
+    novelty: document.getElementById('novelty'),
+    ranking: document.getElementById('ranking'),
+    sort: document.getElementById('sort')
+  };
+  let records = [];
+
+  const text = (value) => String(value ?? '').trim();
+  const normal = (value) => text(value).toLocaleLowerCase('en-AU');
+  const uniqueSorted = (values) => [...new Set(values.filter(Boolean))].sort((a,b) => a.localeCompare(b, 'en-AU'));
+  const addOptions = (select, values) => uniqueSorted(values).forEach((value) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+  const targetValues = (h) => (h.targets_pathways || []).map((item) => text(item.name)).filter(Boolean);
+  const searchText = (h) => normal([
+    h.hypothesis_id,
+    h.title,
+    h.plain_language_summary,
+    h.hypothesis_statement,
+    h.mechanism?.summary,
+    ...((h.mechanism?.relationships || []).flatMap((item) => [item.subject, item.predicate, item.object])),
+    ...((h.targets_pathways || []).flatMap((item) => [item.name, item.kind, item.role]))
+  ].join(' '));
+
+  function render() {
+    const query = normal(controls.query.value);
+    const filtered = records.filter((h) => {
+      if (query && !searchText(h).includes(query)) return false;
+      if (controls.target.value && !targetValues(h).includes(controls.target.value)) return false;
+      if (controls.evidenceStage.value && h.evidence_stage !== controls.evidenceStage.value) return false;
+      if (controls.publicationClass.value && h.review_state?.publication_class !== controls.publicationClass.value) return false;
+      if (controls.reviewState.value && h.review_state?.status !== controls.reviewState.value) return false;
+      if (controls.uncertainty.value && h.uncertainty?.level !== controls.uncertainty.value) return false;
+      if (controls.novelty.value && h.novelty?.status !== controls.novelty.value) return false;
+      if (controls.ranking.value && h.ranking?.status !== controls.ranking.value) return false;
+      return true;
+    });
+
+    const sorted = [...filtered].sort((a,b) => {
+      if (controls.sort.value === 'title-asc') return text(a.title).localeCompare(text(b.title), 'en-AU');
+      if (controls.sort.value === 'ranking-desc') {
+        const aScore = typeof a.ranking?.score === 'number' ? a.ranking.score : -Infinity;
+        const bScore = typeof b.ranking?.score === 'number' ? b.ranking.score : -Infinity;
+        if (aScore !== bScore) return bScore - aScore;
+      }
+      return Date.parse(b.provenance?.updated_at || 0) - Date.parse(a.provenance?.updated_at || 0);
+    });
+
+    countNode.textContent = sorted.length + ' of ' + records.length + ' hypothesis object' + (records.length === 1 ? '' : 's') + ' shown.';
+    resultsNode.replaceChildren();
+    if (!sorted.length) {
+      const empty = document.createElement('p');
+      empty.className = 'empty';
+      empty.textContent = 'No hypotheses match the current filters.';
+      resultsNode.appendChild(empty);
+      return;
+    }
+
+    sorted.forEach((h) => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      const heading = document.createElement('h2');
+      const link = document.createElement('a');
+      link.href = '../hypotheses/' + encodeURIComponent(h.hypothesis_id) + '/';
+      link.textContent = text(h.title);
+      heading.appendChild(link);
+      const id = document.createElement('p');
+      id.className = 'meta';
+      id.textContent = h.hypothesis_id + ' · ' + text(h.evidence_stage) + ' · ' + text(h.review_state?.publication_class);
+      const summary = document.createElement('p');
+      summary.textContent = text(h.plain_language_summary);
+      const chips = document.createElement('div');
+      chips.className = 'chips';
+      [
+        'uncertainty: ' + text(h.uncertainty?.level),
+        'novelty: ' + text(h.novelty?.status),
+        'ranking: ' + text(h.ranking?.status),
+        ...targetValues(h)
+      ].filter((value) => !value.endsWith(': ')).forEach((value) => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = value;
+        chips.appendChild(chip);
+      });
+      const status = document.createElement('p');
+      status.className = 'status';
+      status.textContent = 'Review: ' + text(h.review_state?.status) + ' · Last updated: ' + text(h.provenance?.updated_at);
+      card.append(heading, id, summary, chips, status);
+      resultsNode.appendChild(card);
+    });
+  }
+
+  async function load() {
+    try {
+      const indexResponse = await fetch(indexPath, { cache: 'no-store' });
+      if (!indexResponse.ok) throw new Error('Could not load hypothesis index.');
+      const index = await indexResponse.json();
+      if (!Array.isArray(index.hypotheses)) throw new Error('Hypothesis index is malformed.');
+      const objects = await Promise.all(index.hypotheses.map(async (entry) => {
+        const canonicalPath = text(entry.canonical_object_path);
+        if (!safeCanonicalPath.test(canonicalPath)) throw new Error('Unsafe canonical path in index.');
+        const response = await fetch('../' + canonicalPath, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Could not load ' + canonicalPath + '.');
+        const object = await response.json();
+        if (object.hypothesis_id !== entry.hypothesis_id) throw new Error('Index/object identifier mismatch.');
+        return object;
+      }));
+      records = objects;
+      addOptions(controls.target, records.flatMap(targetValues));
+      addOptions(controls.evidenceStage, records.map((h) => h.evidence_stage));
+      addOptions(controls.publicationClass, records.map((h) => h.review_state?.publication_class));
+      addOptions(controls.reviewState, records.map((h) => h.review_state?.status));
+      addOptions(controls.uncertainty, records.map((h) => h.uncertainty?.level));
+      addOptions(controls.novelty, records.map((h) => h.novelty?.status));
+      addOptions(controls.ranking, records.map((h) => h.ranking?.status));
+      loadingNode.hidden = true;
+      render();
+    } catch (error) {
+      loadingNode.textContent = 'Search unavailable: ' + error.message;
+      loadingNode.className = 'error';
+    }
+  }
+
+  form.addEventListener('input', render);
+  form.addEventListener('change', render);
+  form.addEventListener('reset', () => setTimeout(render, 0));
+  load();
+})();
+</script>
+</body>
+</html>
