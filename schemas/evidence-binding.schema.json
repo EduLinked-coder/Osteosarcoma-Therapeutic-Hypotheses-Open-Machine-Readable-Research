@@ -15,6 +15,7 @@
     "evidence_type",
     "evidence_maturity",
     "biological_model",
+    "evidence_context",
     "relationship_to_hypothesis",
     "hypothesis_components",
     "finding",
@@ -23,9 +24,40 @@
     "provenance",
     "clinical_use"
   ],
+  "$defs": {
+    "assessed_text": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "value"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "reported",
+            "not-reported-in-public-source",
+            "not-applicable",
+            "not-yet-assessed"
+          ]
+        },
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 3
+        },
+        "note": {
+          "type": "string",
+          "minLength": 3
+        }
+      }
+    }
+  },
   "properties": {
     "evidence_binding_version": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "evidence_id": {
       "type": "string",
@@ -91,6 +123,27 @@
     "biological_model": {
       "type": "string",
       "minLength": 3
+    },
+    "evidence_context": {
+      "type": "object",
+      "description": "Explicit assessment of experimental model, population/context and mechanism metadata. Unknown or unassessed context must remain explicit rather than being inferred from citation text.",
+      "additionalProperties": false,
+      "required": [
+        "experimental_model",
+        "population_context",
+        "mechanism"
+      ],
+      "properties": {
+        "experimental_model": {
+          "$ref": "#/$defs/assessed_text"
+        },
+        "population_context": {
+          "$ref": "#/$defs/assessed_text"
+        },
+        "mechanism": {
+          "$ref": "#/$defs/assessed_text"
+        }
+      }
     },
     "relationship_to_hypothesis": {
       "enum": [
