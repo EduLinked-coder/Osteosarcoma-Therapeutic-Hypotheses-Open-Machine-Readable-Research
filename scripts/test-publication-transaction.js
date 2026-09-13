@@ -79,6 +79,16 @@ clinicalUse.public_projection.hypothesis.clinical_use = true;
 clinicalUse.handoff_digest = computeHandoffDigest(clinicalUse);
 expectBlocked(() => validateHandoff(clinicalUse), /schema failed|clinical_use:false/);
 
+const prohibitedField = fixture();
+prohibitedField.public_projection.hypothesis.client_id = 'synthetic-variable-name-only';
+prohibitedField.handoff_digest = computeHandoffDigest(prohibitedField);
+expectBlocked(() => validateHandoff(prohibitedField), /public projection safety validation failed.*prohibited public field name/i);
+
+const credentialMaterial = fixture();
+credentialMaterial.public_projection.hypothesis.title += ' sk-proj-' + 'A'.repeat(24);
+credentialMaterial.handoff_digest = computeHandoffDigest(credentialMaterial);
+expectBlocked(() => validateHandoff(credentialMaterial), /public projection safety validation failed.*OpenAI-style API key material/i);
+
 expectBlocked(() => stageHandoff(fixture()), /already exists/);
 
-console.log('Publication transaction tests passed: integrity, authority, clinical-use and overwrite gates fail closed.');
+console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety and overwrite gates fail closed.');
