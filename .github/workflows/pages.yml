@@ -26,6 +26,8 @@ jobs:
         run: node scripts/test-publication-transaction.js
       - name: Validate governed research contributions
         run: node scripts/validate-contributions.js
+      - name: Validate living evidence history
+        run: node scripts/validate-evidence-events.js
       - name: Validate canonical hypothesis schema
         run: node scripts/validate-schema.js
       - name: Check generated public projections
