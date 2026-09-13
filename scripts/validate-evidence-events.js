@@ -106,6 +106,27 @@ for (const [hypothesisId, hypothesisEvents] of eventsByHypothesis.entries()) {
   if (terminals.length !== 1) fail(hypothesisId + ' evidence event history must have exactly one terminal event.');
   if (terminals.length !== 1) continue;
 
+  // A single root and terminal are not sufficient to prove a valid history: a
+  // disconnected cycle could otherwise coexist beside the apparent chain.
+  // Walk backwards from the terminal and require every event for the
+  // hypothesis to be reachable exactly once.
+  const visited = new Set();
+  let cursor = terminals[0];
+  while (cursor) {
+    if (visited.has(cursor.event_id)) {
+      fail(hypothesisId + ' evidence event history contains a cycle at ' + cursor.event_id + '.');
+      break;
+    }
+    visited.add(cursor.event_id);
+    if (cursor.previous_event_id === null) break;
+    const previous = events.get(cursor.previous_event_id);
+    if (!previous || previous.hypothesis_id !== hypothesisId) break;
+    cursor = previous;
+  }
+  if (visited.size !== hypothesisEvents.length) {
+    fail(hypothesisId + ' evidence event history contains disconnected or cyclic events outside the terminal chain.');
+  }
+
   const canonicalPath = hypothesisFiles.get(hypothesisId);
   if (!canonicalPath) continue;
   const raw = fs.readFileSync(path.join(root, canonicalPath), 'utf8');
