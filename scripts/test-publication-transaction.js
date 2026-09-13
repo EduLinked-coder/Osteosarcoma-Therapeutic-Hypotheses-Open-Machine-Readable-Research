@@ -3,6 +3,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const { validateEvidenceBindingIdentity } = require('./lib/evidence-binding-integrity');
 const {
   CONTRACT_ID,
   CONTRACT_VERSION,
@@ -65,6 +66,10 @@ const result = validateHandoff(valid);
 assert.equal(result.hypothesis.hypothesis_id, 'OS-TH-0001');
 assert.equal(result.bindings.length, evidenceBindings.length);
 
+for (const binding of evidenceBindings) {
+  assert.deepEqual(validateEvidenceBindingIdentity(binding, 'fixture'), []);
+}
+
 const digestTamper = fixture();
 digestTamper.public_projection.hypothesis.title += ' tampered';
 expectBlocked(() => validateHandoff(digestTamper), /digest does not match/);
@@ -89,6 +94,16 @@ credentialMaterial.public_projection.hypothesis.title += ' sk-proj-' + 'A'.repea
 credentialMaterial.handoff_digest = computeHandoffDigest(credentialMaterial);
 expectBlocked(() => validateHandoff(credentialMaterial), /public projection safety validation failed.*OpenAI-style API key material/i);
 
+const mismatchedPmid = fixture();
+mismatchedPmid.public_projection.evidence_bindings[0].pmid = '99999999';
+mismatchedPmid.handoff_digest = computeHandoffDigest(mismatchedPmid);
+expectBlocked(() => validateHandoff(mismatchedPmid), /public evidence identity validation failed.*pmid must exactly match/i);
+
+const unsafeEvidenceId = clone(evidenceBindings[0]);
+unsafeEvidenceId.evidence_id = 'DOI-10.1000/example/../../outside';
+unsafeEvidenceId.doi = '10.1000/example/../../outside';
+assert.match(validateEvidenceBindingIdentity(unsafeEvidenceId, 'fixture').join(' | '), /path-safe stable identifier/i);
+
 expectBlocked(() => stageHandoff(fixture()), /already exists/);
 
-console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety and overwrite gates fail closed.');
+console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety, evidence-identity and overwrite gates fail closed.');
