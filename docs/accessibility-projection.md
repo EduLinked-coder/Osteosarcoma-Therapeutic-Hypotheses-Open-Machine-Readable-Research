@@ -51,3 +51,7 @@ Future improvements may add structured term explanations, symbol-supported proje
 ## Validation
 
 Generated accessibility pages are part of the renderer freshness boundary. `node scripts/render-public-research.js --check` must fail when an Easy Read projection is missing or stale.
+
+`node scripts/validate-public-interface.js` adds a bounded deterministic interface-integrity gate across public HTML. It checks basic document semantics needed by assistive technologies and keyboard users, including a declared document language, viewport metadata, one primary heading, a main landmark, explicit image alternative text, avoidance of positive `tabindex`, safe new-window relationships, and resolvable local links. `node scripts/test-public-interface.js` proves representative invalid cases fail closed.
+
+These automated checks are intentionally conservative and do **not** constitute WCAG conformance certification, independent accessibility audit, Easy Read certification or user testing. Human accessibility review remains necessary for matters that cannot be established deterministically from repository markup alone.

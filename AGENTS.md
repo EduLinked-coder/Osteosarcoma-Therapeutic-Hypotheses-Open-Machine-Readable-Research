@@ -18,6 +18,14 @@ Candidate evidence operations are not publication authority. If an upstream capa
 
 Authorised ecosystem routing may resolve a source-owned domain research system without exposing that private routing here. Automated cross-repository publication must still fail closed until the candidate has attributable object-level lineage, disclosure authority and an explicit public-safe release handoff. Continue safe public-repository engineering, but do not infer or expose private source details merely because a domain source exists.
 
+## Living Evidence History
+
+Material changes in public evidence must use the existing `evidence-events/` append-only ledger and `schemas/evidence-change-event.schema.json`; do not invent another revision store.
+
+Do not silently rewrite, delete or recycle a published `OS-EVENT-####` record to change history. Corrections must be represented by a later event with a new stable identifier. Event records may reference only deliberately public evidence bindings already present in this repository.
+
+The canonical hypothesis object remains the current projection. The terminal evidence event for a hypothesis must reconcile to that canonical object's digest and lifecycle state. Changes to scientific review state, publication class, supersession or withdrawal require attributable human scientific authority. An evidence event does not transfer publication authority or clinical-use authority.
+
 ## Public Safety Rules
 
 Never publish patient names, patient-specific tumour characteristics, treatment histories, medical records, private clinical notes, credentials, secrets, tokens, private repository content or restricted unpublished research.
