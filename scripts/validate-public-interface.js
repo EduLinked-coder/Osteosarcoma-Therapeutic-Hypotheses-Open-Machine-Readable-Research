@@ -5,6 +5,8 @@ const args = process.argv.slice(2);
 const rootIndex = args.indexOf('--root');
 const root = path.resolve(rootIndex >= 0 && args[rootIndex + 1] ? args[rootIndex + 1] : process.cwd());
 const isFixtureRoot = rootIndex >= 0;
+const validateDiscovery = !isFixtureRoot || args.includes('--discovery');
+const canonicalSiteBase = 'https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/';
 let failed = false;
 
 const fail = (message) => {
@@ -99,8 +101,79 @@ for (const htmlPath of htmlFiles) {
   }
 }
 
+if (validateDiscovery) {
+  const robotsPath = path.join(root, 'robots.txt');
+  const sitemapPath = path.join(root, 'sitemap.xml');
+  const expectedSitemapUrl = canonicalSiteBase + 'sitemap.xml';
+
+  if (!fs.existsSync(robotsPath)) {
+    fail('Missing robots.txt discovery entry point.');
+  } else {
+    const robots = fs.readFileSync(robotsPath, 'utf8');
+    if (!/^User-agent:\s*\*\s*$/mi.test(robots)) fail('robots.txt must contain a wildcard User-agent directive.');
+    if (!/^Allow:\s*\/\s*$/mi.test(robots)) fail('robots.txt must explicitly allow the public root.');
+    const sitemapDirectives = [...robots.matchAll(/^Sitemap:\s*(\S+)\s*$/gmi)].map((match) => match[1]);
+    if (sitemapDirectives.length !== 1 || sitemapDirectives[0] !== expectedSitemapUrl) {
+      fail('robots.txt must contain exactly one canonical Sitemap directive: ' + expectedSitemapUrl);
+    }
+  }
+
+  if (!fs.existsSync(sitemapPath)) {
+    fail('Missing sitemap.xml discovery entry point.');
+  } else {
+    const sitemap = fs.readFileSync(sitemapPath, 'utf8');
+    if (!/<urlset\b[^>]*xmlns=["']http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9["'][^>]*>/i.test(sitemap)) {
+      fail('sitemap.xml is missing the canonical sitemap urlset namespace.');
+    }
+
+    const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/gi)].map((match) => match[1].trim());
+    if (!locations.length) fail('sitemap.xml contains no <loc> entries.');
+    const seenLocations = new Set();
+
+    for (const location of locations) {
+      if (seenLocations.has(location)) fail('sitemap.xml contains duplicate <loc>: ' + location);
+      seenLocations.add(location);
+      if (!location.startsWith(canonicalSiteBase)) {
+        fail('sitemap.xml contains a URL outside the canonical public site base: ' + location);
+        continue;
+      }
+      if (location.includes('?') || location.includes('#')) {
+        fail('sitemap.xml URLs must not contain query strings or fragments: ' + location);
+      }
+
+      let localRelative = location.slice(canonicalSiteBase.length);
+      try {
+        localRelative = decodeURIComponent(localRelative);
+      } catch {
+        fail('sitemap.xml contains malformed URL encoding: ' + location);
+        continue;
+      }
+      const candidate = localRelative === ''
+        ? path.join(root, 'index.html')
+        : localRelative.endsWith('/')
+          ? path.join(root, localRelative, 'index.html')
+          : path.join(root, localRelative);
+      const relative = path.relative(root, candidate);
+      if (relative.startsWith('..') || path.isAbsolute(relative)) {
+        fail('sitemap.xml URL escapes the public repository root: ' + location);
+      } else if (!fs.existsSync(candidate)) {
+        fail('sitemap.xml references a missing public target: ' + relative.replace(/\\/g, '/'));
+      }
+    }
+
+    if (!isFixtureRoot) {
+      const requiredHumanRoutes = ['', 'search/', 'activity/', 'docs/quickstart/', 'evidence/'];
+      for (const route of requiredHumanRoutes) {
+        const expected = canonicalSiteBase + route;
+        if (!seenLocations.has(expected)) fail('sitemap.xml is missing required human discovery route: ' + expected);
+      }
+    }
+  }
+}
+
 if (failed) {
   process.exitCode = 1;
 } else {
-  console.log('Public interface validation passed for ' + htmlFiles.length + ' HTML page(s).');
+  const discoveryMessage = validateDiscovery ? ' plus robots/sitemap discovery integrity' : '';
+  console.log('Public interface validation passed for ' + htmlFiles.length + ' HTML page(s)' + discoveryMessage + '.');
 }
