@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { validateJsonSchema } = require('./lib/schema-lite');
+const { scanStructuredValue, scanSecretMaterial } = require('./validate-public-safety');
 
 const root = process.cwd();
 const CONTRACT_ID = 'OSTEOSARCOMA-PUBLIC-PROJECTION-HANDOFF-001';
@@ -14,11 +15,6 @@ const ID = /^OS-TH-[0-9]{4}$/;
 const GIT_SHA = /^[0-9a-f]{40}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const allowedEnvelopeKeys = new Set(['contract_id', 'contract_version', 'source', 'target', 'authority', 'public_projection', 'handoff_digest']);
-const prohibitedPublicKeys = new Set([
-  'patient_name', 'patient_id', 'medical_record', 'medical_records', 'treatment_history',
-  'clinical_notes', 'date_of_birth', 'dob', 'credential', 'credentials', 'token',
-  'secret', 'secrets', 'private_key', 'api_key'
-]);
 
 class PublicationTransactionBlocked extends Error {}
 
@@ -55,18 +51,12 @@ function isPublicHttpUrl(value) {
   }
 }
 
-function scanPublicProjection(value, pointer = 'public_projection') {
-  if (Array.isArray(value)) {
-    value.forEach((item, index) => scanPublicProjection(item, pointer + '[' + index + ']'));
-    return;
-  }
-  if (!value || typeof value !== 'object') return;
-  for (const [key, child] of Object.entries(value)) {
-    if (prohibitedPublicKeys.has(key.toLowerCase())) {
-      throw new PublicationTransactionBlocked(pointer + ' contains prohibited public field ' + key + '.');
-    }
-    scanPublicProjection(child, pointer + '.' + key);
-  }
+function validatePublicProjectionSafety(projection) {
+  const errors = [
+    ...scanStructuredValue(projection, 'public_projection'),
+    ...scanSecretMaterial(JSON.stringify(projection), 'public_projection')
+  ];
+  requireGate(errors.length === 0, 'public projection safety validation failed: ' + errors.join(' | '));
 }
 
 function validateHandoff(envelope) {
@@ -101,7 +91,7 @@ function validateHandoff(envelope) {
   const bindings = projection.evidence_bindings;
   requireGate(hypothesis && typeof hypothesis === 'object' && !Array.isArray(hypothesis), 'public hypothesis is required');
   requireGate(Array.isArray(bindings) && bindings.length > 0, 'at least one public evidence binding is required');
-  scanPublicProjection(projection);
+  validatePublicProjectionSafety(projection);
 
   const hypothesisErrors = validateJsonSchema(hypothesisSchema, hypothesisSchema, hypothesis, 'public_projection.hypothesis');
   requireGate(hypothesisErrors.length === 0, 'public hypothesis schema failed: ' + hypothesisErrors.join(' | '));
@@ -158,6 +148,7 @@ function stageHandoff(envelope) {
   execFileSync(process.execPath, ['scripts/render-public-research.js'], { cwd: root, stdio: 'inherit' });
   execFileSync(process.execPath, ['scripts/validate-schema.js'], { cwd: root, stdio: 'inherit' });
   execFileSync(process.execPath, ['scripts/render-public-research.js', '--check'], { cwd: root, stdio: 'inherit' });
+  execFileSync(process.execPath, ['scripts/validate-public-safety.js'], { cwd: root, stdio: 'inherit' });
   execFileSync(process.execPath, ['scripts/validate-public-research.js'], { cwd: root, stdio: 'inherit' });
 
   return {
@@ -197,6 +188,7 @@ module.exports = {
   PublicationTransactionBlocked,
   canonicalJson,
   computeHandoffDigest,
+  validatePublicProjectionSafety,
   validateHandoff,
   stageHandoff
 };
