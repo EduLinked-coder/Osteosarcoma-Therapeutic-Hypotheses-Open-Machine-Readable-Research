@@ -26,6 +26,12 @@ Do not silently rewrite, delete or recycle a published `OS-EVENT-####` record to
 
 The canonical hypothesis object remains the current projection. The terminal evidence event for a hypothesis must reconcile to that canonical object's digest and lifecycle state. Changes to scientific review state, publication class, supersession or withdrawal require attributable human scientific authority. An evidence event does not transfer publication authority or clinical-use authority.
 
+## Evidence Context Integrity
+
+Every public evidence binding must explicitly assess experimental model, population/context and mechanism metadata using the existing `evidence_context` structure. When a public source has not been systematically assessed for one of those dimensions, preserve that uncertainty with an explicit unresolved status and `value: null`; do not infer missing context from a title, abstract, hypothesis wording or another source.
+
+A `reported` context value must be attributable to the public source represented by that binding. Evidence-context completeness establishes machine-readable provenance discipline only; it does not establish scientific relevance, evidence quality, replication, acceptance, clinical validity, disclosure authority or publication authority.
+
 ## Public Safety Rules
 
 Never publish patient names, patient-specific tumour characteristics, treatment histories, medical records, private clinical notes, credentials, secrets, tokens, private repository content or restricted unpublished research.
