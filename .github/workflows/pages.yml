@@ -30,6 +30,10 @@ jobs:
         run: node scripts/test-evidence-events.js
       - name: Validate living evidence history
         run: node scripts/validate-evidence-events.js
+      - name: Test lifecycle binding validator fail-closed cases
+        run: node scripts/test-lifecycle-bindings.js
+      - name: Validate lifecycle and supersession bindings
+        run: node scripts/validate-lifecycle-bindings.js
       - name: Check living research activity
         run: node scripts/render-research-activity.js --check
       - name: Validate evidence relationship consistency
