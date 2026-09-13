@@ -23,6 +23,7 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - Start with `docs/quickstart.md` for the human and machine entry points.
 - Browse current public hypotheses from the GitHub Pages site or `indexes/hypotheses.json`.
 - Use `search/` to search and filter the portfolio by canonical-object fields such as mechanism/target text, evidence stage, publication/review state, uncertainty, novelty and ranking state.
+- Use `hypotheses/{OS-TH-####}/easy-read/` for the generated accessibility projection of the same canonical hypothesis object; see `docs/accessibility-projection.md` for its governance and limitations.
 - Use `.github/ISSUE_TEMPLATE/` to propose evidence, contradictions, failed replications, successor hypotheses or safety/privacy review.
 - Copy `examples/evidence-bindings/*.example.json` when creating governed evidence bindings.
 
@@ -36,6 +37,7 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - `indexes/hypotheses.json` — machine-readable discovery index
 - `evidence-bindings/` — public evidence bindings used by hypothesis objects
 - `examples/evidence-bindings/` — copyable candidate evidence-binding examples
+- `docs/accessibility-projection.md` — accessibility projection contract and Easy Read boundary
 - `docs/publication-lifecycle.md` — fail-closed publication authority and safety rules
 
 ## First publication cycle
