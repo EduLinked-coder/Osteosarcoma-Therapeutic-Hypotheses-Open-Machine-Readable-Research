@@ -58,10 +58,12 @@ try {
   const currentState = {
     canonical_object_sha256: digest,
     canonical_object_updated_at: canonical.provenance.updated_at,
+    evidence_stage: canonical.evidence_stage,
     review_state: canonical.review_state.status,
     publication_class: canonical.review_state.publication_class,
     uncertainty_level: canonical.uncertainty.level,
     ranking_status: canonical.ranking.status,
+    ranking_score: canonical.ranking.score,
     supersession_status: canonical.supersession.status
   };
 
@@ -120,6 +122,17 @@ try {
   };
   writeJson('evidence-events/OS-EVENT-0001.json', protectedChange);
   expectFail('protected lifecycle change without human decision', 'changes a protected scientific/publication lifecycle state without a recorded human decision');
+
+  const evidenceStageChange = JSON.parse(JSON.stringify(validEvent));
+  evidenceStageChange.event_type = 'HYPOTHESIS_REVISION_RECORDED';
+  evidenceStageChange.hypothesis_state_before.evidence_stage = 'computational';
+  evidenceStageChange.scientific_decision = {
+    status: 'PENDING_HUMAN_REVIEW',
+    authority_reference: null,
+    decision_summary: 'Evidence maturity change remains pending human scientific authority.'
+  };
+  writeJson('evidence-events/OS-EVENT-0001.json', evidenceStageChange);
+  expectFail('evidence maturity change without human decision', 'changes a protected scientific/publication lifecycle state without a recorded human decision');
 
   const brokenChain = JSON.parse(JSON.stringify(validEvent));
   brokenChain.previous_event_id = 'OS-EVENT-9999';
