@@ -22,6 +22,7 @@ Transitions are evidence gates, not automatic claims of efficacy.
 
 - Start with `docs/quickstart.md` for the human and machine entry points.
 - Browse current public hypotheses from the GitHub Pages site or `indexes/hypotheses.json`.
+- Use `activity/` for the generated living-research activity view and `indexes/evidence-events.json` for the machine-readable event/activity index.
 - Use `structured-data/hypotheses.jsonld` for deterministic Schema.org JSON-LD discovery metadata derived from the same canonical public hypotheses.
 - Use `search/` to search and filter the portfolio by canonical-object fields such as mechanism/target text, evidence stage, publication/review state, uncertainty, novelty and ranking state.
 - Use `hypotheses/{OS-TH-####}/easy-read/` for the generated accessibility projection of the same canonical hypothesis object; see `docs/accessibility-projection.md` for its governance and limitations.
@@ -34,12 +35,13 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - `manifest.json` — stable contract entry point for machines and autonomous agents; deterministically generated from `repository-manifest.json`
 - `repository-manifest.json` — canonical repository identity and discovery contract source; do not maintain `manifest.json` independently
 - `AGENTS.md` — instructions for AI/research agents
+- `indexes/hypotheses.json` — machine-readable hypothesis discovery index
+- `indexes/evidence-events.json` — deterministic living-evidence activity index
 - `structured-data/hypotheses.jsonld` — deterministic Schema.org JSON-LD collection projection
 - `schemas/therapeutic-hypothesis.schema.json` — hypothesis object schema
 - `schemas/evidence-binding.schema.json` — evidence binding schema
 - `schemas/evidence-change-event.schema.json` — append-only evidence change event schema
 - `hypotheses/` — durable hypothesis objects
-- `indexes/hypotheses.json` — machine-readable discovery index
 - `evidence-bindings/` — public evidence bindings used by hypothesis objects
 - `evidence-events/` — append-only public evidence change history
 - `examples/evidence-bindings/` — copyable candidate evidence-binding examples
@@ -48,13 +50,15 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - `docs/accessibility-projection.md` — accessibility projection contract and Easy Read boundary
 - `docs/publication-lifecycle.md` — fail-closed publication authority and safety rules
 
-Run `node scripts/render-machine-manifest.js --check` to verify that the stable `manifest.json` entry point still matches its canonical source.
+Run `node scripts/render-machine-manifest.js --check` to verify that the stable `manifest.json` entry point still matches its canonical source. Run `node scripts/render-research-activity.js --check` to verify that the human and machine activity projections match the canonical hypotheses and append-only event ledger.
 
 ## Living evidence
 
 New supporting, contradictory, limiting, replication or retraction information must not silently overwrite the history of a hypothesis. Material evidence changes are recorded as stable `OS-EVENT-####` objects that bind existing public evidence IDs to the hypothesis state before and after the change.
 
-The canonical `hypothesis.json` remains the current research projection. The event ledger preserves how ranking, uncertainty, review requirements, supersession or withdrawal decisions evolved. Protected scientific/publication lifecycle changes require an attributable human scientific decision; an event never transfers publication authority or clinical-use authority.
+The canonical `hypothesis.json` remains the current research projection. The event ledger preserves evidence maturity, ranking status and score, uncertainty, review requirements, supersession and withdrawal decisions. Evidence-stage and protected publication-lifecycle changes require an attributable human scientific decision; an event never transfers publication authority or clinical-use authority.
+
+`activity/` and `indexes/evidence-events.json` are generated discovery projections over that history. They surface new evidence events, changed ranking metadata, changed evidence maturity, superseded/withdrawn hypotheses and unresolved evidence gaps without becoming a second scientific store. When the event ledger is empty, the activity page explicitly does **not** interpret that as evidence that no new literature exists.
 
 ## Structured metadata
 
