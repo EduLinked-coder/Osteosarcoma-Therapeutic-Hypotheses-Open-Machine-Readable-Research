@@ -50,7 +50,7 @@
   "identifier_convention": "OS-TH-####",
   "contribution_identifier_convention": "OS-CONTRIB-####",
   "evidence_event_identifier_convention": "OS-EVENT-####",
-  "evidence_model": "Evidence bindings classify public sources as SUPPORTS, CONTRADICTS, LIMITS, CONTEXTUALISES, FAILED_REPLICATION or SUCCESSOR_CONTEXT and preserve uncertainty, maturity, acceptance state and provenance.",
+  "evidence_model": "Evidence bindings classify public sources as SUPPORTS, CONTRADICTS, LIMITS, NEUTRAL, CONTEXTUALISES, FAILED_REPLICATION or SUCCESSOR_CONTEXT and preserve uncertainty, maturity, acceptance state and provenance.",
   "lifecycle_model": [
     "PUBLIC_RESEARCH_CANDIDATE",
     "SCIENTIFIC_REVIEW",

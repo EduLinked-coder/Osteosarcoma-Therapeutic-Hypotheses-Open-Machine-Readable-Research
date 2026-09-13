@@ -33,11 +33,12 @@ Do not include patient information, private clinical context, client information
 ## Safe evidence-binding pattern
 
 1. Use a public identifier or durable public URL.
-2. Classify the relationship: `SUPPORTS`, `CONTRADICTS`, `LIMITS`, `CONTEXTUALISES`, `FAILED_REPLICATION` or `SUCCESSOR_CONTEXT`.
-3. Keep `clinical_use` as `false`.
-4. Keep `acceptance_state.status` as `candidate-public-evidence` unless explicit review authority says otherwise.
-5. Add the binding to `evidence-bindings/{evidence_id}.json`.
-6. Run:
+2. Classify the relationship: `SUPPORTS`, `CONTRADICTS`, `LIMITS`, `NEUTRAL`, `CONTEXTUALISES`, `FAILED_REPLICATION` or `SUCCESSOR_CONTEXT`.
+3. Use `NEUTRAL` only when the source is relevant to the hypothesis but, after scientific assessment, does not support, contradict or limit the hypothesis claim. `NEUTRAL` is an evidence relationship, not a synonym for unknown or unassessed; uncertain classification must remain unresolved rather than being normalised automatically.
+4. Keep `clinical_use` as `false`.
+5. Keep `acceptance_state.status` as `candidate-public-evidence` unless explicit review authority says otherwise.
+6. Add the binding to `evidence-bindings/{evidence_id}.json`.
+7. Run:
 
 ```sh
 node scripts/validate-contributions.js
