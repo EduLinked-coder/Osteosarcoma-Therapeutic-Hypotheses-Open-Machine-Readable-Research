@@ -11,6 +11,7 @@ This repository publishes public, evidence-bound osteosarcoma therapeutic resear
 | Inspect the canonical object | Use the hypothesis page's JSON link | Read `hypotheses/{OS-TH-####}/hypothesis.json` |
 | Validate a hypothesis | Check review state, uncertainty and evidence stage | Validate against `schemas/therapeutic-hypothesis.schema.json` |
 | Inspect evidence bindings | Read `evidence-bindings/*.json` | Validate against `schemas/evidence-binding.schema.json` |
+| Propose a governed contribution | Use the relevant GitHub issue template | Start from `schemas/research-contribution.schema.json` and `examples/contributions/` |
 | Propose new evidence | Use the New public evidence issue template | Copy `examples/evidence-bindings/supports.example.json` |
 | Report a contradiction | Use the Contradictory evidence issue template | Copy `examples/evidence-bindings/contradicts.example.json` |
 | Report failed replication | Use the Failed replication issue template | Copy `examples/evidence-bindings/failed-replication.example.json` |
@@ -20,6 +21,12 @@ The search interface does not maintain a duplicate research database. It loads t
 ## Contribution boundary
 
 A contribution is a proposal for review. It is not accepted evidence, medical advice, treatment guidance, dosing instruction or expected patient benefit.
+
+Machine-readable contribution proposals use the governed lifecycle documented in `docs/contribution-lifecycle.md`:
+
+`SUBMITTED -> SOURCE_VERIFIED -> EVIDENCE_VALIDATED -> SCIENTIFIC_REVIEW -> ACCEPTED | REJECTED`
+
+An `ACCEPTED` contribution still has to be incorporated through the canonical hypothesis/evidence objects and normal pull-request validation path. Contribution acceptance is not clinical validation.
 
 Do not include patient information, private clinical context, client information, credentials, secrets, unpublished restricted research or private repository content.
 
@@ -33,6 +40,7 @@ Do not include patient information, private clinical context, client information
 6. Run:
 
 ```sh
+node scripts/validate-contributions.js
 node scripts/validate-schema.js
 node scripts/render-public-research.js --check
 node scripts/validate-public-research.js
