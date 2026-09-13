@@ -1,6 +1,13 @@
 'use strict';
 
 const SAFE_EVIDENCE_ID = /^(PMID-[0-9]+|DOI-[A-Za-z0-9._~%()!*'-]+|SOURCE-[A-Z0-9-]+)$/;
+const EVIDENCE_CONTEXT_FIELDS = ['experimental_model', 'population_context', 'mechanism'];
+const EVIDENCE_CONTEXT_STATUSES = new Set([
+  'reported',
+  'not-reported-in-public-source',
+  'not-applicable',
+  'not-yet-assessed'
+]);
 
 function isPathSafeEvidenceId(value) {
   return typeof value === 'string' &&
@@ -9,6 +16,40 @@ function isPathSafeEvidenceId(value) {
     value !== '..' &&
     !value.includes('/') &&
     !value.includes('\\');
+}
+
+function validateEvidenceContextIntegrity(binding, where = 'evidence binding') {
+  const errors = [];
+  if (!binding || typeof binding !== 'object' || Array.isArray(binding)) {
+    return [where + ' must be an object.'];
+  }
+
+  const context = binding.evidence_context;
+  if (!context || typeof context !== 'object' || Array.isArray(context)) {
+    return [where + '.evidence_context must explicitly assess experimental_model, population_context and mechanism.'];
+  }
+
+  for (const field of EVIDENCE_CONTEXT_FIELDS) {
+    const assessment = context[field];
+    const fieldWhere = where + '.evidence_context.' + field;
+    if (!assessment || typeof assessment !== 'object' || Array.isArray(assessment)) {
+      errors.push(fieldWhere + ' must be an assessment object.');
+      continue;
+    }
+    if (!EVIDENCE_CONTEXT_STATUSES.has(assessment.status)) {
+      errors.push(fieldWhere + '.status is unsupported.');
+      continue;
+    }
+    if (assessment.status === 'reported') {
+      if (typeof assessment.value !== 'string' || assessment.value.trim().length < 3) {
+        errors.push(fieldWhere + '.value must contain the reported public-source context when status is reported.');
+      }
+    } else if (assessment.value !== null) {
+      errors.push(fieldWhere + '.value must be null unless status is reported; do not infer unassessed context.');
+    }
+  }
+
+  return errors;
 }
 
 function validateEvidenceBindingIdentity(binding, where = 'evidence binding') {
@@ -79,6 +120,9 @@ function validateEvidenceBindingIdentity(binding, where = 'evidence binding') {
 
 module.exports = {
   SAFE_EVIDENCE_ID,
+  EVIDENCE_CONTEXT_FIELDS,
+  EVIDENCE_CONTEXT_STATUSES,
   isPathSafeEvidenceId,
+  validateEvidenceContextIntegrity,
   validateEvidenceBindingIdentity
 };

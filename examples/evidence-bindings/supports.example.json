@@ -1,5 +1,5 @@
 {
-  "evidence_binding_version": "1.0.0",
+  "evidence_binding_version": "1.1.0",
   "evidence_id": "PMID-00000000",
   "source_type": "pubmed",
   "pmid": "00000000",
@@ -10,6 +10,23 @@
   "evidence_type": "in-vivo",
   "evidence_maturity": "preclinical",
   "biological_model": "example osteosarcoma preclinical model",
+  "evidence_context": {
+    "experimental_model": {
+      "status": "reported",
+      "value": "example in-vivo osteosarcoma model",
+      "note": "Synthetic example only; use the public source wording for a real binding."
+    },
+    "population_context": {
+      "status": "not-applicable",
+      "value": null,
+      "note": "Synthetic preclinical example with no human population context."
+    },
+    "mechanism": {
+      "status": "reported",
+      "value": "example bounded mechanism component",
+      "note": "Synthetic example only; do not infer mechanism metadata for a real binding."
+    }
+  },
   "relationship_to_hypothesis": "SUPPORTS",
   "hypothesis_components": [
     "example mechanism component"
