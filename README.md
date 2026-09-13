@@ -29,7 +29,8 @@ Transitions are evidence gates, not automatic claims of efficacy.
 
 ## Machine discovery
 
-- `repository-manifest.json` — repository identity and discovery contract
+- `manifest.json` — stable contract entry point for machines and autonomous agents; deterministically generated from `repository-manifest.json`
+- `repository-manifest.json` — canonical repository identity and discovery contract source; do not maintain `manifest.json` independently
 - `AGENTS.md` — instructions for AI/research agents
 - `schemas/therapeutic-hypothesis.schema.json` — hypothesis object schema
 - `schemas/evidence-binding.schema.json` — evidence binding schema
@@ -39,6 +40,8 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - `examples/evidence-bindings/` — copyable candidate evidence-binding examples
 - `docs/accessibility-projection.md` — accessibility projection contract and Easy Read boundary
 - `docs/publication-lifecycle.md` — fail-closed publication authority and safety rules
+
+Run `node scripts/render-machine-manifest.js --check` to verify that the stable `manifest.json` entry point still matches its canonical source.
 
 ## First publication cycle
 
