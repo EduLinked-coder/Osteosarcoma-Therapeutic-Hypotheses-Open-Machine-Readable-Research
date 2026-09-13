@@ -19,9 +19,10 @@ const clone = (value) => JSON.parse(JSON.stringify(value));
 
 const hypothesis = readJson('hypotheses/OS-TH-0001/hypothesis.json');
 const evidenceIds = [
-  ...(hypothesis.supporting_evidence || []),
-  ...((hypothesis.contradictory_evidence || {}).items || [])
-].map((item) => item.evidence_id).filter(Boolean);
+  ...(hypothesis.supporting_evidence || []).map((item) => item.evidence_id),
+  ...((hypothesis.contradictory_evidence || {}).items || []).map((item) => item.evidence_id),
+  ...(hypothesis.mechanism?.relationships || []).flatMap((relationship) => relationship.evidence_refs || [])
+].filter(Boolean);
 const evidenceBindings = [...new Set(evidenceIds)].sort().map((id) => readJson('evidence-bindings/' + id + '.json'));
 const hypothesisSchema = readJson('schemas/therapeutic-hypothesis.schema.json');
 const evidenceSchema = readJson('schemas/evidence-binding.schema.json');
@@ -99,6 +100,11 @@ mismatchedPmid.public_projection.evidence_bindings[0].pmid = '99999999';
 mismatchedPmid.handoff_digest = computeHandoffDigest(mismatchedPmid);
 expectBlocked(() => validateHandoff(mismatchedPmid), /public evidence identity validation failed.*pmid must exactly match/i);
 
+const missingMechanismBinding = fixture();
+missingMechanismBinding.public_projection.hypothesis.mechanism.relationships[0].evidence_refs = ['SOURCE-MISSING-MECHANISM'];
+missingMechanismBinding.handoff_digest = computeHandoffDigest(missingMechanismBinding);
+expectBlocked(() => validateHandoff(missingMechanismBinding), /hypothesis references evidence missing from handoff: SOURCE-MISSING-MECHANISM/i);
+
 const unsafeEvidenceId = clone(evidenceBindings[0]);
 unsafeEvidenceId.evidence_id = 'DOI-10.1000/example/../../outside';
 unsafeEvidenceId.doi = '10.1000/example/../../outside';
@@ -122,4 +128,4 @@ assert.match(validateEvidenceBindingIdentity(mismatchedDoiUrl, 'fixture').join('
 
 expectBlocked(() => stageHandoff(fixture()), /already exists/);
 
-console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety, canonical evidence-identity and overwrite gates fail closed.');
+console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety, canonical evidence-identity/reference and overwrite gates fail closed.');
