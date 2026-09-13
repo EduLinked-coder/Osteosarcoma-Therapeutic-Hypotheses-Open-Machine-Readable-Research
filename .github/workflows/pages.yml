@@ -36,6 +36,8 @@ jobs:
         run: node scripts/validate-lifecycle-bindings.js
       - name: Check living research activity
         run: node scripts/render-research-activity.js --check
+      - name: Validate canonical search contract
+        run: node scripts/validate-search.js
       - name: Validate evidence relationship consistency
         run: node scripts/validate-evidence-relationship-consistency.js
       - name: Validate canonical hypothesis schema
