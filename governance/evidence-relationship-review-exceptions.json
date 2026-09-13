@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "purpose": "Machine-readable register of evidence-relationship mismatches that are known, explicitly under human scientific review, and therefore must not be silently normalised by automation.",
+  "authority_boundary": "An exception records an unresolved scientific interpretation. It does not decide which relationship is correct, approve evidence, change publication state, or transfer clinical authority.",
+  "exceptions": [
+    {
+      "hypothesis_id": "OS-TH-0001",
+      "evidence_id": "PMID-42577778",
+      "hypothesis_relationship": "CONTEXTUALISES",
+      "binding_relationship": "LIMITS",
+      "status": "HUMAN_SCIENTIFIC_REVIEW_REQUIRED",
+      "review_issue": "https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/23",
+      "resolution_rule": "Remove this exception only after an attributable scientific decision updates the governed public representations consistently and preserves the decision rationale/provenance.",
+      "clinical_use": false
+    }
+  ]
+}
