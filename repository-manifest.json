@@ -11,6 +11,14 @@
     "source_routing_state": "DOMAIN_SOURCE_RESOLVABLE_THROUGH_AUTHORISED_ECOSYSTEM_ROUTING",
     "automation_readiness": "TARGET_HANDOFF_VALIDATION_AND_STAGING_IMPLEMENTED_END_TO_END_PUBLICATION_BLOCKED_UNTIL_ATTRIBUTABLE_SOURCE_ENVELOPE_EXISTS"
   },
+  "manifest_projection": {
+    "contract_entry_point": "manifest.json",
+    "canonical_source": "repository-manifest.json",
+    "generated_by": "scripts/render-machine-manifest.js",
+    "check_command": "node scripts/render-machine-manifest.js --check",
+    "manual_edit_allowed": false,
+    "rule": "manifest.json is a deterministic public discovery projection of repository-manifest.json and must not become a second independently maintained manifest."
+  },
   "canonical_object_locations": {
     "hypotheses": "hypotheses/{OS-TH-####}/hypothesis.json",
     "human_pages": "hypotheses/{OS-TH-####}/index.html",
@@ -50,7 +58,7 @@
     "ACCEPTED",
     "REJECTED"
   ],
-  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; CI verifies transaction gates, contribution governance, generated-output freshness, schemas and public research boundaries before deployment.",
+  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, contribution governance, generated-output freshness, schemas and public research boundaries before deployment.",
   "publication_status_semantics": {
     "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
@@ -93,6 +101,7 @@
   },
   "clinical_use": false,
   "machine_entry_points": [
+    "manifest.json",
     "repository-manifest.json",
     "indexes/hypotheses.json",
     "schemas/therapeutic-hypothesis.schema.json",
