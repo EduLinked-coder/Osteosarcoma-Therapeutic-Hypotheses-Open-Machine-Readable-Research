@@ -26,6 +26,8 @@ jobs:
         run: node scripts/test-publication-transaction.js
       - name: Validate governed research contributions
         run: node scripts/validate-contributions.js
+      - name: Test living evidence validator fail-closed cases
+        run: node scripts/test-evidence-events.js
       - name: Validate living evidence history
         run: node scripts/validate-evidence-events.js
       - name: Validate evidence relationship consistency
