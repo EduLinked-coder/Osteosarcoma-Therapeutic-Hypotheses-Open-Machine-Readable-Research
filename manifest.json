@@ -29,6 +29,8 @@
     "evidence_binding_schema": "schemas/evidence-binding.schema.json",
     "evidence_events": "evidence-events/{OS-EVENT-####}.json",
     "evidence_event_schema": "schemas/evidence-change-event.schema.json",
+    "evidence_event_index": "indexes/evidence-events.json",
+    "research_activity": "activity/",
     "living_evidence_lifecycle": "docs/living-evidence-lifecycle.md",
     "structured_metadata": "structured-data/hypotheses.jsonld",
     "structured_metadata_contract": "docs/structured-metadata.md",
@@ -75,7 +77,7 @@
     "SUPERSESSION_RECORDED",
     "WITHDRAWAL_RECORDED"
   ],
-  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; append-only evidence change history is checked by scripts/validate-evidence-events.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; deterministic Schema.org JSON-LD is rendered through scripts/render-structured-metadata.js; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, contribution governance, evidence-history integrity, generated-output freshness, structured metadata freshness, schemas and public research boundaries before deployment.",
+  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; append-only evidence change history is checked by scripts/validate-evidence-events.js; living-research activity is deterministically rendered through scripts/render-research-activity.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; deterministic Schema.org JSON-LD is rendered through scripts/render-structured-metadata.js; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, contribution governance, evidence-history integrity, research-activity freshness, generated-output freshness, structured metadata freshness, schemas and public research boundaries before deployment.",
   "publication_status_semantics": {
     "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
@@ -112,10 +114,22 @@
     "event_is_independent_scientific_authority": false,
     "event_may_reference_only_existing_public_evidence_bindings": true,
     "terminal_event_must_match_current_canonical_object": true,
+    "event_history_must_be_single_connected_chain": true,
+    "evidence_stage_preserved_in_history": true,
+    "ranking_status_and_score_preserved_in_history": true,
     "protected_lifecycle_change_requires_attributable_human_decision": true,
     "historical_event_rewrite_or_id_reuse_allowed": false,
     "publication_authority_transferred": false,
     "clinical_use_authority_transferred": false
+  },
+  "research_activity_boundary": {
+    "source_of_truth": "canonical hypothesis.json objects and append-only public evidence events",
+    "human_projection": "activity/",
+    "machine_projection": "indexes/evidence-events.json",
+    "absence_of_recorded_event_means_no_new_literature": false,
+    "scientific_record_created_by_projection": false,
+    "clinical_use_authority_transferred": false,
+    "publication_authority_transferred": false
   },
   "structured_metadata_boundary": {
     "source_of_truth": "canonical hypothesis.json objects and existing public evidence bindings",
@@ -141,6 +155,7 @@
     "manifest.json",
     "repository-manifest.json",
     "indexes/hypotheses.json",
+    "indexes/evidence-events.json",
     "structured-data/hypotheses.jsonld",
     "schemas/therapeutic-hypothesis.schema.json",
     "schemas/evidence-binding.schema.json",
@@ -149,6 +164,7 @@
     "scripts/publication-transaction.js",
     "scripts/validate-contributions.js",
     "scripts/validate-evidence-events.js",
+    "scripts/render-research-activity.js",
     "scripts/render-structured-metadata.js",
     "hypotheses/OS-TH-0001/hypothesis.json",
     "evidence-bindings/PMID-42574989.json",
@@ -163,6 +179,7 @@
     "index.html",
     "README.md",
     "search/",
+    "activity/",
     "docs/quickstart/",
     "evidence/",
     "evidence/index.html",
@@ -190,6 +207,14 @@
       "evidence/index.html",
       "indexes/hypotheses.json",
       "sitemap.xml"
+    ]
+  },
+  "research_activity_projection": {
+    "generated_by": "scripts/render-research-activity.js",
+    "check_command": "node scripts/render-research-activity.js --check",
+    "paths": [
+      "activity/index.html",
+      "indexes/evidence-events.json"
     ]
   },
   "structured_metadata_projection": {
