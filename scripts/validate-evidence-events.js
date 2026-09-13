@@ -71,7 +71,7 @@ for (const filename of eventFiles) {
 
   const before = event.hypothesis_state_before || {};
   const after = event.hypothesis_state_after || {};
-  const protectedFields = ['review_state', 'publication_class', 'supersession_status'];
+  const protectedFields = ['evidence_stage', 'review_state', 'publication_class', 'supersession_status'];
   const protectedChanged = protectedFields.some((field) => before[field] !== after[field]);
   if (protectedChanged && decision.status !== 'RECORDED_HUMAN_DECISION') {
     fail(event.event_id + ' changes a protected scientific/publication lifecycle state without a recorded human decision.');
@@ -106,10 +106,6 @@ for (const [hypothesisId, hypothesisEvents] of eventsByHypothesis.entries()) {
   if (terminals.length !== 1) fail(hypothesisId + ' evidence event history must have exactly one terminal event.');
   if (terminals.length !== 1) continue;
 
-  // A single root and terminal are not sufficient to prove a valid history: a
-  // disconnected cycle could otherwise coexist beside the apparent chain.
-  // Walk backwards from the terminal and require every event for the
-  // hypothesis to be reachable exactly once.
   const visited = new Set();
   let cursor = terminals[0];
   while (cursor) {
@@ -136,10 +132,12 @@ for (const [hypothesisId, hypothesisEvents] of eventsByHypothesis.entries()) {
   const expected = {
     canonical_object_sha256: digest,
     canonical_object_updated_at: canonical.provenance && canonical.provenance.updated_at,
+    evidence_stage: canonical.evidence_stage,
     review_state: canonical.review_state && canonical.review_state.status,
     publication_class: canonical.review_state && canonical.review_state.publication_class,
     uncertainty_level: canonical.uncertainty && canonical.uncertainty.level,
     ranking_status: canonical.ranking && canonical.ranking.status,
+    ranking_score: canonical.ranking && canonical.ranking.score,
     supersession_status: canonical.supersession && canonical.supersession.status
   };
   for (const [field, value] of Object.entries(expected)) {
