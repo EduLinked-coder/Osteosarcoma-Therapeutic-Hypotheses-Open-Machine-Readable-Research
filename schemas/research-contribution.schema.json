@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/schemas/research-contribution.schema.json",
+  "title": "Osteosarcoma Public Research Contribution",
+  "description": "Machine-readable proposal object for governed public research contributions. A contribution is not accepted evidence or a clinical recommendation merely because it exists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contribution_version",
+    "contribution_id",
+    "contribution_type",
+    "target_hypothesis_id",
+    "state",
+    "submitted_at",
+    "contributor_provenance",
+    "proposal",
+    "review",
+    "clinical_use"
+  ],
+  "properties": {
+    "contribution_version": {"const": "1.0.0"},
+    "contribution_id": {"type": "string", "pattern": "^OS-CONTRIB-[0-9]{4}$"},
+    "contribution_type": {
+      "enum": [
+        "NEW_EVIDENCE",
+        "CONTRADICTORY_EVIDENCE",
+        "FAILED_REPLICATION",
+        "NEW_HYPOTHESIS",
+        "MECHANISM_PROPOSAL",
+        "FALSIFICATION_EXPERIMENT",
+        "ERROR_REPORT",
+        "SUCCESSOR_HYPOTHESIS"
+      ]
+    },
+    "target_hypothesis_id": {"type": ["string", "null"], "pattern": "^OS-TH-[0-9]{4}$"},
+    "state": {
+      "enum": [
+        "SUBMITTED",
+        "SOURCE_VERIFIED",
+        "EVIDENCE_VALIDATED",
+        "SCIENTIFIC_REVIEW",
+        "ACCEPTED",
+        "REJECTED"
+      ]
+    },
+    "submitted_at": {"type": "string", "format": "date-time"},
+    "contributor_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["submitted_via", "contributor_reference"],
+      "properties": {
+        "submitted_via": {"enum": ["github-issue", "github-pull-request", "public-research-form", "other-public-path"]},
+        "contributor_reference": {"type": "string", "minLength": 3},
+        "submission_reference": {"type": ["string", "null"]}
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "source_refs", "relationship"],
+      "properties": {
+        "summary": {"type": "string", "minLength": 20},
+        "source_refs": {
+          "type": "array",
+          "items": {"type": "string", "format": "uri"}
+        },
+        "relationship": {
+          "enum": [
+            "SUPPORTS",
+            "CONTRADICTS",
+            "LIMITS",
+            "CONTEXTUALISES",
+            "FAILED_REPLICATION",
+            "SUCCESSOR_CONTEXT",
+            "NEW_RESEARCH_DIRECTION",
+            "ERROR_CORRECTION"
+          ]
+        },
+        "hypothesis_components": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 3}
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scientific_review_required", "decision_reference", "reviewed_at"],
+      "properties": {
+        "scientific_review_required": {"const": true},
+        "decision_reference": {"type": ["string", "null"]},
+        "reviewed_at": {"type": ["string", "null"], "format": "date-time"},
+        "review_note": {"type": "string"}
+      }
+    },
+    "example": {"type": "boolean"},
+    "acceptance_meaning": {
+      "const": "Contribution state records repository review only; it does not establish clinical benefit, treatment guidance or patient-specific applicability."
+    },
+    "clinical_use": {"const": false}
+  }
+}

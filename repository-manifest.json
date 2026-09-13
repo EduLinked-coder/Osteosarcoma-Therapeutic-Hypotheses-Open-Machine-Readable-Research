@@ -18,6 +18,11 @@
     "index": "indexes/hypotheses.json",
     "evidence_bindings": "evidence-bindings/{evidence_id}.json",
     "evidence_binding_schema": "schemas/evidence-binding.schema.json",
+    "search": "search/",
+    "contributions": "contributions/{OS-CONTRIB-####}.json",
+    "contribution_schema": "schemas/research-contribution.schema.json",
+    "contribution_examples": "examples/contributions/*.example.json",
+    "contribution_lifecycle": "docs/contribution-lifecycle.md",
     "quickstart": "docs/quickstart/",
     "quickstart_source": "docs/quickstart.md",
     "publication_lifecycle": "docs/publication-lifecycle.md",
@@ -26,6 +31,7 @@
     "evidence_human_page": "evidence/"
   },
   "identifier_convention": "OS-TH-####",
+  "contribution_identifier_convention": "OS-CONTRIB-####",
   "evidence_model": "Evidence bindings classify public sources as SUPPORTS, CONTRADICTS, LIMITS, CONTEXTUALISES, FAILED_REPLICATION or SUCCESSOR_CONTEXT and preserve uncertainty, maturity, acceptance state and provenance.",
   "lifecycle_model": [
     "PUBLIC_RESEARCH_CANDIDATE",
@@ -34,7 +40,15 @@
     "SUPERSEDED",
     "WITHDRAWN"
   ],
-  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; canonical hypothesis objects are then rendered through scripts/render-public-research.js and CI verifies transaction gates, generated-output freshness, schemas and public research boundaries before deployment.",
+  "contribution_lifecycle_model": [
+    "SUBMITTED",
+    "SOURCE_VERIFIED",
+    "EVIDENCE_VALIDATED",
+    "SCIENTIFIC_REVIEW",
+    "ACCEPTED",
+    "REJECTED"
+  ],
+  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; canonical hypothesis objects are rendered through scripts/render-public-research.js and CI verifies transaction gates, contribution governance, generated-output freshness, schemas and public research boundaries before deployment.",
   "publication_status_semantics": {
     "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
@@ -58,30 +72,42 @@
     "clinical_use_authority_transferred": false,
     "cross_repository_automation_ready": false
   },
+  "contribution_boundary": {
+    "contribution_is_accepted_evidence_by_default": false,
+    "scientific_review_required": true,
+    "final_state_requires_attributable_decision": true,
+    "clinical_use_authority_transferred": false,
+    "patient_or_private_material_allowed": false
+  },
   "clinical_use": false,
   "machine_entry_points": [
     "repository-manifest.json",
     "indexes/hypotheses.json",
     "schemas/therapeutic-hypothesis.schema.json",
     "schemas/evidence-binding.schema.json",
+    "schemas/research-contribution.schema.json",
     "scripts/publication-transaction.js",
+    "scripts/validate-contributions.js",
     "hypotheses/OS-TH-0001/hypothesis.json",
     "evidence-bindings/PMID-42574989.json",
     "evidence-bindings/PMID-42577778.json",
     "examples/evidence-bindings/supports.example.json",
     "examples/evidence-bindings/contradicts.example.json",
-    "examples/evidence-bindings/failed-replication.example.json"
+    "examples/evidence-bindings/failed-replication.example.json",
+    "examples/contributions/submitted.example.json"
   ],
   "licensing": "Not yet established in repository metadata.",
   "human_entry_points": [
     "index.html",
     "README.md",
+    "search/",
     "docs/quickstart/",
     "evidence/",
     "evidence/index.html",
     "docs/quickstart/index.html",
     "docs/quickstart.md",
     "docs/publication-lifecycle.md",
+    "docs/contribution-lifecycle.md",
     ".github/ISSUE_TEMPLATE/new-evidence.md",
     ".github/ISSUE_TEMPLATE/contradictory-evidence.md",
     ".github/ISSUE_TEMPLATE/failed-replication.md",
