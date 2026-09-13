@@ -126,6 +126,19 @@ try {
   writeJson('evidence-events/OS-EVENT-0001.json', brokenChain);
   expectFail('missing previous event', 'references missing previous event OS-EVENT-9999');
 
+  writeJson('evidence-events/OS-EVENT-0001.json', validEvent);
+  const cycleEvent2 = JSON.parse(JSON.stringify(validEvent));
+  cycleEvent2.event_id = 'OS-EVENT-0002';
+  cycleEvent2.previous_event_id = 'OS-EVENT-0003';
+  cycleEvent2.change_summary = 'Synthetic disconnected-cycle fixture event two.';
+  const cycleEvent3 = JSON.parse(JSON.stringify(validEvent));
+  cycleEvent3.event_id = 'OS-EVENT-0003';
+  cycleEvent3.previous_event_id = 'OS-EVENT-0002';
+  cycleEvent3.change_summary = 'Synthetic disconnected-cycle fixture event three.';
+  writeJson('evidence-events/OS-EVENT-0002.json', cycleEvent2);
+  writeJson('evidence-events/OS-EVENT-0003.json', cycleEvent3);
+  expectFail('disconnected cyclic history', 'contains disconnected or cyclic events outside the terminal chain');
+
   console.log('Living evidence validator fail-closed tests passed.');
 } finally {
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
