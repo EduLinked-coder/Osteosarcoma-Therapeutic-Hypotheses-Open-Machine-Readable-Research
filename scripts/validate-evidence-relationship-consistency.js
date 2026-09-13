@@ -19,6 +19,19 @@ const relationshipMap = {
   neutral: 'NEUTRAL'
 };
 
+const bindingSchema = readJson('schemas/evidence-binding.schema.json');
+const hypothesisSchema = readJson('schemas/therapeutic-hypothesis.schema.json');
+const contributionSchema = readJson('schemas/research-contribution.schema.json');
+const bindingRelationships = new Set(bindingSchema.properties?.relationship_to_hypothesis?.enum || []);
+const canonicalRelationships = new Set(hypothesisSchema.$defs?.evidenceBinding?.properties?.relationship?.enum || []);
+const contributionRelationships = new Set(contributionSchema.properties?.proposal?.properties?.relationship?.enum || []);
+
+for (const [canonical, governed] of Object.entries(relationshipMap)) {
+  if (!canonicalRelationships.has(canonical)) fail('Canonical hypothesis schema is missing relationship ' + canonical + '.');
+  if (!bindingRelationships.has(governed)) fail('Governed evidence-binding schema is missing relationship ' + governed + '.');
+  if (!contributionRelationships.has(governed)) fail('Research contribution schema is missing relationship ' + governed + '.');
+}
+
 const index = readJson('indexes/hypotheses.json');
 const reviewRegisterPath = 'governance/evidence-relationship-review-exceptions.json';
 if (!exists(reviewRegisterPath)) fail('Missing protected review register: ' + reviewRegisterPath);
