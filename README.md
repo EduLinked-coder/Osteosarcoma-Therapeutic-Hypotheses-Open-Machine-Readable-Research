@@ -26,6 +26,7 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - Use `hypotheses/{OS-TH-####}/easy-read/` for the generated accessibility projection of the same canonical hypothesis object; see `docs/accessibility-projection.md` for its governance and limitations.
 - Use `.github/ISSUE_TEMPLATE/` to propose evidence, contradictions, failed replications, successor hypotheses or safety/privacy review.
 - Copy `examples/evidence-bindings/*.example.json` when creating governed evidence bindings.
+- Use `evidence-events/` for append-only records of material evidence changes; see `docs/living-evidence-lifecycle.md` before recording a lifecycle event.
 
 ## Machine discovery
 
@@ -33,12 +34,21 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - `AGENTS.md` — instructions for AI/research agents
 - `schemas/therapeutic-hypothesis.schema.json` — hypothesis object schema
 - `schemas/evidence-binding.schema.json` — evidence binding schema
+- `schemas/evidence-change-event.schema.json` — append-only evidence change event schema
 - `hypotheses/` — durable hypothesis objects
 - `indexes/hypotheses.json` — machine-readable discovery index
 - `evidence-bindings/` — public evidence bindings used by hypothesis objects
+- `evidence-events/` — append-only public evidence change history
 - `examples/evidence-bindings/` — copyable candidate evidence-binding examples
+- `docs/living-evidence-lifecycle.md` — evidence-change, revision, supersession and withdrawal history contract
 - `docs/accessibility-projection.md` — accessibility projection contract and Easy Read boundary
 - `docs/publication-lifecycle.md` — fail-closed publication authority and safety rules
+
+## Living evidence
+
+New supporting, contradictory, limiting, replication or retraction information must not silently overwrite the history of a hypothesis. Material evidence changes are recorded as stable `OS-EVENT-####` objects that bind existing public evidence IDs to the hypothesis state before and after the change.
+
+The canonical `hypothesis.json` remains the current research projection. The event ledger preserves how ranking, uncertainty, review requirements, supersession or withdrawal decisions evolved. Protected scientific/publication lifecycle changes require an attributable human scientific decision; an event never transfers publication authority or clinical-use authority.
 
 ## First publication cycle
 
