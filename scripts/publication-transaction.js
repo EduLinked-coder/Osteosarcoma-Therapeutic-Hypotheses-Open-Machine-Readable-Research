@@ -118,10 +118,14 @@ function validateHandoff(envelope) {
     requireGate(isPublicHttpUrl(binding.canonical_source_url), binding.evidence_id + ' canonical source must be public http(s)');
   }
 
+  const mechanismEvidenceRefs = (hypothesis.mechanism?.relationships || [])
+    .flatMap((relationship) => relationship.evidence_refs || [])
+    .filter(Boolean);
   const referencedIds = new Set([
-    ...(hypothesis.supporting_evidence || []),
-    ...((hypothesis.contradictory_evidence || {}).items || [])
-  ].map((item) => item.evidence_id).filter(Boolean));
+    ...(hypothesis.supporting_evidence || []).map((item) => item.evidence_id),
+    ...((hypothesis.contradictory_evidence || {}).items || []).map((item) => item.evidence_id),
+    ...mechanismEvidenceRefs
+  ].filter(Boolean));
   for (const evidenceId of referencedIds) requireGate(bindingIds.has(evidenceId), 'hypothesis references evidence missing from handoff: ' + evidenceId);
   for (const evidenceId of bindingIds) requireGate(referencedIds.has(evidenceId), 'handoff contains unreferenced evidence binding: ' + evidenceId);
 
