@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { isPathSafeEvidenceId, validateEvidenceBindingIdentity } = require('./lib/evidence-binding-integrity');
 
 const root = process.cwd();
 const fail = (message) => {
@@ -88,6 +89,8 @@ for (const file of evidenceFiles) {
   const relativePath = 'evidence-bindings/' + file;
   const binding = readJson(relativePath);
   validateNode(evidenceSchema, evidenceSchema, binding, relativePath);
+  for (const identityError of validateEvidenceBindingIdentity(binding, relativePath)) fail(identityError);
+  if (!isPathSafeEvidenceId(binding.evidence_id)) fail(relativePath + ' evidence_id is not safe for a single canonical evidence-binding path segment.');
   if (file !== binding.evidence_id + '.json') fail(relativePath + ' filename must match evidence_id.');
   if (binding.clinical_use !== false) fail(relativePath + ' must explicitly set clinical_use:false.');
   if (binding.acceptance_state && binding.acceptance_state.status !== 'candidate-public-evidence') fail(relativePath + ' must remain candidate evidence until reviewed.');
@@ -118,6 +121,10 @@ for (const entry of index.hypotheses) {
 
   const evidenceItems = [...(h.supporting_evidence || []), ...((h.contradictory_evidence || {}).items || [])];
   for (const evidence of evidenceItems) {
+    if (!isPathSafeEvidenceId(evidence.evidence_id)) {
+      fail(entry.hypothesis_id + ' references an unsafe evidence_id path segment: ' + evidence.evidence_id);
+      continue;
+    }
     const bindingPath = 'evidence-bindings/' + evidence.evidence_id + '.json';
     if (!fs.existsSync(path.join(root, bindingPath))) fail(entry.hypothesis_id + ' missing evidence binding: ' + bindingPath);
     const binding = readJson(bindingPath);
