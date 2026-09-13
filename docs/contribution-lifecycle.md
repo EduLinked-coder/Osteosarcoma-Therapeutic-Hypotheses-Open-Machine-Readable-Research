@@ -12,6 +12,25 @@ Use `schemas/research-contribution.schema.json` for structured public contributi
 
 Template examples belong under `examples/contributions/` and must remain in `SUBMITTED` state.
 
+## Public issue intake
+
+The GitHub issue intake is a human-facing projection of the governed contribution types. Each issue remains a proposal only and does not bypass the machine-readable contribution lifecycle.
+
+| Contribution type | Public intake template |
+| --- | --- |
+| `NEW_EVIDENCE` | `.github/ISSUE_TEMPLATE/new-evidence.md` |
+| `CONTRADICTORY_EVIDENCE` | `.github/ISSUE_TEMPLATE/contradictory-evidence.md` |
+| `FAILED_REPLICATION` | `.github/ISSUE_TEMPLATE/failed-replication.md` |
+| `NEW_HYPOTHESIS` | `.github/ISSUE_TEMPLATE/new-hypothesis.md` |
+| `MECHANISM_PROPOSAL` | `.github/ISSUE_TEMPLATE/mechanism-proposal.md` |
+| `FALSIFICATION_EXPERIMENT` | `.github/ISSUE_TEMPLATE/falsification-experiment.md` |
+| `ERROR_REPORT` | `.github/ISSUE_TEMPLATE/error-report.md` |
+| `SUCCESSOR_HYPOTHESIS` | `.github/ISSUE_TEMPLATE/successor-hypothesis.md` |
+
+`node scripts/validate-contribution-intake.js` verifies that every `contribution_type` in the canonical schema retains a governed public intake template with explicit boundary language. A future schema type therefore fails closed until an intake path is deliberately bound.
+
+Safety/privacy review remains available through `.github/ISSUE_TEMPLATE/safety-privacy-review.md`; it is a governance escalation route rather than a research contribution type.
+
 ## States
 
 The governed state sequence is:
@@ -81,6 +100,8 @@ Run:
 
 ```sh
 node scripts/validate-contributions.js
+node scripts/test-contribution-intake.js
+node scripts/validate-contribution-intake.js
 ```
 
-CI runs this alongside the existing publication-transaction, schema, projection-freshness and public-boundary checks.
+CI runs these alongside the existing publication-transaction, schema, projection-freshness and public-boundary checks.
