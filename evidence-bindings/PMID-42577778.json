@@ -1,5 +1,5 @@
 {
-  "evidence_binding_version": "1.0.0",
+  "evidence_binding_version": "1.1.0",
   "evidence_id": "PMID-42577778",
   "source_type": "pubmed",
   "pmid": "42577778",
@@ -9,6 +9,23 @@
   "evidence_type": "narrative-review",
   "evidence_maturity": "contextual",
   "biological_model": "literature review",
+  "evidence_context": {
+    "experimental_model": {
+      "status": "not-applicable",
+      "value": null,
+      "note": "This binding represents a narrative review rather than a single experimental model."
+    },
+    "population_context": {
+      "status": "not-yet-assessed",
+      "value": null,
+      "note": "Population or clinical-context detail has not yet been systematically extracted for this public binding."
+    },
+    "mechanism": {
+      "status": "not-yet-assessed",
+      "value": null,
+      "note": "Mechanistic detail remains represented conservatively in the existing finding and hypothesis-component fields pending systematic extraction."
+    }
+  },
   "relationship_to_hypothesis": "LIMITS",
   "hypothesis_components": [
     "bone/pulmonary immune niche",
