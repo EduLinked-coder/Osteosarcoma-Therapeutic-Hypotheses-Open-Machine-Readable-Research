@@ -104,6 +104,22 @@ unsafeEvidenceId.evidence_id = 'DOI-10.1000/example/../../outside';
 unsafeEvidenceId.doi = '10.1000/example/../../outside';
 assert.match(validateEvidenceBindingIdentity(unsafeEvidenceId, 'fixture').join(' | '), /path-safe stable identifier/i);
 
+const validDoi = clone(evidenceBindings[0]);
+validDoi.evidence_id = 'DOI-' + encodeURIComponent('10.1000/example*part');
+validDoi.source_type = 'doi';
+validDoi.doi = '10.1000/example*part';
+validDoi.canonical_source_url = 'https://doi.org/10.1000/example*part';
+delete validDoi.pmid;
+assert.deepEqual(validateEvidenceBindingIdentity(validDoi, 'fixture'), []);
+
+const nonCanonicalDoi = clone(validDoi);
+nonCanonicalDoi.evidence_id = 'DOI-10.1000%2fexample*part';
+assert.match(validateEvidenceBindingIdentity(nonCanonicalDoi, 'fixture').join(' | '), /encodeURIComponent\(lowercase doi\) exactly/i);
+
+const mismatchedDoiUrl = clone(validDoi);
+mismatchedDoiUrl.canonical_source_url = 'https://doi.org/10.1000/different';
+assert.match(validateEvidenceBindingIdentity(mismatchedDoiUrl, 'fixture').join(' | '), /canonical_source_url must resolve the same DOI/i);
+
 expectBlocked(() => stageHandoff(fixture()), /already exists/);
 
-console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety, evidence-identity and overwrite gates fail closed.');
+console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety, canonical evidence-identity and overwrite gates fail closed.');
