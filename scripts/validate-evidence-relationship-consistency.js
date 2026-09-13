@@ -15,7 +15,8 @@ const relationshipMap = {
   supports: 'SUPPORTS',
   contradicts: 'CONTRADICTS',
   contextualises: 'CONTEXTUALISES',
-  limits: 'LIMITS'
+  limits: 'LIMITS',
+  neutral: 'NEUTRAL'
 };
 
 const index = readJson('indexes/hypotheses.json');
