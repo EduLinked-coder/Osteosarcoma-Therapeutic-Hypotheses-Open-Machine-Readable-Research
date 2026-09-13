@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Test fail-closed publication transaction
+        run: node scripts/test-publication-transaction.js
       - name: Validate canonical hypothesis schema
         run: node scripts/validate-schema.js
       - name: Check generated public projections

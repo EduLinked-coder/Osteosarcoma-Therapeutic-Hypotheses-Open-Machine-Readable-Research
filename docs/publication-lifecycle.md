@@ -16,7 +16,7 @@ Upstream research operations may produce candidate evidence packets or exports w
 
 The public repository must not contain private repository topology or private source material solely to support automation. Private/source-owned routing remains in authorised internal systems. Only a deliberately public-safe release projection may cross into this repository.
 
-If the attributable source owner, disclosure authority or public-safe handoff for a candidate is unresolved, automated private-to-public publication is blocked. Do not guess the source owner, copy private material for convenience or infer publication authority from technical success.
+Authorised ecosystem routing may resolve a source-owned osteosarcoma research system without making that private routing part of this public repository. For each public candidate, object-level lineage, disclosure authority and a public-safe release handoff must still be established. If any of those are unresolved, automated private-to-public publication is blocked. Do not copy private material for convenience or infer publication authority from domain ownership or technical success.
 
 ## Publication transaction
 
@@ -31,6 +31,26 @@ A publication transaction moves material from candidate research intelligence in
 7. Canonical JSON is updated first.
 8. Generated projections are rendered from canonical JSON using `scripts/render-public-research.js`.
 9. CI validates schema, generated-output freshness and public research boundaries.
+
+## Executable candidate handoff staging
+
+The target-side transaction entry point is `scripts/publication-transaction.js`. It consumes only a deliberately public-safe candidate envelope using contract `OSTEOSARCOMA-PUBLIC-PROJECTION-HANDOFF-001`; it does not discover private repositories, read credentials, approve science, merge a pull request or confer publication authority.
+
+Validate an envelope without changing repository files:
+
+```sh
+node scripts/publication-transaction.js --check path/to/public-safe-handoff.json
+```
+
+Stage a **new** candidate into a working branch:
+
+```sh
+node scripts/publication-transaction.js --stage path/to/public-safe-handoff.json
+```
+
+The transaction fails closed unless the handoff digest is intact, the target schemas match, source revision and report digest are attributable, disclosure authority is explicitly referenced, scientific review remains required, `clinical_use` remains false, uncertainty and contradictory-evidence assessment survive, evidence is public HTTP(S) candidate evidence bound to the same hypothesis, and every embedded object validates against the repository schemas.
+
+The handoff envelope itself is not persisted into this public repository. Private/source routing remains source-owned. Existing hypothesis IDs cannot be autonomously overwritten by this transaction; revisions, supersession and replacement remain separate governed operations. After staging a new candidate, the script reuses the existing renderer and validators before reporting success. A Git branch or pull request must still be created through the normal bounded review path, and merge remains outside autonomous authority.
 
 ## What agents may publish
 
