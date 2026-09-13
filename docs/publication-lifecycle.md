@@ -32,6 +32,26 @@ A publication transaction moves material from candidate research intelligence in
 8. Generated projections are rendered from canonical JSON using `scripts/render-public-research.js`.
 9. CI validates schema, generated-output freshness and public research boundaries.
 
+## Executable candidate handoff staging
+
+The target-side transaction entry point is `scripts/publication-transaction.js`. It consumes only a deliberately public-safe candidate envelope using contract `OSTEOSARCOMA-PUBLIC-PROJECTION-HANDOFF-001`; it does not discover private repositories, read credentials, approve science, merge a pull request or confer publication authority.
+
+Validate an envelope without changing repository files:
+
+```sh
+node scripts/publication-transaction.js --check path/to/public-safe-handoff.json
+```
+
+Stage a **new** candidate into a working branch:
+
+```sh
+node scripts/publication-transaction.js --stage path/to/public-safe-handoff.json
+```
+
+The transaction fails closed unless the handoff digest is intact, the target schemas match, source revision and report digest are attributable, disclosure authority is explicitly referenced, scientific review remains required, `clinical_use` remains false, uncertainty and contradictory-evidence assessment survive, evidence is public HTTP(S) candidate evidence bound to the same hypothesis, and every embedded object validates against the repository schemas.
+
+The handoff envelope itself is not persisted into this public repository. Private/source routing remains source-owned. Existing hypothesis IDs cannot be autonomously overwritten by this transaction; revisions, supersession and replacement remain separate governed operations. After staging a new candidate, the script reuses the existing renderer and validators before reporting success. A Git branch or pull request must still be created through the normal bounded review path, and merge remains outside autonomous authority.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:
