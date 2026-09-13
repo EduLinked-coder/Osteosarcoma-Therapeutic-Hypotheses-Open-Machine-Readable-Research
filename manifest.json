@@ -1,0 +1,151 @@
+{
+  "manifest_version": "1.0.0",
+  "repository": "EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research",
+  "purpose": "Public, machine-readable and human-readable discovery layer for governed osteosarcoma therapeutic research hypotheses.",
+  "public_boundary": "This repository publishes research hypotheses only. It must not publish private clinical context, patient information, credentials, restricted evidence, medical advice or treatment recommendations.",
+  "ecosystem_integration": {
+    "role": "PUBLIC_RESEARCH_PROJECTION_AND_DISCOVERY_CONSUMER",
+    "discovery_rule": "Authorised agents must resolve the canonical EduLinked repository ecosystem registry and existing Universal Research Engine federation capability before creating new research, evidence, provenance or publication machinery.",
+    "private_routing_rule": "Private repository topology and restricted source content are intentionally not embedded in this public manifest. Resolve private/source-owned routing only through authorised ecosystem systems.",
+    "authority_rule": "Candidate evidence generation, export success, validation success and generated projections do not transfer scientific-review, clinical-use or publication authority.",
+    "source_routing_state": "DOMAIN_SOURCE_RESOLVABLE_THROUGH_AUTHORISED_ECOSYSTEM_ROUTING",
+    "automation_readiness": "TARGET_HANDOFF_VALIDATION_AND_STAGING_IMPLEMENTED_END_TO_END_PUBLICATION_BLOCKED_UNTIL_ATTRIBUTABLE_SOURCE_ENVELOPE_EXISTS"
+  },
+  "manifest_projection": {
+    "contract_entry_point": "manifest.json",
+    "canonical_source": "repository-manifest.json",
+    "generated_by": "scripts/render-machine-manifest.js",
+    "check_command": "node scripts/render-machine-manifest.js --check",
+    "manual_edit_allowed": false,
+    "rule": "manifest.json is a deterministic public discovery projection of repository-manifest.json and must not become a second independently maintained manifest."
+  },
+  "canonical_object_locations": {
+    "hypotheses": "hypotheses/{OS-TH-####}/hypothesis.json",
+    "human_pages": "hypotheses/{OS-TH-####}/index.html",
+    "easy_read_pages": "hypotheses/{OS-TH-####}/easy-read/index.html",
+    "schema": "schemas/therapeutic-hypothesis.schema.json",
+    "index": "indexes/hypotheses.json",
+    "evidence_bindings": "evidence-bindings/{evidence_id}.json",
+    "evidence_binding_schema": "schemas/evidence-binding.schema.json",
+    "search": "search/",
+    "contributions": "contributions/{OS-CONTRIB-####}.json",
+    "contribution_schema": "schemas/research-contribution.schema.json",
+    "contribution_examples": "examples/contributions/*.example.json",
+    "contribution_lifecycle": "docs/contribution-lifecycle.md",
+    "accessibility_projection": "docs/accessibility-projection.md",
+    "quickstart": "docs/quickstart/",
+    "quickstart_source": "docs/quickstart.md",
+    "publication_lifecycle": "docs/publication-lifecycle.md",
+    "publication_transaction": "scripts/publication-transaction.js",
+    "evidence_binding_examples": "examples/evidence-bindings/*.example.json",
+    "evidence_human_page": "evidence/"
+  },
+  "identifier_convention": "OS-TH-####",
+  "contribution_identifier_convention": "OS-CONTRIB-####",
+  "evidence_model": "Evidence bindings classify public sources as SUPPORTS, CONTRADICTS, LIMITS, CONTEXTUALISES, FAILED_REPLICATION or SUCCESSOR_CONTEXT and preserve uncertainty, maturity, acceptance state and provenance.",
+  "lifecycle_model": [
+    "PUBLIC_RESEARCH_CANDIDATE",
+    "SCIENTIFIC_REVIEW",
+    "REVIEWED_PUBLIC_HYPOTHESIS",
+    "SUPERSEDED",
+    "WITHDRAWN"
+  ],
+  "contribution_lifecycle_model": [
+    "SUBMITTED",
+    "SOURCE_VERIFIED",
+    "EVIDENCE_VALIDATED",
+    "SCIENTIFIC_REVIEW",
+    "ACCEPTED",
+    "REJECTED"
+  ],
+  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, contribution governance, generated-output freshness, schemas and public research boundaries before deployment.",
+  "publication_status_semantics": {
+    "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
+    "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
+    "superseded": "Retained historical object replaced by a successor interpretation.",
+    "withdrawn": "Retained historical object no longer appropriate for active publication."
+  },
+  "publication_transaction_boundary": {
+    "candidate_handoff_contract_id": "OSTEOSARCOMA-PUBLIC-PROJECTION-HANDOFF-001",
+    "target_staging_runtime_implemented": true,
+    "requires_public_or_release_authorised_source": true,
+    "requires_attributable_object_lineage": true,
+    "requires_disclosure_authority": true,
+    "requires_public_evidence_binding": true,
+    "requires_uncertainty_and_contradiction_preservation": true,
+    "requires_public_safety_gate": true,
+    "requires_handoff_digest_integrity": true,
+    "private_source_copy_allowed": false,
+    "source_owner_inference_allowed": false,
+    "autonomous_existing_hypothesis_overwrite_allowed": false,
+    "scientific_review_authority_transferred": false,
+    "clinical_use_authority_transferred": false,
+    "cross_repository_automation_ready": false
+  },
+  "contribution_boundary": {
+    "contribution_is_accepted_evidence_by_default": false,
+    "scientific_review_required": true,
+    "final_state_requires_attributable_decision": true,
+    "clinical_use_authority_transferred": false,
+    "patient_or_private_material_allowed": false
+  },
+  "accessibility_projection_boundary": {
+    "source_of_truth": "canonical hypothesis.json object",
+    "separate_scientific_record_allowed": false,
+    "scientific_claims_may_be_added_by_projection": false,
+    "uncertainty_must_be_preserved": true,
+    "contradictory_evidence_state_must_be_preserved": true,
+    "review_state_must_be_preserved": true,
+    "clinical_use_boundary_must_be_preserved": true,
+    "independent_easy_read_certification_claimed": false
+  },
+  "clinical_use": false,
+  "machine_entry_points": [
+    "manifest.json",
+    "repository-manifest.json",
+    "indexes/hypotheses.json",
+    "schemas/therapeutic-hypothesis.schema.json",
+    "schemas/evidence-binding.schema.json",
+    "schemas/research-contribution.schema.json",
+    "scripts/publication-transaction.js",
+    "scripts/validate-contributions.js",
+    "hypotheses/OS-TH-0001/hypothesis.json",
+    "evidence-bindings/PMID-42574989.json",
+    "evidence-bindings/PMID-42577778.json",
+    "examples/evidence-bindings/supports.example.json",
+    "examples/evidence-bindings/contradicts.example.json",
+    "examples/evidence-bindings/failed-replication.example.json",
+    "examples/contributions/submitted.example.json"
+  ],
+  "licensing": "Not yet established in repository metadata.",
+  "human_entry_points": [
+    "index.html",
+    "README.md",
+    "search/",
+    "docs/quickstart/",
+    "evidence/",
+    "evidence/index.html",
+    "hypotheses/{OS-TH-####}/easy-read/",
+    "docs/accessibility-projection.md",
+    "docs/quickstart/index.html",
+    "docs/quickstart.md",
+    "docs/publication-lifecycle.md",
+    "docs/contribution-lifecycle.md",
+    ".github/ISSUE_TEMPLATE/new-evidence.md",
+    ".github/ISSUE_TEMPLATE/contradictory-evidence.md",
+    ".github/ISSUE_TEMPLATE/failed-replication.md",
+    ".github/ISSUE_TEMPLATE/safety-privacy-review.md"
+  ],
+  "generated_outputs": {
+    "generated_by": "scripts/render-public-research.js",
+    "check_command": "node scripts/render-public-research.js --check",
+    "paths": [
+      "index.html",
+      "hypotheses/{OS-TH-####}/index.html",
+      "hypotheses/{OS-TH-####}/easy-read/index.html",
+      "evidence/index.html",
+      "indexes/hypotheses.json",
+      "sitemap.xml"
+    ]
+  }
+}
