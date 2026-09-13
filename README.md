@@ -22,6 +22,7 @@ Transitions are evidence gates, not automatic claims of efficacy.
 
 - Start with `docs/quickstart.md` for the human and machine entry points.
 - Browse current public hypotheses from the GitHub Pages site or `indexes/hypotheses.json`.
+- Use `search/` to search and filter the portfolio by canonical-object fields such as mechanism/target text, evidence stage, publication/review state, uncertainty, novelty and ranking state.
 - Use `.github/ISSUE_TEMPLATE/` to propose evidence, contradictions, failed replications, successor hypotheses or safety/privacy review.
 - Copy `examples/evidence-bindings/*.example.json` when creating governed evidence bindings.
 
