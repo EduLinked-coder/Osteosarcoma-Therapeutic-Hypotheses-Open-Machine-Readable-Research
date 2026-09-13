@@ -28,6 +28,6 @@
     "clinical_use": {"const":false}
   },
   "$defs": {
-    "evidenceBinding": {"type":"object","additionalProperties":false,"required":["evidence_id","citation","evidence_type","relationship","finding","source_url"],"properties":{"evidence_id":{"type":"string","pattern":"^(PMID-[0-9]+|DOI-[A-Za-z0-9._~%()!'-]+|SOURCE-[A-Z0-9-]+)$"},"citation":{"type":"string"},"pmid":{"type":"string","pattern":"^[0-9]+$"},"doi":{"type":"string"},"evidence_type":{"enum":["computational","in-vitro","in-vivo","animal-model","patient-derived-model","observational-human","clinical-trial","systematic-review","narrative-review","multi-omics","other"]},"relationship":{"enum":["supports","contradicts","contextualises","limits"]},"finding":{"type":"string","minLength":15},"source_url":{"type":"string","format":"uri"}}}
+    "evidenceBinding": {"type":"object","additionalProperties":false,"required":["evidence_id","citation","evidence_type","relationship","finding","source_url"],"properties":{"evidence_id":{"type":"string","pattern":"^(PMID-[0-9]+|DOI-[A-Za-z0-9._~%()!*'-]+|SOURCE-[A-Z0-9-]+)$"},"citation":{"type":"string"},"pmid":{"type":"string","pattern":"^[0-9]+$"},"doi":{"type":"string"},"evidence_type":{"enum":["computational","in-vitro","in-vivo","animal-model","patient-derived-model","observational-human","clinical-trial","systematic-review","narrative-review","multi-omics","other"]},"relationship":{"enum":["supports","contradicts","contextualises","limits"]},"finding":{"type":"string","minLength":15},"source_url":{"type":"string","format":"uri"}}}
   }
 }
