@@ -1,0 +1,86 @@
+# Governed Research Contribution Lifecycle
+
+This repository accepts **research proposals for review**, not automatically accepted evidence or clinical claims.
+
+A GitHub issue, pull request or machine-readable contribution object may preserve a proposal and its provenance. Existence of that proposal does not make it scientifically accepted, publication-authorised or clinically actionable.
+
+## Machine-readable contribution object
+
+Use `schemas/research-contribution.schema.json` for structured public contribution proposals. Live contribution objects, when used, belong under:
+
+`contributions/OS-CONTRIB-####.json`
+
+Template examples belong under `examples/contributions/` and must remain in `SUBMITTED` state.
+
+## States
+
+The governed state sequence is:
+
+`SUBMITTED -> SOURCE_VERIFIED -> EVIDENCE_VALIDATED -> SCIENTIFIC_REVIEW -> ACCEPTED`
+
+or, at an appropriate review gate:
+
+`SUBMITTED | SOURCE_VERIFIED | EVIDENCE_VALIDATED | SCIENTIFIC_REVIEW -> REJECTED`
+
+### `SUBMITTED`
+
+A proposal has been received. It has not yet been source-verified or scientifically accepted.
+
+### `SOURCE_VERIFIED`
+
+The cited public source and durable identifier/URL have been checked. This does **not** mean the source supports the contributor's interpretation.
+
+### `EVIDENCE_VALIDATED`
+
+The evidence relationship and machine-readable fields have passed repository validation. Validation does **not** confer scientific acceptance.
+
+### `SCIENTIFIC_REVIEW`
+
+A human scientific review decision is required. Machines may prepare evidence and comparisons but may not manufacture the decision.
+
+### `ACCEPTED`
+
+A review decision has accepted the contribution for governed incorporation into repository research state. The accepted change must still be applied through the canonical hypothesis/evidence objects and normal pull-request validation path. `ACCEPTED` does not mean clinically validated, medically recommended or expected to benefit a patient.
+
+### `REJECTED`
+
+A review decision has declined the proposed contribution. Preserve the proposal, reason and decision provenance where publication/privacy rules permit; do not silently erase contradictory or unsuccessful contributions merely because they were rejected.
+
+## Required boundaries
+
+Every public contribution object must:
+
+- preserve a stable contribution identifier;
+- preserve contributor provenance without requiring private contact data;
+- keep `clinical_use:false`;
+- retain `scientific_review_required:true`;
+- use public HTTP(S) source references where source references are supplied;
+- avoid patient information, private clinical context, credentials, secrets and restricted research;
+- require an attributable `decision_reference` and `reviewed_at` timestamp for `ACCEPTED` or `REJECTED` state.
+
+The contribution validator also fails closed on common prohibited public fields and duplicate contribution identifiers.
+
+## Contribution type is not acceptance
+
+Supported proposal types include:
+
+- new evidence;
+- contradictory evidence;
+- failed replication;
+- new hypothesis;
+- mechanism proposal;
+- falsification experiment;
+- error report;
+- successor hypothesis.
+
+A contribution must not bypass the canonical evidence-binding schema, hypothesis schema, publication transaction, privacy boundary or scientific-review authority simply because it arrived through a trusted contributor or automation.
+
+## Validation
+
+Run:
+
+```sh
+node scripts/validate-contributions.js
+```
+
+CI runs this alongside the existing publication-transaction, schema, projection-freshness and public-boundary checks.
