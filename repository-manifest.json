@@ -30,6 +30,8 @@
     "evidence_events": "evidence-events/{OS-EVENT-####}.json",
     "evidence_event_schema": "schemas/evidence-change-event.schema.json",
     "living_evidence_lifecycle": "docs/living-evidence-lifecycle.md",
+    "structured_metadata": "structured-data/hypotheses.jsonld",
+    "structured_metadata_contract": "docs/structured-metadata.md",
     "search": "search/",
     "contributions": "contributions/{OS-CONTRIB-####}.json",
     "contribution_schema": "schemas/research-contribution.schema.json",
@@ -73,7 +75,7 @@
     "SUPERSESSION_RECORDED",
     "WITHDRAWAL_RECORDED"
   ],
-  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; append-only evidence change history is checked by scripts/validate-evidence-events.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, contribution governance, evidence-history integrity, generated-output freshness, schemas and public research boundaries before deployment.",
+  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; append-only evidence change history is checked by scripts/validate-evidence-events.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; deterministic Schema.org JSON-LD is rendered through scripts/render-structured-metadata.js; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, contribution governance, evidence-history integrity, generated-output freshness, structured metadata freshness, schemas and public research boundaries before deployment.",
   "publication_status_semantics": {
     "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
@@ -115,6 +117,15 @@
     "publication_authority_transferred": false,
     "clinical_use_authority_transferred": false
   },
+  "structured_metadata_boundary": {
+    "source_of_truth": "canonical hypothesis.json objects and existing public evidence bindings",
+    "schema_org_context": "https://schema.org",
+    "scientific_record_created_by_projection": false,
+    "external_indexing_or_certification_claimed": false,
+    "private_source_topology_allowed": false,
+    "clinical_use_authority_transferred": false,
+    "publication_authority_transferred": false
+  },
   "accessibility_projection_boundary": {
     "source_of_truth": "canonical hypothesis.json object",
     "separate_scientific_record_allowed": false,
@@ -130,6 +141,7 @@
     "manifest.json",
     "repository-manifest.json",
     "indexes/hypotheses.json",
+    "structured-data/hypotheses.jsonld",
     "schemas/therapeutic-hypothesis.schema.json",
     "schemas/evidence-binding.schema.json",
     "schemas/evidence-change-event.schema.json",
@@ -137,6 +149,7 @@
     "scripts/publication-transaction.js",
     "scripts/validate-contributions.js",
     "scripts/validate-evidence-events.js",
+    "scripts/render-structured-metadata.js",
     "hypotheses/OS-TH-0001/hypothesis.json",
     "evidence-bindings/PMID-42574989.json",
     "evidence-bindings/PMID-42577778.json",
@@ -157,6 +170,7 @@
     "hypotheses/{OS-TH-####}/easy-read/",
     "docs/accessibility-projection.md",
     "docs/living-evidence-lifecycle.md",
+    "docs/structured-metadata.md",
     "docs/quickstart/index.html",
     "docs/quickstart.md",
     "docs/publication-lifecycle.md",
@@ -177,5 +191,10 @@
       "indexes/hypotheses.json",
       "sitemap.xml"
     ]
+  },
+  "structured_metadata_projection": {
+    "generated_by": "scripts/render-structured-metadata.js",
+    "check_command": "node scripts/render-structured-metadata.js --check",
+    "path": "structured-data/hypotheses.jsonld"
   }
 }
