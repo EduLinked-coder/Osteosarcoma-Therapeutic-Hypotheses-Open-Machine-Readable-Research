@@ -1,0 +1,30 @@
+{
+  "contribution_version": "1.0.0",
+  "contribution_id": "OS-CONTRIB-0001",
+  "contribution_type": "ERROR_REPORT",
+  "target_hypothesis_id": "OS-TH-0001",
+  "state": "SUBMITTED",
+  "submitted_at": "2026-09-13T00:00:00Z",
+  "contributor_provenance": {
+    "submitted_via": "github-issue",
+    "contributor_reference": "example-public-contributor",
+    "submission_reference": null
+  },
+  "proposal": {
+    "summary": "Template-only example showing how a public research correction proposal enters governed review without becoming accepted evidence.",
+    "source_refs": [],
+    "relationship": "ERROR_CORRECTION",
+    "hypothesis_components": [
+      "example component requiring review"
+    ]
+  },
+  "review": {
+    "scientific_review_required": true,
+    "decision_reference": null,
+    "reviewed_at": null,
+    "review_note": "Example only. No scientific decision has been made."
+  },
+  "example": true,
+  "acceptance_meaning": "Contribution state records repository review only; it does not establish clinical benefit, treatment guidance or patient-specific applicability.",
+  "clinical_use": false
+}
