@@ -19,6 +19,9 @@
     "index": "indexes/hypotheses.json",
     "evidence_bindings": "evidence-bindings/{evidence_id}.json",
     "evidence_binding_schema": "schemas/evidence-binding.schema.json",
+    "evidence_events": "evidence-events/{OS-EVENT-####}.json",
+    "evidence_event_schema": "schemas/evidence-change-event.schema.json",
+    "living_evidence_lifecycle": "docs/living-evidence-lifecycle.md",
     "search": "search/",
     "contributions": "contributions/{OS-CONTRIB-####}.json",
     "contribution_schema": "schemas/research-contribution.schema.json",
@@ -34,6 +37,7 @@
   },
   "identifier_convention": "OS-TH-####",
   "contribution_identifier_convention": "OS-CONTRIB-####",
+  "evidence_event_identifier_convention": "OS-EVENT-####",
   "evidence_model": "Evidence bindings classify public sources as SUPPORTS, CONTRADICTS, LIMITS, CONTEXTUALISES, FAILED_REPLICATION or SUCCESSOR_CONTEXT and preserve uncertainty, maturity, acceptance state and provenance.",
   "lifecycle_model": [
     "PUBLIC_RESEARCH_CANDIDATE",
@@ -50,7 +54,18 @@
     "ACCEPTED",
     "REJECTED"
   ],
-  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; CI verifies transaction gates, contribution governance, generated-output freshness, schemas and public research boundaries before deployment.",
+  "living_evidence_event_model": [
+    "EVIDENCE_ADDED",
+    "EVIDENCE_RELATIONSHIP_CHANGED",
+    "REPLICATION_STATUS_CHANGED",
+    "EVIDENCE_SUPERSEDED",
+    "EVIDENCE_REJECTED",
+    "SOURCE_RETRACTION_RECORDED",
+    "HYPOTHESIS_REVISION_RECORDED",
+    "SUPERSESSION_RECORDED",
+    "WITHDRAWAL_RECORDED"
+  ],
+  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; append-only evidence change history is checked by scripts/validate-evidence-events.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; CI verifies transaction gates, contribution governance, evidence-history integrity, generated-output freshness, schemas and public research boundaries before deployment.",
   "publication_status_semantics": {
     "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
@@ -81,6 +96,17 @@
     "clinical_use_authority_transferred": false,
     "patient_or_private_material_allowed": false
   },
+  "living_evidence_boundary": {
+    "append_only_history_required": true,
+    "canonical_hypothesis_remains_current_projection": true,
+    "event_is_independent_scientific_authority": false,
+    "event_may_reference_only_existing_public_evidence_bindings": true,
+    "terminal_event_must_match_current_canonical_object": true,
+    "protected_lifecycle_change_requires_attributable_human_decision": true,
+    "historical_event_rewrite_or_id_reuse_allowed": false,
+    "publication_authority_transferred": false,
+    "clinical_use_authority_transferred": false
+  },
   "accessibility_projection_boundary": {
     "source_of_truth": "canonical hypothesis.json object",
     "separate_scientific_record_allowed": false,
@@ -97,9 +123,11 @@
     "indexes/hypotheses.json",
     "schemas/therapeutic-hypothesis.schema.json",
     "schemas/evidence-binding.schema.json",
+    "schemas/evidence-change-event.schema.json",
     "schemas/research-contribution.schema.json",
     "scripts/publication-transaction.js",
     "scripts/validate-contributions.js",
+    "scripts/validate-evidence-events.js",
     "hypotheses/OS-TH-0001/hypothesis.json",
     "evidence-bindings/PMID-42574989.json",
     "evidence-bindings/PMID-42577778.json",
@@ -116,8 +144,10 @@
     "docs/quickstart/",
     "evidence/",
     "evidence/index.html",
+    "evidence-events/README.md",
     "hypotheses/{OS-TH-####}/easy-read/",
     "docs/accessibility-projection.md",
+    "docs/living-evidence-lifecycle.md",
     "docs/quickstart/index.html",
     "docs/quickstart.md",
     "docs/publication-lifecycle.md",
