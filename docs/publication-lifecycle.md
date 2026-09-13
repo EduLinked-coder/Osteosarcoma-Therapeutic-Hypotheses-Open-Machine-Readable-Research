@@ -36,6 +36,8 @@ A publication transaction moves material from candidate research intelligence in
 
 The target-side transaction entry point is `scripts/publication-transaction.js`. It consumes only a deliberately public-safe candidate envelope using contract `OSTEOSARCOMA-PUBLIC-PROJECTION-HANDOFF-001`; it does not discover private repositories, read credentials, approve science, merge a pull request or confer publication authority.
 
+The current handoff contract version is `1.1.0`. A `1.1.0` envelope must identify the target `evidence_binding_version` and that value must exactly match the version required by the target repository's current `schemas/evidence-binding.schema.json`. The target temporarily accepts a `1.0.0` envelope for bounded backwards compatibility, but the embedded hypothesis and evidence bindings must still validate against the target's current schemas and all current public-safety, provenance, evidence-context and scientific-boundary checks. Unsupported future or unknown contract versions fail closed. This compatibility rule does not transfer publication authority or make the source contract authoritative over the target repository.
+
 Validate an envelope without changing repository files:
 
 ```sh

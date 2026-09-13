@@ -10,7 +10,8 @@ const { scanStructuredValue, scanSecretMaterial } = require('./validate-public-s
 
 const root = process.cwd();
 const CONTRACT_ID = 'OSTEOSARCOMA-PUBLIC-PROJECTION-HANDOFF-001';
-const CONTRACT_VERSION = '1.0.0';
+const CONTRACT_VERSION = '1.1.0';
+const SUPPORTED_CONTRACT_VERSIONS = new Set(['1.0.0', CONTRACT_VERSION]);
 const TARGET_REPOSITORY = 'EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research';
 const ID = /^OS-TH-[0-9]{4}$/;
 const GIT_SHA = /^[0-9a-f]{40}$/;
@@ -64,7 +65,7 @@ function validateHandoff(envelope) {
   requireGate(envelope && typeof envelope === 'object' && !Array.isArray(envelope), 'handoff must be a JSON object');
   for (const key of Object.keys(envelope)) requireGate(allowedEnvelopeKeys.has(key), 'handoff has unsupported top-level property ' + key);
   requireGate(envelope.contract_id === CONTRACT_ID, 'unsupported handoff contract id');
-  requireGate(envelope.contract_version === CONTRACT_VERSION, 'unsupported handoff contract version');
+  requireGate(SUPPORTED_CONTRACT_VERSIONS.has(envelope.contract_version), 'unsupported handoff contract version');
   requireGate(typeof envelope.handoff_digest === 'string' && SHA256.test(envelope.handoff_digest), 'handoff digest must be sha256');
   requireGate(computeHandoffDigest(envelope) === envelope.handoff_digest, 'handoff digest does not match payload');
 
@@ -77,9 +78,15 @@ function validateHandoff(envelope) {
   const target = envelope.target || {};
   const hypothesisSchema = readJson('schemas/therapeutic-hypothesis.schema.json');
   const evidenceSchema = readJson('schemas/evidence-binding.schema.json');
+  const targetEvidenceBindingVersion = evidenceSchema.properties?.evidence_binding_version?.const;
   requireGate(target.repository === TARGET_REPOSITORY, 'handoff target repository mismatch');
   requireGate(target.hypothesis_schema === hypothesisSchema.$id, 'handoff target hypothesis schema mismatch');
   requireGate(target.evidence_binding_schema === evidenceSchema.$id, 'handoff target evidence schema mismatch');
+  if (envelope.contract_version === CONTRACT_VERSION) {
+    requireGate(target.evidence_binding_version === targetEvidenceBindingVersion, 'handoff target evidence binding version mismatch');
+  } else if (target.evidence_binding_version !== undefined) {
+    requireGate(target.evidence_binding_version === targetEvidenceBindingVersion, 'handoff target evidence binding version mismatch');
+  }
 
   const authority = envelope.authority || {};
   requireGate(authority.disclosure_authorised === true, 'explicit disclosure authority is required');
@@ -194,6 +201,7 @@ if (require.main === module) {
 module.exports = {
   CONTRACT_ID,
   CONTRACT_VERSION,
+  SUPPORTED_CONTRACT_VERSIONS,
   TARGET_REPOSITORY,
   PublicationTransactionBlocked,
   canonicalJson,

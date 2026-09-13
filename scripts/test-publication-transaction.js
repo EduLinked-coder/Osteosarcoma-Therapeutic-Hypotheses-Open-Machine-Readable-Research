@@ -26,6 +26,7 @@ const evidenceIds = [
 const evidenceBindings = [...new Set(evidenceIds)].sort().map((id) => readJson('evidence-bindings/' + id + '.json'));
 const hypothesisSchema = readJson('schemas/therapeutic-hypothesis.schema.json');
 const evidenceSchema = readJson('schemas/evidence-binding.schema.json');
+const targetEvidenceBindingVersion = evidenceSchema.properties.evidence_binding_version.const;
 
 function fixture() {
   const envelope = {
@@ -40,7 +41,8 @@ function fixture() {
     target: {
       repository: TARGET_REPOSITORY,
       hypothesis_schema: hypothesisSchema.$id,
-      evidence_binding_schema: evidenceSchema.$id
+      evidence_binding_schema: evidenceSchema.$id,
+      evidence_binding_version: targetEvidenceBindingVersion
     },
     authority: {
       disclosure_authorised: true,
@@ -62,10 +64,32 @@ function expectBlocked(callback, pattern) {
   assert.throws(callback, (error) => pattern.test(error.message), 'expected fail-closed transaction block matching ' + pattern);
 }
 
+assert.equal(CONTRACT_VERSION, '1.1.0');
 const valid = fixture();
 const result = validateHandoff(valid);
 assert.equal(result.hypothesis.hypothesis_id, 'OS-TH-0001');
 assert.equal(result.bindings.length, evidenceBindings.length);
+
+const legacyContract = fixture();
+legacyContract.contract_version = '1.0.0';
+delete legacyContract.target.evidence_binding_version;
+legacyContract.handoff_digest = computeHandoffDigest(legacyContract);
+assert.equal(validateHandoff(legacyContract).hypothesis.hypothesis_id, 'OS-TH-0001');
+
+const missingTargetEvidenceVersion = fixture();
+delete missingTargetEvidenceVersion.target.evidence_binding_version;
+missingTargetEvidenceVersion.handoff_digest = computeHandoffDigest(missingTargetEvidenceVersion);
+expectBlocked(() => validateHandoff(missingTargetEvidenceVersion), /target evidence binding version mismatch/);
+
+const mismatchedTargetEvidenceVersion = fixture();
+mismatchedTargetEvidenceVersion.target.evidence_binding_version = '1.0.0';
+mismatchedTargetEvidenceVersion.handoff_digest = computeHandoffDigest(mismatchedTargetEvidenceVersion);
+expectBlocked(() => validateHandoff(mismatchedTargetEvidenceVersion), /target evidence binding version mismatch/);
+
+const unsupportedContract = fixture();
+unsupportedContract.contract_version = '2.0.0';
+unsupportedContract.handoff_digest = computeHandoffDigest(unsupportedContract);
+expectBlocked(() => validateHandoff(unsupportedContract), /unsupported handoff contract version/);
 
 for (const binding of evidenceBindings) {
   assert.deepEqual(validateEvidenceBindingIdentity(binding, 'fixture'), []);
@@ -141,4 +165,4 @@ assert.match(validateEvidenceBindingIdentity(mismatchedDoiUrl, 'fixture').join('
 
 expectBlocked(() => stageHandoff(fixture()), /already exists/);
 
-console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety, explicit evidence-context, canonical evidence-identity/reference and overwrite gates fail closed.');
+console.log('Publication transaction tests passed: v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, public-safety, explicit evidence-context, canonical evidence-identity/reference and overwrite gates fail closed.');
