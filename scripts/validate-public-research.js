@@ -153,7 +153,7 @@ for (const entry of index.hypotheses) {
   if (!sitemap.includes('/hypotheses/' + entry.hypothesis_id + '/')) fail('Sitemap missing ' + entry.hypothesis_id + '.');
   if (!sitemap.includes('/hypotheses/' + entry.hypothesis_id + '/easy-read/')) fail('Sitemap missing Easy Read projection for ' + entry.hypothesis_id + '.');
 }
-for (const required of ['repository-manifest.json', 'AGENTS.md', 'robots.txt', 'sitemap.xml', 'scripts/render-public-research.js', 'docs/accessibility-projection.md']) {
+for (const required of ['manifest.json', 'repository-manifest.json', 'AGENTS.md', 'robots.txt', 'sitemap.xml', 'scripts/render-machine-manifest.js', 'scripts/render-public-research.js', 'docs/accessibility-projection.md']) {
   if (!fs.existsSync(path.join(root, required))) fail('Missing ' + required + '.');
 }
 if (!process.exitCode) console.log('Public research validation passed for ' + index.hypotheses.length + ' hypothesis object(s).');

@@ -28,12 +28,16 @@ jobs:
         run: node scripts/validate-contributions.js
       - name: Validate living evidence history
         run: node scripts/validate-evidence-events.js
+      - name: Validate evidence relationship consistency
+        run: node scripts/validate-evidence-relationship-consistency.js
       - name: Validate canonical hypothesis schema
         run: node scripts/validate-schema.js
       - name: Check generated public projections
         run: node scripts/render-public-research.js --check
       - name: Check structured research metadata
         run: node scripts/render-structured-metadata.js --check
+      - name: Check contract manifest entry point
+        run: node scripts/render-machine-manifest.js --check
       - name: Validate public research boundary
         run: node scripts/validate-public-research.js
 
