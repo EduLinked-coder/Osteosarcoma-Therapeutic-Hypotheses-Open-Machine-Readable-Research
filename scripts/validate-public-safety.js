@@ -82,14 +82,55 @@ const SECRET_PATTERNS = [
   { label: 'AWS access key material', regex: /\bAKIA[0-9A-Z]{16}\b/ }
 ];
 
+const CLINICAL_DIRECTIVE_PATTERNS = [
+  {
+    label: 'patient-directed treatment instruction',
+    regex: /\b(?:this|the)\s+patient\s+(?:should|must|needs?\s+to)\s+(?:start|stop|switch(?:\s+to)?|continue|take|receive|use)\b/i
+  },
+  {
+    label: 'patient-specific treatment recommendation',
+    regex: /\bfor\s+(?:this|the)\s+patient\b[\s\S]{0,120}\b(?:recommend(?:ed|ation)?|start|stop|switch(?:\s+to)?|take|receive|use)\b/i
+  },
+  {
+    label: 'patient-directed dosing instruction',
+    regex: /\b(?:you|this\s+patient|the\s+patient)\s+(?:should\s+|must\s+)?(?:take|use|receive)\s+\d+(?:\.\d+)?\s*(?:mg|g|mcg|ug|ml)\b/i
+  },
+  {
+    label: 'claim of individual patient benefit',
+    regex: /\b(?:this|the)\s+(?:treatment|therapy|regimen|intervention)\s+(?:will|is\s+expected\s+to)\s+(?:benefit|help|improve(?:\s+outcomes?\s+for)?)\s+(?:this|the)\s+patient\b/i
+  }
+];
+
 function normaliseKey(key) {
   return String(key).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function scanClinicalBoundaryLanguage(value, pointer = '$', errors = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => scanClinicalBoundaryLanguage(item, pointer + '[' + index + ']', errors));
+    return errors;
+  }
+  if (typeof value === 'string') {
+    for (const pattern of CLINICAL_DIRECTIVE_PATTERNS) {
+      if (pattern.regex.test(value)) errors.push(pointer + ' contains ' + pattern.label + '.');
+    }
+    return errors;
+  }
+  if (!value || typeof value !== 'object') return errors;
+
+  for (const [key, child] of Object.entries(value)) {
+    scanClinicalBoundaryLanguage(child, pointer + '.' + key, errors);
+  }
+  return errors;
 }
 
 function scanStructuredValue(value, pointer = '$', errors = []) {
   if (Array.isArray(value)) {
     value.forEach((item, index) => scanStructuredValue(item, pointer + '[' + index + ']', errors));
     return errors;
+  }
+  if (typeof value === 'string') {
+    return scanClinicalBoundaryLanguage(value, pointer, errors);
   }
   if (!value || typeof value !== 'object') return errors;
 
@@ -181,7 +222,9 @@ if (require.main === module) run();
 module.exports = {
   PROHIBITED_KEYS,
   SECRET_PATTERNS,
+  CLINICAL_DIRECTIVE_PATTERNS,
   normaliseKey,
+  scanClinicalBoundaryLanguage,
   scanStructuredValue,
   scanSecretMaterial,
   validateRepositoryPublicSafety,
