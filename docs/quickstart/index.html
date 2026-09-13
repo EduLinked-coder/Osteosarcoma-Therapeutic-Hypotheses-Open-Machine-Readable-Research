@@ -35,6 +35,7 @@ pre{overflow:auto;background:#172033;color:#fff;padding:1rem;border-radius:.75re
     <p class="lead">This page is for researchers, reviewers and agents who need to inspect the current public research state, propose evidence safely, or consume the machine-readable objects.</p>
     <div>
       <a class="button primary" href="../../#hypotheses">Browse hypotheses</a>
+      <a class="button" href="../../search/">Search and filter</a>
       <a class="button" href="../../repository-manifest.json">Machine manifest</a>
       <a class="button" href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new/choose">Contribute evidence</a>
     </div>
@@ -48,11 +49,13 @@ pre{overflow:auto;background:#172033;color:#fff;padding:1rem;border-radius:.75re
       <thead><tr><th>Need</th><th>Human path</th><th>Machine path</th></tr></thead>
       <tbody>
         <tr><td>Browse hypotheses</td><td><a href="../../#hypotheses">Open the public site</a></td><td><code>indexes/hypotheses.json</code></td></tr>
+        <tr><td>Search/filter hypotheses</td><td><a href="../../search/">Open canonical-object search</a></td><td>Follow <code>canonical_object_path</code> values from <code>indexes/hypotheses.json</code></td></tr>
         <tr><td>Inspect the current object</td><td><a href="../../hypotheses/OS-TH-0001/">Open OS-TH-0001</a></td><td><code>hypotheses/OS-TH-0001/hypothesis.json</code></td></tr>
         <tr><td>Check evidence bindings</td><td><a href="../../evidence-bindings/PMID-42574989.json">Open a binding</a></td><td><code>schemas/evidence-binding.schema.json</code></td></tr>
         <tr><td>Propose new evidence</td><td><a href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new/choose">Use issue templates</a></td><td><code>examples/evidence-bindings/*.example.json</code></td></tr>
       </tbody>
     </table>
+    <p>The search page derives its filters from the generated hypothesis index and canonical hypothesis JSON. It does not maintain a separate scientific record.</p>
   </section>
 
   <section>

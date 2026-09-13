@@ -7,12 +7,15 @@ This repository publishes public, evidence-bound osteosarcoma therapeutic resear
 | Need | Human path | Machine path |
 | --- | --- | --- |
 | Browse current hypotheses | Open the public site or `hypotheses/OS-TH-0001/` | Read `indexes/hypotheses.json` |
+| Search/filter the portfolio | Open `search/` | Follow `canonical_object_path` values from `indexes/hypotheses.json` |
 | Inspect the canonical object | Use the hypothesis page's JSON link | Read `hypotheses/{OS-TH-####}/hypothesis.json` |
 | Validate a hypothesis | Check review state, uncertainty and evidence stage | Validate against `schemas/therapeutic-hypothesis.schema.json` |
 | Inspect evidence bindings | Read `evidence-bindings/*.json` | Validate against `schemas/evidence-binding.schema.json` |
 | Propose new evidence | Use the New public evidence issue template | Copy `examples/evidence-bindings/supports.example.json` |
 | Report a contradiction | Use the Contradictory evidence issue template | Copy `examples/evidence-bindings/contradicts.example.json` |
 | Report failed replication | Use the Failed replication issue template | Copy `examples/evidence-bindings/failed-replication.example.json` |
+
+The search interface does not maintain a duplicate research database. It loads the generated index and then fetches the canonical hypothesis objects, so mechanism, target/pathway, evidence stage, review/publication state, uncertainty, novelty and ranking filters remain projections of canonical JSON.
 
 ## Contribution boundary
 
