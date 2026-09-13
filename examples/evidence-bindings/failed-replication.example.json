@@ -1,5 +1,5 @@
 {
-  "evidence_binding_version": "1.0.0",
+  "evidence_binding_version": "1.1.0",
   "evidence_id": "SOURCE-FAILED-REPLICATION-EXAMPLE",
   "source_type": "other-public-source",
   "canonical_source_url": "https://example.org/public-failed-replication-record",
@@ -8,6 +8,23 @@
   "evidence_type": "other",
   "evidence_maturity": "preclinical",
   "biological_model": "example replication model",
+  "evidence_context": {
+    "experimental_model": {
+      "status": "reported",
+      "value": "example replication model under reported conditions",
+      "note": "Synthetic example only; preserve the source's actual model description in a real binding."
+    },
+    "population_context": {
+      "status": "not-applicable",
+      "value": null,
+      "note": "Synthetic preclinical replication example with no human population context."
+    },
+    "mechanism": {
+      "status": "not-yet-assessed",
+      "value": null,
+      "note": "Mechanism context remains unresolved in this synthetic failed-replication example."
+    }
+  },
   "relationship_to_hypothesis": "FAILED_REPLICATION",
   "hypothesis_components": [
     "example mechanism component"
