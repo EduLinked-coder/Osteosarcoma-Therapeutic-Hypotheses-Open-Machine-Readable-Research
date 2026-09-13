@@ -21,6 +21,7 @@
     "finding",
     "independence_from_other_evidence",
     "replication_status",
+    "acceptance_state",
     "provenance",
     "clinical_use"
   ],
@@ -184,6 +185,7 @@
     },
     "acceptance_state": {
       "type": "object",
+      "description": "Required public evidence acceptance state. Presence in the repository is not scientific acceptance; candidate evidence must remain explicitly classified until attributable review authority changes it.",
       "additionalProperties": false,
       "required": [
         "status",
