@@ -1,5 +1,5 @@
 {
-  "evidence_binding_version": "1.0.0",
+  "evidence_binding_version": "1.1.0",
   "evidence_id": "PMID-00000001",
   "source_type": "pubmed",
   "pmid": "00000001",
@@ -9,6 +9,23 @@
   "evidence_type": "animal-model",
   "evidence_maturity": "preclinical",
   "biological_model": "example independent osteosarcoma model",
+  "evidence_context": {
+    "experimental_model": {
+      "status": "reported",
+      "value": "example independent animal model",
+      "note": "Synthetic example only; use the public source wording for a real binding."
+    },
+    "population_context": {
+      "status": "not-applicable",
+      "value": null,
+      "note": "Synthetic preclinical example with no human population context."
+    },
+    "mechanism": {
+      "status": "not-yet-assessed",
+      "value": null,
+      "note": "Mechanism context is intentionally unresolved in this synthetic contradictory-evidence example."
+    }
+  },
   "relationship_to_hypothesis": "CONTRADICTS",
   "hypothesis_components": [
     "example mechanism component"
