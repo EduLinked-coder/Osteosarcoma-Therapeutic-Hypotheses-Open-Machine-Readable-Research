@@ -3,6 +3,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const { validateEvidenceBindingIdentity } = require('./lib/evidence-binding-integrity');
 const {
   CONTRACT_ID,
   CONTRACT_VERSION,
@@ -18,9 +19,10 @@ const clone = (value) => JSON.parse(JSON.stringify(value));
 
 const hypothesis = readJson('hypotheses/OS-TH-0001/hypothesis.json');
 const evidenceIds = [
-  ...(hypothesis.supporting_evidence || []),
-  ...((hypothesis.contradictory_evidence || {}).items || [])
-].map((item) => item.evidence_id).filter(Boolean);
+  ...(hypothesis.supporting_evidence || []).map((item) => item.evidence_id),
+  ...((hypothesis.contradictory_evidence || {}).items || []).map((item) => item.evidence_id),
+  ...(hypothesis.mechanism?.relationships || []).flatMap((relationship) => relationship.evidence_refs || [])
+].filter(Boolean);
 const evidenceBindings = [...new Set(evidenceIds)].sort().map((id) => readJson('evidence-bindings/' + id + '.json'));
 const hypothesisSchema = readJson('schemas/therapeutic-hypothesis.schema.json');
 const evidenceSchema = readJson('schemas/evidence-binding.schema.json');
@@ -65,6 +67,10 @@ const result = validateHandoff(valid);
 assert.equal(result.hypothesis.hypothesis_id, 'OS-TH-0001');
 assert.equal(result.bindings.length, evidenceBindings.length);
 
+for (const binding of evidenceBindings) {
+  assert.deepEqual(validateEvidenceBindingIdentity(binding, 'fixture'), []);
+}
+
 const digestTamper = fixture();
 digestTamper.public_projection.hypothesis.title += ' tampered';
 expectBlocked(() => validateHandoff(digestTamper), /digest does not match/);
@@ -89,6 +95,37 @@ credentialMaterial.public_projection.hypothesis.title += ' sk-proj-' + 'A'.repea
 credentialMaterial.handoff_digest = computeHandoffDigest(credentialMaterial);
 expectBlocked(() => validateHandoff(credentialMaterial), /public projection safety validation failed.*OpenAI-style API key material/i);
 
+const mismatchedPmid = fixture();
+mismatchedPmid.public_projection.evidence_bindings[0].pmid = '99999999';
+mismatchedPmid.handoff_digest = computeHandoffDigest(mismatchedPmid);
+expectBlocked(() => validateHandoff(mismatchedPmid), /public evidence identity validation failed.*pmid must exactly match/i);
+
+const missingMechanismBinding = fixture();
+missingMechanismBinding.public_projection.hypothesis.mechanism.relationships[0].evidence_refs = ['SOURCE-MISSING-MECHANISM'];
+missingMechanismBinding.handoff_digest = computeHandoffDigest(missingMechanismBinding);
+expectBlocked(() => validateHandoff(missingMechanismBinding), /hypothesis references evidence missing from handoff: SOURCE-MISSING-MECHANISM/i);
+
+const unsafeEvidenceId = clone(evidenceBindings[0]);
+unsafeEvidenceId.evidence_id = 'DOI-10.1000/example/../../outside';
+unsafeEvidenceId.doi = '10.1000/example/../../outside';
+assert.match(validateEvidenceBindingIdentity(unsafeEvidenceId, 'fixture').join(' | '), /path-safe stable identifier/i);
+
+const validDoi = clone(evidenceBindings[0]);
+validDoi.evidence_id = 'DOI-' + encodeURIComponent('10.1000/example*part');
+validDoi.source_type = 'doi';
+validDoi.doi = '10.1000/example*part';
+validDoi.canonical_source_url = 'https://doi.org/10.1000/example*part';
+delete validDoi.pmid;
+assert.deepEqual(validateEvidenceBindingIdentity(validDoi, 'fixture'), []);
+
+const nonCanonicalDoi = clone(validDoi);
+nonCanonicalDoi.evidence_id = 'DOI-10.1000%2fexample*part';
+assert.match(validateEvidenceBindingIdentity(nonCanonicalDoi, 'fixture').join(' | '), /encodeURIComponent\(lowercase doi\) exactly/i);
+
+const mismatchedDoiUrl = clone(validDoi);
+mismatchedDoiUrl.canonical_source_url = 'https://doi.org/10.1000/different';
+assert.match(validateEvidenceBindingIdentity(mismatchedDoiUrl, 'fixture').join(' | '), /canonical_source_url must resolve the same DOI/i);
+
 expectBlocked(() => stageHandoff(fixture()), /already exists/);
 
-console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety and overwrite gates fail closed.');
+console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety, canonical evidence-identity/reference and overwrite gates fail closed.');

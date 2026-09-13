@@ -29,7 +29,8 @@
     },
     "evidence_id": {
       "type": "string",
-      "pattern": "^(PMID-[0-9]+|DOI-.+|SOURCE-[A-Z0-9-]+)$"
+      "description": "Stable single-path-segment identifier. PMID IDs use PMID-<digits>. DOI IDs use DOI- followed by encodeURIComponent(lowercase doi), so DOI slashes are percent-encoded rather than filesystem separators.",
+      "pattern": "^(PMID-[0-9]+|DOI-[A-Za-z0-9._~%()!*'-]+|SOURCE-[A-Z0-9-]+)$"
     },
     "source_type": {
       "enum": [

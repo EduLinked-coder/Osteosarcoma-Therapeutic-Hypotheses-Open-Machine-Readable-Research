@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { validateJsonSchema } = require('./lib/schema-lite');
+const { validateEvidenceBindingIdentity } = require('./lib/evidence-binding-integrity');
 const { scanStructuredValue, scanSecretMaterial } = require('./validate-public-safety');
 
 const root = process.cwd();
@@ -104,8 +105,11 @@ function validateHandoff(envelope) {
 
   const bindingIds = new Set();
   for (const binding of bindings) {
-    const errors = validateJsonSchema(evidenceSchema, evidenceSchema, binding, 'public_projection.evidence_bindings[' + bindingIds.size + ']');
+    const where = 'public_projection.evidence_bindings[' + bindingIds.size + ']';
+    const errors = validateJsonSchema(evidenceSchema, evidenceSchema, binding, where);
     requireGate(errors.length === 0, 'public evidence schema failed: ' + errors.join(' | '));
+    const identityErrors = validateEvidenceBindingIdentity(binding, where);
+    requireGate(identityErrors.length === 0, 'public evidence identity validation failed: ' + identityErrors.join(' | '));
     requireGate(!bindingIds.has(binding.evidence_id), 'duplicate evidence binding id ' + binding.evidence_id);
     bindingIds.add(binding.evidence_id);
     requireGate(binding.clinical_use === false, binding.evidence_id + ' must set clinical_use:false');
@@ -114,10 +118,14 @@ function validateHandoff(envelope) {
     requireGate(isPublicHttpUrl(binding.canonical_source_url), binding.evidence_id + ' canonical source must be public http(s)');
   }
 
+  const mechanismEvidenceRefs = (hypothesis.mechanism?.relationships || [])
+    .flatMap((relationship) => relationship.evidence_refs || [])
+    .filter(Boolean);
   const referencedIds = new Set([
-    ...(hypothesis.supporting_evidence || []),
-    ...((hypothesis.contradictory_evidence || {}).items || [])
-  ].map((item) => item.evidence_id).filter(Boolean));
+    ...(hypothesis.supporting_evidence || []).map((item) => item.evidence_id),
+    ...((hypothesis.contradictory_evidence || {}).items || []).map((item) => item.evidence_id),
+    ...mechanismEvidenceRefs
+  ].filter(Boolean));
   for (const evidenceId of referencedIds) requireGate(bindingIds.has(evidenceId), 'hypothesis references evidence missing from handoff: ' + evidenceId);
   for (const evidenceId of bindingIds) requireGate(referencedIds.has(evidenceId), 'handoff contains unreferenced evidence binding: ' + evidenceId);
 

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { isPathSafeEvidenceId, validateEvidenceBindingIdentity } = require('./lib/evidence-binding-integrity');
 
 const root = process.cwd();
 const fail = (message) => {
@@ -88,6 +89,8 @@ for (const file of evidenceFiles) {
   const relativePath = 'evidence-bindings/' + file;
   const binding = readJson(relativePath);
   validateNode(evidenceSchema, evidenceSchema, binding, relativePath);
+  for (const identityError of validateEvidenceBindingIdentity(binding, relativePath)) fail(identityError);
+  if (!isPathSafeEvidenceId(binding.evidence_id)) fail(relativePath + ' evidence_id is not safe for a single canonical evidence-binding path segment.');
   if (file !== binding.evidence_id + '.json') fail(relativePath + ' filename must match evidence_id.');
   if (binding.clinical_use !== false) fail(relativePath + ' must explicitly set clinical_use:false.');
   if (binding.acceptance_state && binding.acceptance_state.status !== 'candidate-public-evidence') fail(relativePath + ' must remain candidate evidence until reviewed.');
@@ -118,11 +121,33 @@ for (const entry of index.hypotheses) {
 
   const evidenceItems = [...(h.supporting_evidence || []), ...((h.contradictory_evidence || {}).items || [])];
   for (const evidence of evidenceItems) {
+    if (!isPathSafeEvidenceId(evidence.evidence_id)) {
+      fail(entry.hypothesis_id + ' references an unsafe evidence_id path segment: ' + evidence.evidence_id);
+      continue;
+    }
     const bindingPath = 'evidence-bindings/' + evidence.evidence_id + '.json';
     if (!fs.existsSync(path.join(root, bindingPath))) fail(entry.hypothesis_id + ' missing evidence binding: ' + bindingPath);
     const binding = readJson(bindingPath);
     if (binding.evidence_id !== evidence.evidence_id) fail(bindingPath + ' evidence_id mismatch.');
     if (binding.provenance.binding_generated_for !== entry.hypothesis_id) fail(bindingPath + ' provenance does not bind to ' + entry.hypothesis_id + '.');
+  }
+
+  const mechanismEvidenceRefs = [...new Set((h.mechanism?.relationships || [])
+    .flatMap((relationship) => relationship.evidence_refs || [])
+    .filter(Boolean))];
+  for (const evidenceId of mechanismEvidenceRefs) {
+    if (!isPathSafeEvidenceId(evidenceId)) {
+      fail(entry.hypothesis_id + ' mechanism references an unsafe evidence_id path segment: ' + evidenceId);
+      continue;
+    }
+    const bindingPath = 'evidence-bindings/' + evidenceId + '.json';
+    if (!fs.existsSync(path.join(root, bindingPath))) {
+      fail(entry.hypothesis_id + ' mechanism references missing evidence binding: ' + bindingPath);
+      continue;
+    }
+    const binding = readJson(bindingPath);
+    if (binding.evidence_id !== evidenceId) fail(bindingPath + ' evidence_id mismatch for mechanism reference.');
+    if (binding.provenance.binding_generated_for !== entry.hypothesis_id) fail(bindingPath + ' mechanism evidence provenance does not bind to ' + entry.hypothesis_id + '.');
   }
 
   const htmlPath = 'hypotheses/' + entry.hypothesis_id + '/index.html';
