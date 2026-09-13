@@ -103,19 +103,23 @@
       "required": [
         "canonical_object_sha256",
         "canonical_object_updated_at",
+        "evidence_stage",
         "review_state",
         "publication_class",
         "uncertainty_level",
         "ranking_status",
+        "ranking_score",
         "supersession_status"
       ],
       "properties": {
         "canonical_object_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "canonical_object_updated_at": {"type": "string", "format": "date-time"},
+        "evidence_stage": {"enum": ["computational", "replicated-evidence", "preclinical", "clinical-investigation", "clinically-validated", "mixed"]},
         "review_state": {"enum": ["machine-generated", "human-review-required", "reviewed", "revision-required", "withdrawn"]},
         "publication_class": {"enum": ["public-research-candidate", "reviewed-public-hypothesis", "superseded", "withdrawn"]},
         "uncertainty_level": {"enum": ["low", "moderate", "high", "very-high"]},
         "ranking_status": {"enum": ["ranked", "pending-recalculation", "not-ranked"]},
+        "ranking_score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
         "supersession_status": {"enum": ["current", "superseded", "withdrawn"]}
       }
     }
