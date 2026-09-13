@@ -95,6 +95,19 @@ credentialMaterial.public_projection.hypothesis.title += ' sk-proj-' + 'A'.repea
 credentialMaterial.handoff_digest = computeHandoffDigest(credentialMaterial);
 expectBlocked(() => validateHandoff(credentialMaterial), /public projection safety validation failed.*OpenAI-style API key material/i);
 
+const missingEvidenceContext = fixture();
+delete missingEvidenceContext.public_projection.evidence_bindings[0].evidence_context;
+missingEvidenceContext.handoff_digest = computeHandoffDigest(missingEvidenceContext);
+expectBlocked(() => validateHandoff(missingEvidenceContext), /public evidence schema failed.*evidence_context/i);
+
+const inventedEvidenceContext = fixture();
+inventedEvidenceContext.public_projection.evidence_bindings[0].evidence_context.experimental_model = {
+  status: 'not-yet-assessed',
+  value: 'synthetic inferred model that must not be accepted'
+};
+inventedEvidenceContext.handoff_digest = computeHandoffDigest(inventedEvidenceContext);
+expectBlocked(() => validateHandoff(inventedEvidenceContext), /public evidence context validation failed.*value must be null unless status is reported/i);
+
 const mismatchedPmid = fixture();
 mismatchedPmid.public_projection.evidence_bindings[0].pmid = '99999999';
 mismatchedPmid.handoff_digest = computeHandoffDigest(mismatchedPmid);
@@ -128,4 +141,4 @@ assert.match(validateEvidenceBindingIdentity(mismatchedDoiUrl, 'fixture').join('
 
 expectBlocked(() => stageHandoff(fixture()), /already exists/);
 
-console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety, canonical evidence-identity/reference and overwrite gates fail closed.');
+console.log('Publication transaction tests passed: integrity, authority, clinical-use, public-safety, explicit evidence-context, canonical evidence-identity/reference and overwrite gates fail closed.');
