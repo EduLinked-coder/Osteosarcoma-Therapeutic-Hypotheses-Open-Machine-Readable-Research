@@ -19,11 +19,13 @@ assignees: ""
 - Contradictory or limiting evidence IDs:
 - New uncertainty introduced:
 
-## Supersession boundary
+## Boundary
 
 - The current hypothesis must remain traceable.
 - The successor is a candidate until scientific review and publication authority are explicit.
 - Do not erase failed, contradictory or limiting evidence.
+- Do not include patient-specific information, private clinical context, credentials, secrets or restricted research.
+- Do not infer clinical benefit or provide treatment recommendations.
 
 ## Publication authority
 

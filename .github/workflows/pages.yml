@@ -26,6 +26,10 @@ jobs:
         run: node scripts/test-publication-transaction.js
       - name: Validate governed research contributions
         run: node scripts/validate-contributions.js
+      - name: Test contribution intake completeness
+        run: node scripts/test-contribution-intake.js
+      - name: Validate contribution intake completeness
+        run: node scripts/validate-contribution-intake.js
       - name: Test public payload safety validator
         run: node scripts/test-public-safety.js
       - name: Validate public payload safety
