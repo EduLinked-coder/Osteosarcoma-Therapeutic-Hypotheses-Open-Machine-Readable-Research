@@ -5,7 +5,7 @@
   "description": "Canonical public research object for an evidence-bound osteosarcoma therapeutic hypothesis. It is not a clinical recommendation.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version","hypothesis_id","title","hypothesis_statement","mechanism","targets_pathways","evidence_stage","supporting_evidence","contradictory_evidence","uncertainty","ranking","novelty","falsifiability","validation_requirements","provenance","review_state","supersession","clinical_use"],
+  "required": ["schema_version","hypothesis_id","title","plain_language_summary","hypothesis_statement","mechanism","targets_pathways","evidence_stage","supporting_evidence","contradictory_evidence","uncertainty","ranking","novelty","falsifiability","validation_requirements","provenance","review_state","supersession","clinical_use"],
   "properties": {
     "schema_version": {"const":"1.0.0"},
     "hypothesis_id": {"type":"string","pattern":"^OS-TH-[0-9]{4}$"},
