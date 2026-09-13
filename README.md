@@ -26,7 +26,8 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - Use `structured-data/hypotheses.jsonld` for deterministic Schema.org JSON-LD discovery metadata derived from the same canonical public hypotheses.
 - Use `search/` to search and filter the portfolio by canonical-object fields such as mechanism/target text, evidence stage, publication/review state, uncertainty, novelty and ranking state.
 - Use `hypotheses/{OS-TH-####}/easy-read/` for the generated accessibility projection of the same canonical hypothesis object; see `docs/accessibility-projection.md` for its governance and limitations.
-- Use `.github/ISSUE_TEMPLATE/` to propose evidence, contradictions, failed replications, successor hypotheses or safety/privacy review.
+- Use `.github/ISSUE_TEMPLATE/` to submit governed review inputs for new evidence, contradictory evidence, failed replication, a new hypothesis, a mechanism proposal, a falsification experiment, an error report, a successor hypothesis, or safety/privacy review. Issue creation records a proposal only; it does not accept scientific evidence or grant publication authority.
+- Use `schemas/research-contribution.schema.json` and `docs/contribution-lifecycle.md` for the machine-readable contribution types and review states behind those public intake paths.
 - Copy `examples/evidence-bindings/*.example.json` when creating governed evidence bindings.
 - Use `evidence-events/` for append-only records of material evidence changes; see `docs/living-evidence-lifecycle.md` before recording a lifecycle event.
 
@@ -41,16 +42,18 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - `schemas/therapeutic-hypothesis.schema.json` — hypothesis object schema
 - `schemas/evidence-binding.schema.json` — evidence binding schema
 - `schemas/evidence-change-event.schema.json` — append-only evidence change event schema
+- `schemas/research-contribution.schema.json` — governed public contribution proposal schema
 - `hypotheses/` — durable hypothesis objects
 - `evidence-bindings/` — public evidence bindings used by hypothesis objects
 - `evidence-events/` — append-only public evidence change history
 - `examples/evidence-bindings/` — copyable candidate evidence-binding examples
 - `docs/structured-metadata.md` — JSON-LD projection semantics and limits
 - `docs/living-evidence-lifecycle.md` — evidence-change, revision, supersession and withdrawal history contract
+- `docs/contribution-lifecycle.md` — governed contribution states and public intake boundary
 - `docs/accessibility-projection.md` — accessibility projection contract and Easy Read boundary
 - `docs/publication-lifecycle.md` — fail-closed publication authority and safety rules
 
-Run `node scripts/render-machine-manifest.js --check` to verify that the stable `manifest.json` entry point still matches its canonical source. Run `node scripts/render-research-activity.js --check` to verify that the human and machine activity projections match the canonical hypotheses and append-only event ledger.
+Run `node scripts/render-machine-manifest.js --check` to verify that the stable `manifest.json` entry point still matches its canonical source. Run `node scripts/render-research-activity.js --check` to verify that the human and machine activity projections match the canonical hypotheses and append-only event ledger. Run `node scripts/validate-contribution-intake.js` to verify that every machine-readable contribution type retains a governed public intake path.
 
 ## Living evidence
 
