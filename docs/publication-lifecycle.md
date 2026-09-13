@@ -48,7 +48,7 @@ Stage a **new** candidate into a working branch:
 node scripts/publication-transaction.js --stage path/to/public-safe-handoff.json
 ```
 
-The transaction fails closed unless the handoff digest is intact, the target schemas match, source revision and report digest are attributable, disclosure authority is explicitly referenced, scientific review remains required, `clinical_use` remains false, uncertainty and contradictory-evidence assessment survive, evidence is public HTTP(S) candidate evidence bound to the same hypothesis, and every embedded object validates against the repository schemas. The handoff validator reuses the same public-payload safety policy as `scripts/validate-public-safety.js`, so prohibited public field names and high-confidence credential material are rejected before staging. After deterministic rendering, the repository-level public-safety scan runs again before the transaction reports success.
+The transaction fails closed unless the handoff digest is intact, the target schemas match, source revision and report digest are attributable, disclosure authority is explicitly referenced, scientific review remains required, `clinical_use` remains false, uncertainty and contradictory-evidence assessment survive, evidence is public HTTP(S) candidate evidence bound to the same hypothesis, and every embedded object validates against the repository schemas. The handoff validator reuses the same public-payload safety policy as `scripts/validate-public-safety.js`, so prohibited public field names and high-confidence credential material are rejected before staging. It also reuses the repository's evidence-binding identity rules before any filesystem path is constructed. After deterministic rendering, the repository-level public-safety scan runs again before the transaction reports success.
 
 The handoff envelope itself is not persisted into this public repository. Private/source routing remains source-owned. Existing hypothesis IDs cannot be autonomously overwritten by this transaction; revisions, supersession and replacement remain separate governed operations. After staging a new candidate, the script reuses the existing renderer and validators before reporting success. A Git branch or pull request must still be created through the normal bounded review path, and merge remains outside autonomous authority.
 
@@ -106,6 +106,8 @@ CI must fail if generated outputs are stale.
 ## Evidence-binding governance
 
 Every file in `evidence-bindings/*.json` must validate against `schemas/evidence-binding.schema.json`. A binding means there is a governed relationship between a public source and a hypothesis. It does not mean the evidence is accepted, clinically sufficient or patient-actionable.
+
+Evidence IDs are also canonical path components, so they must be stable single-segment identifiers rather than arbitrary source strings. `PMID-<digits>` must agree with the binding's `pmid` field and resolve the same PubMed record. DOI-backed IDs use `DOI-` followed by `encodeURIComponent(doi)`, which keeps DOI slashes percent-encoded instead of treating them as filesystem separators. `scripts/lib/evidence-binding-integrity.js` is the shared transaction/repository integrity rule; the handoff and committed-public-state validator both fail closed on inconsistent or path-unsafe identities. These checks establish identifier/path consistency only and do not establish scientific relevance, source quality, evidence acceptance or publication authority.
 
 ## Review outcomes
 
