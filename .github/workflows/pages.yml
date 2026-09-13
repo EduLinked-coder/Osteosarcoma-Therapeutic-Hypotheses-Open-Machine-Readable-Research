@@ -26,6 +26,10 @@ jobs:
         run: node scripts/test-publication-transaction.js
       - name: Validate governed research contributions
         run: node scripts/validate-contributions.js
+      - name: Test public payload safety validator
+        run: node scripts/test-public-safety.js
+      - name: Validate public payload safety
+        run: node scripts/validate-public-safety.js
       - name: Validate evidence relationship consistency
         run: node scripts/validate-evidence-relationship-consistency.js
       - name: Validate canonical hypothesis schema
