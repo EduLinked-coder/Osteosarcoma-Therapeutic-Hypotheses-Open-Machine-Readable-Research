@@ -23,7 +23,7 @@ if (!fs.existsSync(searchPath)) {
     'updateDate < controls.updatedSince.value',
     'updateDate > controls.updatedBefore.value',
     'They do not imply that literature searches are complete through that date.',
-    'Research priority only'
+    'not medical advice, treatment recommendations, dosing instructions or claims of patient benefit'
   ];
 
   for (const fragment of requiredFragments) {
