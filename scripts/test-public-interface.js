@@ -4,6 +4,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const validator = path.join(__dirname, 'validate-public-interface.js');
+const siteBase = 'https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/';
 let failed = false;
 
 const fail = (message) => {
@@ -17,7 +18,12 @@ const validHtml = ({ href = 'data.json', img = '<img src="figure.png" alt="Decor
 <body><main><h1>Fixture</h1><a href="${href}">Data</a>${img}${extra}</main></body>
 </html>`;
 
-const runFixture = (name, html, shouldPass, extraFiles = { 'data.json': '{}\n' }) => {
+const validDiscoveryFiles = () => ({
+  'robots.txt': `User-agent: *\nAllow: /\n\nSitemap: ${siteBase}sitemap.xml\n`,
+  'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${siteBase}</loc></url>\n</urlset>\n`
+});
+
+const runFixture = (name, html, shouldPass, extraFiles = { 'data.json': '{}\n' }, discovery = false) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-interface-'));
   try {
     fs.writeFileSync(path.join(dir, 'index.html'), html);
@@ -26,7 +32,9 @@ const runFixture = (name, html, shouldPass, extraFiles = { 'data.json': '{}\n' }
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, content);
     }
-    const result = spawnSync(process.execPath, [validator, '--root', dir], { encoding: 'utf8' });
+    const validatorArgs = [validator, '--root', dir];
+    if (discovery) validatorArgs.push('--discovery');
+    const result = spawnSync(process.execPath, validatorArgs, { encoding: 'utf8' });
     const passed = result.status === 0;
     if (passed !== shouldPass) {
       fail(name + ' expected ' + (shouldPass ? 'success' : 'failure') + ' but got exit ' + result.status + '. Output: ' + result.stdout + result.stderr);
@@ -44,8 +52,64 @@ runFixture('positive tabindex', validHtml({ extra: '<button tabindex="2">Unsafe 
 runFixture('unsafe new window', validHtml({ extra: '<a href="https://example.org" target="_blank">External</a>' }), false);
 runFixture('safe new window', validHtml({ extra: '<a href="https://example.org" target="_blank" rel="noopener noreferrer">External</a>' }), true);
 
+runFixture(
+  'valid robots and sitemap discovery contract',
+  validHtml(),
+  true,
+  { 'data.json': '{}\n', ...validDiscoveryFiles() },
+  true
+);
+
+runFixture(
+  'noncanonical robots sitemap directive',
+  validHtml(),
+  false,
+  {
+    'data.json': '{}\n',
+    ...validDiscoveryFiles(),
+    'robots.txt': 'User-agent: *\nAllow: /\n\nSitemap: https://example.org/sitemap.xml\n'
+  },
+  true
+);
+
+runFixture(
+  'sitemap external location',
+  validHtml(),
+  false,
+  {
+    'data.json': '{}\n',
+    ...validDiscoveryFiles(),
+    'sitemap.xml': '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.org/</loc></url></urlset>\n'
+  },
+  true
+);
+
+runFixture(
+  'sitemap missing local target',
+  validHtml(),
+  false,
+  {
+    'data.json': '{}\n',
+    ...validDiscoveryFiles(),
+    'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${siteBase}missing/</loc></url></urlset>\n`
+  },
+  true
+);
+
+runFixture(
+  'sitemap duplicate location',
+  validHtml(),
+  false,
+  {
+    'data.json': '{}\n',
+    ...validDiscoveryFiles(),
+    'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${siteBase}</loc></url><url><loc>${siteBase}</loc></url></urlset>\n`
+  },
+  true
+);
+
 if (failed) {
   process.exitCode = 1;
 } else {
-  console.log('Public interface fail-closed fixture tests passed.');
+  console.log('Public interface and discovery fail-closed fixture tests passed.');
 }
