@@ -26,12 +26,30 @@ jobs:
         run: node scripts/test-publication-transaction.js
       - name: Validate governed research contributions
         run: node scripts/validate-contributions.js
+      - name: Test living evidence validator fail-closed cases
+        run: node scripts/test-evidence-events.js
+      - name: Validate living evidence history
+        run: node scripts/validate-evidence-events.js
+      - name: Test lifecycle binding validator fail-closed cases
+        run: node scripts/test-lifecycle-bindings.js
+      - name: Validate lifecycle and supersession bindings
+        run: node scripts/validate-lifecycle-bindings.js
+      - name: Check living research activity
+        run: node scripts/render-research-activity.js --check
+      - name: Validate canonical search contract
+        run: node scripts/validate-search.js
       - name: Validate evidence relationship consistency
         run: node scripts/validate-evidence-relationship-consistency.js
       - name: Validate canonical hypothesis schema
         run: node scripts/validate-schema.js
       - name: Check generated public projections
         run: node scripts/render-public-research.js --check
+      - name: Test public interface validator fail-closed cases
+        run: node scripts/test-public-interface.js
+      - name: Validate public HTML accessibility and local links
+        run: node scripts/validate-public-interface.js
+      - name: Check structured research metadata
+        run: node scripts/render-structured-metadata.js --check
       - name: Check contract manifest entry point
         run: node scripts/render-machine-manifest.js --check
       - name: Validate public research boundary

@@ -27,6 +27,13 @@
     "index": "indexes/hypotheses.json",
     "evidence_bindings": "evidence-bindings/{evidence_id}.json",
     "evidence_binding_schema": "schemas/evidence-binding.schema.json",
+    "evidence_events": "evidence-events/{OS-EVENT-####}.json",
+    "evidence_event_schema": "schemas/evidence-change-event.schema.json",
+    "evidence_event_index": "indexes/evidence-events.json",
+    "research_activity": "activity/",
+    "living_evidence_lifecycle": "docs/living-evidence-lifecycle.md",
+    "structured_metadata": "structured-data/hypotheses.jsonld",
+    "structured_metadata_contract": "docs/structured-metadata.md",
     "search": "search/",
     "contributions": "contributions/{OS-CONTRIB-####}.json",
     "contribution_schema": "schemas/research-contribution.schema.json",
@@ -42,6 +49,7 @@
   },
   "identifier_convention": "OS-TH-####",
   "contribution_identifier_convention": "OS-CONTRIB-####",
+  "evidence_event_identifier_convention": "OS-EVENT-####",
   "evidence_model": "Evidence bindings classify public sources as SUPPORTS, CONTRADICTS, LIMITS, CONTEXTUALISES, FAILED_REPLICATION or SUCCESSOR_CONTEXT and preserve uncertainty, maturity, acceptance state and provenance.",
   "lifecycle_model": [
     "PUBLIC_RESEARCH_CANDIDATE",
@@ -58,7 +66,18 @@
     "ACCEPTED",
     "REJECTED"
   ],
-  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, contribution governance, generated-output freshness, schemas and public research boundaries before deployment.",
+  "living_evidence_event_model": [
+    "EVIDENCE_ADDED",
+    "EVIDENCE_RELATIONSHIP_CHANGED",
+    "REPLICATION_STATUS_CHANGED",
+    "EVIDENCE_SUPERSEDED",
+    "EVIDENCE_REJECTED",
+    "SOURCE_RETRACTION_RECORDED",
+    "HYPOTHESIS_REVISION_RECORDED",
+    "SUPERSESSION_RECORDED",
+    "WITHDRAWAL_RECORDED"
+  ],
+  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; append-only evidence change history is checked by scripts/validate-evidence-events.js; living-research activity is deterministically rendered through scripts/render-research-activity.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; deterministic Schema.org JSON-LD is rendered through scripts/render-structured-metadata.js; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, contribution governance, evidence-history integrity, research-activity freshness, generated-output freshness, structured metadata freshness, schemas and public research boundaries before deployment.",
   "publication_status_semantics": {
     "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
@@ -89,6 +108,38 @@
     "clinical_use_authority_transferred": false,
     "patient_or_private_material_allowed": false
   },
+  "living_evidence_boundary": {
+    "append_only_history_required": true,
+    "canonical_hypothesis_remains_current_projection": true,
+    "event_is_independent_scientific_authority": false,
+    "event_may_reference_only_existing_public_evidence_bindings": true,
+    "terminal_event_must_match_current_canonical_object": true,
+    "event_history_must_be_single_connected_chain": true,
+    "evidence_stage_preserved_in_history": true,
+    "ranking_status_and_score_preserved_in_history": true,
+    "protected_lifecycle_change_requires_attributable_human_decision": true,
+    "historical_event_rewrite_or_id_reuse_allowed": false,
+    "publication_authority_transferred": false,
+    "clinical_use_authority_transferred": false
+  },
+  "research_activity_boundary": {
+    "source_of_truth": "canonical hypothesis.json objects and append-only public evidence events",
+    "human_projection": "activity/",
+    "machine_projection": "indexes/evidence-events.json",
+    "absence_of_recorded_event_means_no_new_literature": false,
+    "scientific_record_created_by_projection": false,
+    "clinical_use_authority_transferred": false,
+    "publication_authority_transferred": false
+  },
+  "structured_metadata_boundary": {
+    "source_of_truth": "canonical hypothesis.json objects and existing public evidence bindings",
+    "schema_org_context": "https://schema.org",
+    "scientific_record_created_by_projection": false,
+    "external_indexing_or_certification_claimed": false,
+    "private_source_topology_allowed": false,
+    "clinical_use_authority_transferred": false,
+    "publication_authority_transferred": false
+  },
   "accessibility_projection_boundary": {
     "source_of_truth": "canonical hypothesis.json object",
     "separate_scientific_record_allowed": false,
@@ -104,11 +155,17 @@
     "manifest.json",
     "repository-manifest.json",
     "indexes/hypotheses.json",
+    "indexes/evidence-events.json",
+    "structured-data/hypotheses.jsonld",
     "schemas/therapeutic-hypothesis.schema.json",
     "schemas/evidence-binding.schema.json",
+    "schemas/evidence-change-event.schema.json",
     "schemas/research-contribution.schema.json",
     "scripts/publication-transaction.js",
     "scripts/validate-contributions.js",
+    "scripts/validate-evidence-events.js",
+    "scripts/render-research-activity.js",
+    "scripts/render-structured-metadata.js",
     "hypotheses/OS-TH-0001/hypothesis.json",
     "evidence-bindings/PMID-42574989.json",
     "evidence-bindings/PMID-42577778.json",
@@ -122,11 +179,15 @@
     "index.html",
     "README.md",
     "search/",
+    "activity/",
     "docs/quickstart/",
     "evidence/",
     "evidence/index.html",
+    "evidence-events/README.md",
     "hypotheses/{OS-TH-####}/easy-read/",
     "docs/accessibility-projection.md",
+    "docs/living-evidence-lifecycle.md",
+    "docs/structured-metadata.md",
     "docs/quickstart/index.html",
     "docs/quickstart.md",
     "docs/publication-lifecycle.md",
@@ -147,5 +208,18 @@
       "indexes/hypotheses.json",
       "sitemap.xml"
     ]
+  },
+  "research_activity_projection": {
+    "generated_by": "scripts/render-research-activity.js",
+    "check_command": "node scripts/render-research-activity.js --check",
+    "paths": [
+      "activity/index.html",
+      "indexes/evidence-events.json"
+    ]
+  },
+  "structured_metadata_projection": {
+    "generated_by": "scripts/render-structured-metadata.js",
+    "check_command": "node scripts/render-structured-metadata.js --check",
+    "path": "structured-data/hypotheses.jsonld"
   }
 }

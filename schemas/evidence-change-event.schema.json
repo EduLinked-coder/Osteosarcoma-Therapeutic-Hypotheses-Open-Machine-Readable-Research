@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/schemas/evidence-change-event.schema.json",
+  "title": "Osteosarcoma Public Evidence Change Event",
+  "description": "Append-only public record of an evidence change and its governed effect assessment for a therapeutic hypothesis. An event does not itself grant scientific, publication or clinical authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_schema_version",
+    "event_id",
+    "hypothesis_id",
+    "event_type",
+    "recorded_at",
+    "evidence_ids",
+    "change_summary",
+    "previous_event_id",
+    "hypothesis_state_before",
+    "hypothesis_state_after",
+    "impact_assessment",
+    "scientific_decision",
+    "provenance",
+    "append_only",
+    "publication_authority_transferred",
+    "clinical_use"
+  ],
+  "properties": {
+    "event_schema_version": {"const": "1.0.0"},
+    "event_id": {"type": "string", "pattern": "^OS-EVENT-[0-9]{4}$"},
+    "hypothesis_id": {"type": "string", "pattern": "^OS-TH-[0-9]{4}$"},
+    "event_type": {
+      "enum": [
+        "EVIDENCE_ADDED",
+        "EVIDENCE_RELATIONSHIP_CHANGED",
+        "REPLICATION_STATUS_CHANGED",
+        "EVIDENCE_SUPERSEDED",
+        "EVIDENCE_REJECTED",
+        "SOURCE_RETRACTION_RECORDED",
+        "HYPOTHESIS_REVISION_RECORDED",
+        "SUPERSESSION_RECORDED",
+        "WITHDRAWAL_RECORDED"
+      ]
+    },
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^(PMID-[0-9]+|DOI-.+|SOURCE-[A-Z0-9-]+)$"}
+    },
+    "change_summary": {"type": "string", "minLength": 20},
+    "previous_event_id": {"type": ["string", "null"], "pattern": "^OS-EVENT-[0-9]{4}$"},
+    "hypothesis_state_before": {"$ref": "#/$defs/hypothesisState"},
+    "hypothesis_state_after": {"$ref": "#/$defs/hypothesisState"},
+    "impact_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ranking_recalculation_required",
+        "uncertainty_review_required",
+        "review_state_review_required",
+        "supersession_review_required",
+        "withdrawal_review_required",
+        "reason"
+      ],
+      "properties": {
+        "ranking_recalculation_required": {"type": "boolean"},
+        "uncertainty_review_required": {"type": "boolean"},
+        "review_state_review_required": {"type": "boolean"},
+        "supersession_review_required": {"type": "boolean"},
+        "withdrawal_review_required": {"type": "boolean"},
+        "reason": {"type": "string", "minLength": 20}
+      }
+    },
+    "scientific_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "authority_reference", "decision_summary"],
+      "properties": {
+        "status": {"enum": ["NOT_REQUIRED", "PENDING_HUMAN_REVIEW", "RECORDED_HUMAN_DECISION"]},
+        "authority_reference": {"type": ["string", "null"]},
+        "decision_summary": {"type": "string", "minLength": 10}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recorded_from", "source_refs", "recorded_by"],
+      "properties": {
+        "recorded_from": {"enum": ["public-evidence-binding", "governed-contribution", "scientific-review", "repository-maintenance"]},
+        "source_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 3}},
+        "recorded_by": {"type": "string", "minLength": 3},
+        "pull_request_url": {"type": "string", "format": "uri"},
+        "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "append_only": {"const": true},
+    "publication_authority_transferred": {"const": false},
+    "clinical_use": {"const": false}
+  },
+  "$defs": {
+    "hypothesisState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_object_sha256",
+        "canonical_object_updated_at",
+        "evidence_stage",
+        "review_state",
+        "publication_class",
+        "uncertainty_level",
+        "ranking_status",
+        "ranking_score",
+        "supersession_status"
+      ],
+      "properties": {
+        "canonical_object_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "canonical_object_updated_at": {"type": "string", "format": "date-time"},
+        "evidence_stage": {"enum": ["computational", "replicated-evidence", "preclinical", "clinical-investigation", "clinically-validated", "mixed"]},
+        "review_state": {"enum": ["machine-generated", "human-review-required", "reviewed", "revision-required", "withdrawn"]},
+        "publication_class": {"enum": ["public-research-candidate", "reviewed-public-hypothesis", "superseded", "withdrawn"]},
+        "uncertainty_level": {"enum": ["low", "moderate", "high", "very-high"]},
+        "ranking_status": {"enum": ["ranked", "pending-recalculation", "not-ranked"]},
+        "ranking_score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "supersession_status": {"enum": ["current", "superseded", "withdrawn"]}
+      }
+    }
+  }
+}
