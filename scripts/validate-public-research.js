@@ -132,6 +132,24 @@ for (const entry of index.hypotheses) {
     if (binding.provenance.binding_generated_for !== entry.hypothesis_id) fail(bindingPath + ' provenance does not bind to ' + entry.hypothesis_id + '.');
   }
 
+  const mechanismEvidenceRefs = [...new Set((h.mechanism?.relationships || [])
+    .flatMap((relationship) => relationship.evidence_refs || [])
+    .filter(Boolean))];
+  for (const evidenceId of mechanismEvidenceRefs) {
+    if (!isPathSafeEvidenceId(evidenceId)) {
+      fail(entry.hypothesis_id + ' mechanism references an unsafe evidence_id path segment: ' + evidenceId);
+      continue;
+    }
+    const bindingPath = 'evidence-bindings/' + evidenceId + '.json';
+    if (!fs.existsSync(path.join(root, bindingPath))) {
+      fail(entry.hypothesis_id + ' mechanism references missing evidence binding: ' + bindingPath);
+      continue;
+    }
+    const binding = readJson(bindingPath);
+    if (binding.evidence_id !== evidenceId) fail(bindingPath + ' evidence_id mismatch for mechanism reference.');
+    if (binding.provenance.binding_generated_for !== entry.hypothesis_id) fail(bindingPath + ' mechanism evidence provenance does not bind to ' + entry.hypothesis_id + '.');
+  }
+
   const htmlPath = 'hypotheses/' + entry.hypothesis_id + '/index.html';
   if (!fs.existsSync(path.join(root, htmlPath))) fail('Missing human projection: ' + htmlPath);
   const html = readText(htmlPath);
