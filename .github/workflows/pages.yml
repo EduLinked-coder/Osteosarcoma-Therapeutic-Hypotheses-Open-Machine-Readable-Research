@@ -32,6 +32,8 @@ jobs:
         run: node scripts/validate-schema.js
       - name: Check generated public projections
         run: node scripts/render-public-research.js --check
+      - name: Check structured research metadata
+        run: node scripts/render-structured-metadata.js --check
       - name: Validate public research boundary
         run: node scripts/validate-public-research.js
 
