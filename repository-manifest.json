@@ -14,6 +14,7 @@
   "canonical_object_locations": {
     "hypotheses": "hypotheses/{OS-TH-####}/hypothesis.json",
     "human_pages": "hypotheses/{OS-TH-####}/index.html",
+    "easy_read_pages": "hypotheses/{OS-TH-####}/easy-read/index.html",
     "schema": "schemas/therapeutic-hypothesis.schema.json",
     "index": "indexes/hypotheses.json",
     "evidence_bindings": "evidence-bindings/{evidence_id}.json",
@@ -23,6 +24,7 @@
     "contribution_schema": "schemas/research-contribution.schema.json",
     "contribution_examples": "examples/contributions/*.example.json",
     "contribution_lifecycle": "docs/contribution-lifecycle.md",
+    "accessibility_projection": "docs/accessibility-projection.md",
     "quickstart": "docs/quickstart/",
     "quickstart_source": "docs/quickstart.md",
     "publication_lifecycle": "docs/publication-lifecycle.md",
@@ -48,7 +50,7 @@
     "ACCEPTED",
     "REJECTED"
   ],
-  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; canonical hypothesis objects are rendered through scripts/render-public-research.js and CI verifies transaction gates, contribution governance, generated-output freshness, schemas and public research boundaries before deployment.",
+  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; CI verifies transaction gates, contribution governance, generated-output freshness, schemas and public research boundaries before deployment.",
   "publication_status_semantics": {
     "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
@@ -79,6 +81,16 @@
     "clinical_use_authority_transferred": false,
     "patient_or_private_material_allowed": false
   },
+  "accessibility_projection_boundary": {
+    "source_of_truth": "canonical hypothesis.json object",
+    "separate_scientific_record_allowed": false,
+    "scientific_claims_may_be_added_by_projection": false,
+    "uncertainty_must_be_preserved": true,
+    "contradictory_evidence_state_must_be_preserved": true,
+    "review_state_must_be_preserved": true,
+    "clinical_use_boundary_must_be_preserved": true,
+    "independent_easy_read_certification_claimed": false
+  },
   "clinical_use": false,
   "machine_entry_points": [
     "repository-manifest.json",
@@ -104,6 +116,8 @@
     "docs/quickstart/",
     "evidence/",
     "evidence/index.html",
+    "hypotheses/{OS-TH-####}/easy-read/",
+    "docs/accessibility-projection.md",
     "docs/quickstart/index.html",
     "docs/quickstart.md",
     "docs/publication-lifecycle.md",
@@ -119,6 +133,7 @@
     "paths": [
       "index.html",
       "hypotheses/{OS-TH-####}/index.html",
+      "hypotheses/{OS-TH-####}/easy-read/index.html",
       "evidence/index.html",
       "indexes/hypotheses.json",
       "sitemap.xml"
