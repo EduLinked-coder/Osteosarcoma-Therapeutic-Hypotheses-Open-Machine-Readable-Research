@@ -38,6 +38,8 @@ Never publish patient names, patient-specific tumour characteristics, treatment 
 
 When uncertain whether material is public-safe, fail closed and create a review item instead of publishing it.
 
+The shared public-safety validator also fails closed on high-confidence patient-directed treatment instructions, patient-specific treatment recommendations, patient-directed dosing instructions and claims of individual patient benefit in structured public payloads. The same structured-payload rule is reused by candidate handoff validation and repository-wide public-safety validation. This deterministic guard is intentionally narrow: it does not determine scientific validity, replace human review, or treat contextual experimental dose reporting as patient guidance.
+
 ## Scientific Boundary
 
 Preserve scientific uncertainty, contradictory evidence, evidence maturity, validation requirements, provenance and review state. A high research-priority score means worth investigating, not likely to benefit a patient.
