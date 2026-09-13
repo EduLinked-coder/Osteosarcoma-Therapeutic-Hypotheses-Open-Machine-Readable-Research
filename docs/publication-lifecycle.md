@@ -52,6 +52,16 @@ The transaction fails closed unless the handoff digest is intact, the target sch
 
 The handoff envelope itself is not persisted into this public repository. Private/source routing remains source-owned. Existing hypothesis IDs cannot be autonomously overwritten by this transaction; revisions, supersession and replacement remain separate governed operations. After staging a new candidate, the script reuses the existing renderer and validators before reporting success. A Git branch or pull request must still be created through the normal bounded review path, and merge remains outside autonomous authority.
 
+## Executable public payload safety gate
+
+`scripts/validate-public-safety.js` adds a repository-level fail-closed check over public text and structured payload surfaces. It supplements schema and publication-boundary validation; it does not replace human privacy or publication review.
+
+The validator rejects prohibited public structured-field names associated with patient-identifying clinical data and credential material, including canonical application credential variable fields that must never be projected publicly. It also checks public text surfaces for high-confidence credential material such as private-key blocks and common access-key/token formats.
+
+The corresponding negative-fixture test is `scripts/test-public-safety.js`. CI runs both the fixture test and the live public-payload scan before deployment. The test uses synthetic strings only and grants no credential, disclosure, scientific or publication authority.
+
+The scanner is deliberately conservative: passing it means only that these bounded machine-detectable hazards were not found. It does **not** prove de-identification, consent, privacy compliance or public-release authority. If public safety is uncertain, fail closed and create a safety/privacy review item.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:
