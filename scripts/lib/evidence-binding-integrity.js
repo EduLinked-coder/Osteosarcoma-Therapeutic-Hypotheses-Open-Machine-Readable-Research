@@ -1,6 +1,6 @@
 'use strict';
 
-const SAFE_EVIDENCE_ID = /^(PMID-[0-9]+|DOI-[A-Za-z0-9._~%()!'-]+|SOURCE-[A-Z0-9-]+)$/;
+const SAFE_EVIDENCE_ID = /^(PMID-[0-9]+|DOI-[A-Za-z0-9._~%()!*'-]+|SOURCE-[A-Z0-9-]+)$/;
 
 function isPathSafeEvidenceId(value) {
   return typeof value === 'string' &&
@@ -19,7 +19,7 @@ function validateEvidenceBindingIdentity(binding, where = 'evidence binding') {
 
   const evidenceId = binding.evidence_id;
   if (!isPathSafeEvidenceId(evidenceId)) {
-    errors.push(where + '.evidence_id must be a path-safe stable identifier (PMID-<digits>, DOI-<percent-encoded-doi>, or SOURCE-<token>).');
+    errors.push(where + '.evidence_id must be a path-safe stable identifier (PMID-<digits>, DOI-<canonical-percent-encoded-doi>, or SOURCE-<token>).');
     return errors;
   }
 
@@ -44,16 +44,33 @@ function validateEvidenceBindingIdentity(binding, where = 'evidence binding') {
 
   if (evidenceId.startsWith('DOI-')) {
     const encodedDoi = evidenceId.slice('DOI-'.length);
-    let decodedDoi = null;
-    try {
-      decodedDoi = decodeURIComponent(encodedDoi);
-    } catch {
-      errors.push(where + '.evidence_id contains invalid percent-encoding for a DOI identifier.');
+    if (binding.source_type !== 'doi') {
+      errors.push(where + '.source_type must be doi when evidence_id uses DOI-.');
     }
+
     if (typeof binding.doi !== 'string' || !binding.doi.trim()) {
       errors.push(where + '.doi is required when evidence_id uses DOI-.');
-    } else if (decodedDoi !== null && decodedDoi.toLowerCase() !== binding.doi.trim().toLowerCase()) {
-      errors.push(where + '.doi must exactly match the percent-decoded DOI encoded in evidence_id.');
+    } else {
+      const canonicalDoi = binding.doi.trim().toLowerCase();
+      const expectedEncodedDoi = encodeURIComponent(canonicalDoi);
+      if (encodedDoi !== expectedEncodedDoi) {
+        errors.push(where + '.evidence_id must use DOI- followed by encodeURIComponent(lowercase doi) exactly.');
+      }
+
+      try {
+        const source = new URL(String(binding.canonical_source_url || ''));
+        let sourceDoi = '';
+        try {
+          sourceDoi = decodeURIComponent(source.pathname.replace(/^\/+/, '')).toLowerCase();
+        } catch {
+          errors.push(where + '.canonical_source_url contains invalid DOI percent-encoding.');
+        }
+        if (source.hostname.toLowerCase() !== 'doi.org' || sourceDoi !== canonicalDoi) {
+          errors.push(where + '.canonical_source_url must resolve the same DOI on doi.org.');
+        }
+      } catch {
+        errors.push(where + '.canonical_source_url must be a valid doi.org URL for the same DOI.');
+      }
     }
   }
 
