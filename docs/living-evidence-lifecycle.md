@@ -1,6 +1,6 @@
 # Living evidence lifecycle
 
-Published hypotheses in this repository are living research objects. New evidence must be able to change the evidence graph, uncertainty, ranking and review requirements without erasing how an earlier interpretation was reached.
+Published hypotheses in this repository are living research objects. New evidence must be able to change the evidence graph, evidence maturity, uncertainty, ranking and review requirements without erasing how an earlier interpretation was reached.
 
 This repository therefore uses an append-only evidence change ledger in `evidence-events/` alongside the existing canonical hypothesis objects and public evidence bindings.
 
@@ -22,19 +22,21 @@ A material public evidence change should follow this sequence:
 
 → `RANKING / UNCERTAINTY RECALCULATION WHERE REQUIRED`
 
-→ `REVIEW-STATE / SUPERSESSION / WITHDRAWAL EVALUATION WHERE REQUIRED`
+→ `EVIDENCE-MATURITY / REVIEW-STATE / SUPERSESSION / WITHDRAWAL EVALUATION WHERE REQUIRED`
 
 → `CANONICAL HYPOTHESIS REVISION`
 
 → `DETERMINISTIC PUBLIC PROJECTIONS`
 
-The event captures the hypothesis state before and after the recorded change. The terminal event for a hypothesis must match the current canonical object's digest and lifecycle fields, so the historical ledger cannot silently drift away from the published projection.
+The event captures the hypothesis state before and after the recorded change. That state includes the canonical-object digest, evidence stage, ranking status and score, uncertainty level, review/publication state and supersession state. The terminal event for a hypothesis must match the current canonical object's digest and lifecycle fields, so the historical ledger cannot silently drift away from the published projection.
 
 ## Protected decisions
 
-Ranking and uncertainty calculation may be machine-assisted where the repository's governed method allows it. Scientific publication state is different.
+Ranking and uncertainty calculation may be machine-assisted where the repository's governed method allows it. Evidence maturity and scientific publication state are different.
 
-Changes to `review_state`, `publication_class`, or `supersession_status` require an attributable human scientific decision in the event record. `SUPERSESSION_RECORDED` and `WITHDRAWAL_RECORDED` events also require that authority explicitly.
+Changes to `evidence_stage`, `review_state`, `publication_class`, or `supersession_status` require an attributable human scientific decision in the event record. `SUPERSESSION_RECORDED` and `WITHDRAWAL_RECORDED` events also require that authority explicitly.
+
+A change in ranking score or ranking status must remain visible in the before/after event state. Recording a ranking change does not convert research priority into expected patient benefit.
 
 No event may transfer publication authority or clinical-use authority.
 
@@ -49,7 +51,9 @@ For each hypothesis with event history:
 - there must be one root event;
 - events must remain inside that hypothesis's history;
 - there must be one terminal event;
-- the terminal event's `hypothesis_state_after` must match the current canonical hypothesis object.
+- every event must belong to the single connected terminal-to-root chain;
+- disconnected or cyclic event components are invalid;
+- the terminal event's `hypothesis_state_after` must match the current canonical hypothesis object, including evidence stage and ranking score.
 
 ## Evidence and provenance requirements
 
@@ -65,6 +69,7 @@ A new evidence event means that the evidence history changed and was recorded. I
 - a hypothesis became clinically validated;
 - a patient is likely to benefit;
 - a supersession or withdrawal is authorised unless an attributable human scientific decision is recorded;
+- evidence maturity may be promoted without scientific authority;
 - uncertainty may be discarded.
 
 Contradictory, limiting and failed-replication evidence remains first-class evidence throughout the lifecycle.
