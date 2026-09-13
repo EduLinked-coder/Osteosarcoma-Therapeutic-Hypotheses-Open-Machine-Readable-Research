@@ -22,6 +22,7 @@ Transitions are evidence gates, not automatic claims of efficacy.
 
 - Start with `docs/quickstart.md` for the human and machine entry points.
 - Browse current public hypotheses from the GitHub Pages site or `indexes/hypotheses.json`.
+- Use `structured-data/hypotheses.jsonld` for deterministic Schema.org JSON-LD discovery metadata derived from the same canonical public hypotheses.
 - Use `search/` to search and filter the portfolio by canonical-object fields such as mechanism/target text, evidence stage, publication/review state, uncertainty, novelty and ranking state.
 - Use `hypotheses/{OS-TH-####}/easy-read/` for the generated accessibility projection of the same canonical hypothesis object; see `docs/accessibility-projection.md` for its governance and limitations.
 - Use `.github/ISSUE_TEMPLATE/` to propose evidence, contradictions, failed replications, successor hypotheses or safety/privacy review.
@@ -32,6 +33,7 @@ Transitions are evidence gates, not automatic claims of efficacy.
 
 - `repository-manifest.json` — repository identity and discovery contract
 - `AGENTS.md` — instructions for AI/research agents
+- `structured-data/hypotheses.jsonld` — deterministic Schema.org JSON-LD collection projection
 - `schemas/therapeutic-hypothesis.schema.json` — hypothesis object schema
 - `schemas/evidence-binding.schema.json` — evidence binding schema
 - `schemas/evidence-change-event.schema.json` — append-only evidence change event schema
@@ -40,6 +42,7 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - `evidence-bindings/` — public evidence bindings used by hypothesis objects
 - `evidence-events/` — append-only public evidence change history
 - `examples/evidence-bindings/` — copyable candidate evidence-binding examples
+- `docs/structured-metadata.md` — JSON-LD projection semantics and limits
 - `docs/living-evidence-lifecycle.md` — evidence-change, revision, supersession and withdrawal history contract
 - `docs/accessibility-projection.md` — accessibility projection contract and Easy Read boundary
 - `docs/publication-lifecycle.md` — fail-closed publication authority and safety rules
@@ -49,6 +52,10 @@ Transitions are evidence gates, not automatic claims of efficacy.
 New supporting, contradictory, limiting, replication or retraction information must not silently overwrite the history of a hypothesis. Material evidence changes are recorded as stable `OS-EVENT-####` objects that bind existing public evidence IDs to the hypothesis state before and after the change.
 
 The canonical `hypothesis.json` remains the current research projection. The event ledger preserves how ranking, uncertainty, review requirements, supersession or withdrawal decisions evolved. Protected scientific/publication lifecycle changes require an attributable human scientific decision; an event never transfers publication authority or clinical-use authority.
+
+## Structured metadata
+
+The JSON-LD projection is generated from canonical public hypotheses and existing public evidence bindings. It uses conservative Schema.org `CreativeWork` semantics and preserves evidence stage, review requirement, uncertainty, contradictory-evidence status, research-priority meaning and `clinicalUse:false` as machine-readable properties. It does not create a second scientific record or claim external indexing, certification, peer review or clinical validation.
 
 ## First publication cycle
 
