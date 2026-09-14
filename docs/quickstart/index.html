@@ -36,6 +36,7 @@ pre{overflow:auto;background:#172033;color:#fff;padding:1rem;border-radius:.75re
     <div>
       <a class="button primary" href="../../#hypotheses">Browse hypotheses</a>
       <a class="button" href="../../search/">Search and filter</a>
+      <a class="button" href="../../review/">Protected review state</a>
       <a class="button" href="../../repository-manifest.json">Machine manifest</a>
       <a class="button" href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new/choose">Contribute evidence</a>
     </div>
@@ -52,10 +53,11 @@ pre{overflow:auto;background:#172033;color:#fff;padding:1rem;border-radius:.75re
         <tr><td>Search/filter hypotheses</td><td><a href="../../search/">Open canonical-object search</a></td><td>Follow <code>canonical_object_path</code> values from <code>indexes/hypotheses.json</code></td></tr>
         <tr><td>Inspect the current object</td><td><a href="../../hypotheses/OS-TH-0001/">Open OS-TH-0001</a></td><td><code>hypotheses/OS-TH-0001/hypothesis.json</code></td></tr>
         <tr><td>Check evidence bindings</td><td><a href="../../evidence-bindings/PMID-42574989.json">Open a binding</a></td><td><code>schemas/evidence-binding.schema.json</code></td></tr>
+        <tr><td>Inspect unresolved scientific interpretation differences</td><td><a href="../../review/">Open protected review state</a></td><td><code>governance/evidence-relationship-review-exceptions.json</code></td></tr>
         <tr><td>Propose new evidence</td><td><a href="https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/new/choose">Use issue templates</a></td><td><code>examples/evidence-bindings/*.example.json</code></td></tr>
       </tbody>
     </table>
-    <p>The search page derives its filters from the generated hypothesis index and canonical hypothesis JSON. It does not maintain a separate scientific record.</p>
+    <p>The search page derives its filters from the generated hypothesis index and canonical hypothesis JSON. It does not maintain a separate scientific record. The protected review page likewise reads the governed review-exception register rather than copying unresolved relationship interpretations into another store.</p>
   </section>
 
   <section>
@@ -70,7 +72,7 @@ pre{overflow:auto;background:#172033;color:#fff;padding:1rem;border-radius:.75re
 
   <section>
     <h2>For agents</h2>
-    <p>Read <code>repository-manifest.json</code> first, then follow the index to canonical hypothesis JSON, evidence bindings, schemas and examples. Generated pages, indexes and sitemap must stay renderer-owned.</p>
+    <p>Read <code>repository-manifest.json</code> first, then follow the index to canonical hypothesis JSON, evidence bindings, schemas and examples. Read <code>governance/evidence-relationship-review-exceptions.json</code> before attempting to normalise a known relationship mismatch: a registered exception is an unresolved human scientific-review state, not permission to choose an interpretation. Generated pages, indexes and sitemap must stay renderer-owned.</p>
     <pre><code>node scripts/validate-schema.js
 node scripts/render-public-research.js --check
 node scripts/validate-public-research.js</code></pre>
