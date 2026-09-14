@@ -68,7 +68,7 @@ function buildPullRequestBody(hypothesisId) {
   return [
     '## Candidate public research projection',
     '',
-    'This draft pull request stages `' + hypothesisId + '` through the repository\'s existing fail-closed public handoff and deterministic projection transaction.',
+    'This pull request stages `' + hypothesisId + '` through the repository\'s existing fail-closed public handoff and deterministic projection transaction.',
     '',
     '### Authority boundary',
     '',
@@ -76,7 +76,7 @@ function buildPullRequestBody(hypothesisId) {
     '- `clinical_use:false` remains mandatory;',
     '- research priority is not expected patient benefit;',
     '- the private/source handoff envelope is not committed or copied into this public repository;',
-    '- this draft PR grants no evidence acceptance, disclosure, clinical, merge or publication authority.',
+    '- this review PR grants no evidence acceptance, disclosure, clinical, merge or publication authority.',
     '',
     '### Review',
     '',
@@ -95,7 +95,7 @@ function buildReviewPlan(envelope) {
     title: 'Candidate public research hypothesis ' + hypothesisId,
     body: buildPullRequestBody(hypothesisId),
     evidence_binding_count: bindings.length,
-    draft: true,
+    draft: false,
     merge_performed: false,
     publication_authority_granted: false
   };
@@ -104,7 +104,6 @@ function buildReviewPlan(envelope) {
 function buildPullRequestArgs(plan) {
   return [
     'pr', 'create',
-    '--draft',
     '--base', plan.base,
     '--head', plan.branch,
     '--title', plan.title,
@@ -179,7 +178,7 @@ function cleanupUncommittedCandidate(baseSha, branch, result) {
   }
 }
 
-function openDraftPullRequest(envelope) {
+function openPullRequest(envelope) {
   const plan = buildReviewPlan(envelope);
   const baseSha = prepareCleanMain();
   assertBranchAvailable(plan.branch);
@@ -214,14 +213,16 @@ function openDraftPullRequest(envelope) {
       reused_evidence_ids: result.reused_evidence_ids
     };
   } catch (error) {
-    if (!committed && result) cleanupUncommittedCandidate(baseSha, plan.branch, result);
+    if (!committed) {
+      cleanupUncommittedCandidate(baseSha, plan.branch, result || { hypothesis_id: plan.hypothesis_id, new_evidence_ids: [] });
+    }
     throw error;
   }
 }
 
 function cli() {
   const [mode, envelopePath] = process.argv.slice(2);
-  requireGate(['--plan', '--open-draft-pr'].includes(mode) && envelopePath, 'usage: node scripts/publication-review.js --plan|--open-draft-pr <public-safe-handoff.json>');
+  requireGate(['--plan', '--open-pr'].includes(mode) && envelopePath, 'usage: node scripts/publication-review.js --plan|--open-pr <public-safe-handoff.json>');
   const envelope = readJson(envelopePath);
 
   if (mode === '--plan') {
@@ -232,15 +233,15 @@ function cli() {
       base: plan.base,
       title: plan.title,
       evidence_binding_count: plan.evidence_binding_count,
-      draft: true,
+      draft: false,
       merge_performed: false,
       publication_authority_granted: false
     }, null, 2));
     return;
   }
 
-  const result = openDraftPullRequest(envelope);
-  console.log('Opened bounded draft publication review for ' + result.hypothesis_id + '. No merge or publication approval was performed.');
+  const result = openPullRequest(envelope);
+  console.log('Opened bounded publication review for ' + result.hypothesis_id + '. No merge or publication approval was performed.');
   console.log(JSON.stringify(result, null, 2));
 }
 
@@ -264,5 +265,5 @@ module.exports = {
   parseStatusPaths,
   assertAllowedChangedPaths,
   sanitizeOperationalMessage,
-  openDraftPullRequest
+  openPullRequest
 };
