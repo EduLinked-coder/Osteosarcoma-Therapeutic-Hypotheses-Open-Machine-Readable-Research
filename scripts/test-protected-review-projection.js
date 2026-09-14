@@ -71,7 +71,7 @@ expectFailure('README protected-review route removed', (fixture) => {
 });
 
 expectFailure('README attributable-decision boundary removed', (fixture) => {
-  fixture.readme = fixture.readme.replace('attributable human scientific decision', 'automated normalisation');
+  fixture.readme = fixture.readme.split('attributable human scientific decision').join('automated normalisation');
 });
 
 console.log('Protected scientific-review projection fail-closed fixtures passed.');
