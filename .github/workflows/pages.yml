@@ -38,6 +38,8 @@ jobs:
         run: node scripts/test-evidence-context.js
       - name: Validate evidence context completeness
         run: node scripts/validate-evidence-context.js
+      - name: Test evidence acceptance-state schema boundary
+        run: node scripts/test-evidence-acceptance-state.js
       - name: Test living evidence validator fail-closed cases
         run: node scripts/test-evidence-events.js
       - name: Validate living evidence history
