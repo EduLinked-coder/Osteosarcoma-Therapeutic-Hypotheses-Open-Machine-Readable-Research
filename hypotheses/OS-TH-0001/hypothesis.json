@@ -16,6 +16,8 @@
     {"name":"transendothelial migration","kind":"process","role":"candidate metastatic process"},
     {"name":"bone/pulmonary immune niche","kind":"microenvironment","role":"candidate suppressive microenvironmental layer"}
   ],
+  "disease_context": {"disease":"osteosarcoma","status":"specified","context":"metastatic osteosarcoma"},
+  "research_classification": "therapeutic-hypothesis",
   "evidence_stage": "preclinical",
   "supporting_evidence": [
     {"evidence_id":"PMID-42574989","citation":"Formononetin Antagonizes Osteosarcoma Metastasis by Targeting CD44: An Integrated Multi-Omics Study","pmid":"42574989","doi":"10.1016/j.phymed.2026.158612","evidence_type":"multi-omics","relationship":"supports","finding":"The study links CD44 with an osteosarcoma metastatic phenotype and reports experimental attenuation of that phenotype in preclinical models.","source_url":"https://pubmed.ncbi.nlm.nih.gov/42574989/"},
@@ -41,11 +43,13 @@
     "score": null,
     "scale": "0-100 research-priority score",
     "meaning": "Research priority only; never expected patient benefit.",
+    "explanation": "No numeric research-priority score is assigned while ranking is pending recalculation; this state does not imply expected patient benefit.",
     "components": {"independent_evidence":null,"mechanistic_coherence":null,"replication":null,"translational_relevance":null,"osteosarcoma_specificity":null,"novelty":null,"testability":null,"uncertainty_quality":null}
   },
   "novelty": {
     "status": "unverified",
-    "assessment": "The combination was generated as a cross-mechanism research hypothesis. An exhaustive prior-art and literature search for the exact combination has not yet established novelty."
+    "assessment": "The combination was generated as a cross-mechanism research hypothesis. An exhaustive prior-art and literature search for the exact combination has not yet established novelty.",
+    "confidence": "unverified"
   },
   "falsifiability": {
     "falsification_conditions": [
@@ -80,5 +84,6 @@
     "review_note": "Public candidate for transparent research inspection; not yet classified as a scientifically reviewed public hypothesis."
   },
   "supersession": {"status":"current","successor_id":null,"reason":null},
+  "accessibility": {"plain_language_summary":"canonical","easy_read_projection":"hypotheses/OS-TH-0001/easy-read/","projection_status":"generated","meaning":"Accessibility projections derive from the canonical hypothesis object and do not add scientific facts or claim independent certification."},
   "clinical_use": false
 }
