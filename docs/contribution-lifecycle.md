@@ -73,11 +73,12 @@ Every public contribution object must:
 - preserve contributor provenance without requiring private contact data;
 - keep `clinical_use:false`;
 - retain `scientific_review_required:true`;
+- retain the canonical `acceptance_meaning` statement that repository review state does not establish clinical benefit, treatment guidance or patient-specific applicability;
 - use public HTTP(S) source references where source references are supplied;
 - avoid patient information, private clinical context, credentials, secrets and restricted research;
 - require an attributable `decision_reference` and `reviewed_at` timestamp for `ACCEPTED` or `REJECTED` state.
 
-The contribution validator also fails closed on common prohibited public fields and duplicate contribution identifiers.
+The contribution validator fails closed if the canonical schema stops requiring the governed `acceptance_meaning`, if its fixed meaning changes, if an object omits or changes that meaning, or if common prohibited public fields or duplicate contribution identifiers appear. The focused acceptance-boundary fixture is also available for direct regression testing.
 
 ## Contribution type is not acceptance
 
@@ -99,9 +100,10 @@ A contribution must not bypass the canonical evidence-binding schema, hypothesis
 Run:
 
 ```sh
+node scripts/test-contribution-acceptance-boundary.js
 node scripts/validate-contributions.js
 node scripts/test-contribution-intake.js
 node scripts/validate-contribution-intake.js
 ```
 
-CI runs these alongside the existing publication-transaction, schema, projection-freshness and public-boundary checks.
+CI runs `validate-contributions.js`, which enforces the acceptance-boundary schema contract and object value, alongside the existing publication-transaction, intake, schema, projection-freshness and public-boundary checks. The focused fixture can be run directly when changing contribution acceptance semantics.

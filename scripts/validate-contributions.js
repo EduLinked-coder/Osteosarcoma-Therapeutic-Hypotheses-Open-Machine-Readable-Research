@@ -8,6 +8,7 @@ const root = process.cwd();
 const schema = JSON.parse(fs.readFileSync(path.join(root, 'schemas/research-contribution.schema.json'), 'utf8'));
 const idPattern = /^OS-CONTRIB-[0-9]{4}$/;
 const finalStates = new Set(['ACCEPTED', 'REJECTED']);
+const expectedAcceptanceMeaning = 'Contribution state records repository review only; it does not establish clinical benefit, treatment guidance or patient-specific applicability.';
 const prohibitedKeys = new Set([
   'patient_name', 'patient_id', 'medical_record', 'medical_records', 'treatment_history',
   'clinical_notes', 'date_of_birth', 'dob', 'credential', 'credentials', 'token',
@@ -19,6 +20,15 @@ const seen = new Set();
 function fail(message) {
   console.error('CONTRIBUTION VALIDATION FAILED: ' + message);
   failed = true;
+}
+
+function validateAcceptanceBoundaryContract() {
+  if (!Array.isArray(schema.required) || !schema.required.includes('acceptance_meaning')) {
+    fail('Canonical contribution schema must require acceptance_meaning.');
+  }
+  if (schema.properties?.acceptance_meaning?.const !== expectedAcceptanceMeaning) {
+    fail('Canonical contribution schema must preserve the governed acceptance_meaning statement exactly.');
+  }
 }
 
 function scan(value, pointer) {
@@ -52,6 +62,9 @@ function validateFile(relativePath) {
   if (seen.has(object.contribution_id)) fail(relativePath + ' duplicates contribution_id ' + object.contribution_id + '.');
   seen.add(object.contribution_id);
 
+  if (object.acceptance_meaning !== expectedAcceptanceMeaning) {
+    fail(relativePath + ' must preserve the governed acceptance_meaning boundary exactly.');
+  }
   if (object.clinical_use !== false) fail(relativePath + ' must explicitly set clinical_use:false.');
   if (object.review?.scientific_review_required !== true) fail(relativePath + ' must preserve scientific review.');
   for (const sourceRef of object.proposal?.source_refs || []) {
@@ -69,6 +82,8 @@ function validateFile(relativePath) {
   }
 }
 
+validateAcceptanceBoundaryContract();
+
 const roots = ['examples/contributions', 'contributions'];
 const files = [];
 for (const relativeRoot of roots) {
@@ -83,4 +98,4 @@ if (files.length === 0) fail('No research contribution examples or objects found
 files.sort().forEach(validateFile);
 
 if (failed) process.exitCode = 1;
-else console.log('Research contribution validation passed for ' + files.length + ' object(s).');
+else console.log('Research contribution validation passed for ' + files.length + ' object(s), including the mandatory acceptance boundary.');
