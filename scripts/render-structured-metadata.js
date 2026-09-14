@@ -44,6 +44,35 @@ for (const filename of fs.readdirSync(path.join(root, 'evidence-bindings')).filt
 
 const hypotheses = hypothesisIds.map((id) => readJson('hypotheses/' + id + '/hypothesis.json'));
 const latestUpdatedAt = hypotheses.map((h) => h.provenance.updated_at).sort().at(-1);
+const hypothesisIdSet = new Set(hypotheses.map((h) => h.hypothesis_id));
+const protectedReviewRegisterPath = 'governance/evidence-relationship-review-exceptions.json';
+const protectedReviewRegister = readJson(protectedReviewRegisterPath);
+if (protectedReviewRegister.schema_version !== '1.0.0') throw new Error(protectedReviewRegisterPath + ' must retain schema_version 1.0.0.');
+if (typeof protectedReviewRegister.authority_boundary !== 'string' || !protectedReviewRegister.authority_boundary.includes('does not decide which relationship is correct')) {
+  throw new Error(protectedReviewRegisterPath + ' must retain the no-scientific-resolution authority boundary.');
+}
+if (!Array.isArray(protectedReviewRegister.exceptions)) throw new Error(protectedReviewRegisterPath + ' exceptions must be an array.');
+const protectedReviewByHypothesis = new Map();
+for (const [index, item] of protectedReviewRegister.exceptions.entries()) {
+  const label = protectedReviewRegisterPath + ' exceptions[' + index + ']';
+  if (!idPattern.test(String(item.hypothesis_id || ''))) throw new Error(label + ' must use a stable OS-TH-#### identifier.');
+  if (!hypothesisIdSet.has(item.hypothesis_id)) throw new Error(label + ' references a hypothesis outside the canonical public set.');
+  if (item.status !== 'HUMAN_SCIENTIFIC_REVIEW_REQUIRED') throw new Error(label + ' must remain HUMAN_SCIENTIFIC_REVIEW_REQUIRED until attributable scientific review resolves it.');
+  if (item.clinical_use !== false) throw new Error(label + ' must preserve clinical_use:false.');
+  if (typeof item.resolution_rule !== 'string' || !item.resolution_rule.includes('attributable scientific decision')) {
+    throw new Error(label + ' must retain the attributable scientific-decision resolution rule.');
+  }
+  let reviewIssue;
+  try {
+    reviewIssue = new URL(String(item.review_issue || ''));
+  } catch {
+    throw new Error(label + ' must retain a valid protected-review issue URL.');
+  }
+  if (reviewIssue.protocol !== 'https:' || reviewIssue.hostname !== 'github.com') throw new Error(label + ' review issue must remain an HTTPS GitHub URL.');
+  const grouped = protectedReviewByHypothesis.get(item.hypothesis_id) || [];
+  grouped.push(item);
+  protectedReviewByHypothesis.set(item.hypothesis_id, grouped);
+}
 
 const hasPart = hypotheses.map((h) => {
   if (h.hypothesis_id !== h.hypothesis_id.match(idPattern)?.[0]) throw new Error('Invalid stable hypothesis ID: ' + h.hypothesis_id);
@@ -72,6 +101,7 @@ const hasPart = hypotheses.map((h) => {
     h.disease_context.context,
     ...(h.targets_pathways || []).map((item) => item.name)
   ].filter(Boolean))];
+  const protectedReview = protectedReviewByHypothesis.get(h.hypothesis_id) || [];
 
   return {
     '@type': 'CreativeWork',
@@ -101,6 +131,11 @@ const hasPart = hypotheses.map((h) => {
       { '@type': 'PropertyValue', name: 'reviewState', value: h.review_state.status },
       { '@type': 'PropertyValue', name: 'publicationClass', value: h.review_state.publication_class },
       { '@type': 'PropertyValue', name: 'scientificReviewRequired', value: h.review_state.scientific_review_required },
+      { '@type': 'PropertyValue', name: 'protectedScientificReviewRequired', value: protectedReview.length > 0 },
+      { '@type': 'PropertyValue', name: 'protectedScientificReviewExceptionCount', value: protectedReview.length },
+      { '@type': 'PropertyValue', name: 'protectedScientificReviewRoute', value: siteBase + 'review/' },
+      { '@type': 'PropertyValue', name: 'protectedScientificReviewRegister', value: siteBase + protectedReviewRegisterPath },
+      { '@type': 'PropertyValue', name: 'protectedScientificReviewMeaning', value: 'A registered protected-review exception records unresolved scientific interpretation and requires attributable human scientific review; it does not resolve the relationship or grant clinical or publication authority.' },
       { '@type': 'PropertyValue', name: 'uncertaintyLevel', value: h.uncertainty.level },
       { '@type': 'PropertyValue', name: 'contradictoryEvidenceStatus', value: h.contradictory_evidence.status },
       { '@type': 'PropertyValue', name: 'rankingStatus', value: h.ranking.status },
@@ -133,4 +168,4 @@ const projection = {
 
 writeProjection('structured-data/hypotheses.jsonld', JSON.stringify(projection, null, 2));
 if (stale) process.exitCode = 1;
-else if (checkOnly) console.log('Structured metadata projection is current for ' + hypotheses.length + ' hypothesis object(s).');
+else if (checkOnly) console.log('Structured metadata projection is current for ' + hypotheses.length + ' hypothesis object(s), including governed protected-review discovery state.');
