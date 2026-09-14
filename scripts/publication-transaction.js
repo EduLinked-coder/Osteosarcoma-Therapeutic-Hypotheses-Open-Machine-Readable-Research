@@ -137,6 +137,7 @@ function validateHandoff(envelope) {
   requireGate(Array.isArray(bindings) && bindings.length > 0, 'at least one public evidence binding is required');
   validatePublicProjectionSafety(projection);
 
+  validateNewCandidateCanonicalContract(hypothesis);
   const hypothesisErrors = validateJsonSchema(hypothesisSchema, hypothesisSchema, hypothesis, 'public_projection.hypothesis');
   requireGate(hypothesisErrors.length === 0, 'public hypothesis schema failed: ' + hypothesisErrors.join(' | '));
   requireGate(ID.test(hypothesis.hypothesis_id || ''), 'public hypothesis id is invalid');
@@ -145,7 +146,6 @@ function validateHandoff(envelope) {
   requireGate(hypothesis.review_state?.publication_class === 'public-research-candidate', 'automatic transaction is limited to public-research-candidate objects');
   requireGate(Boolean(hypothesis.uncertainty?.summary), 'public hypothesis must preserve uncertainty');
   requireGate(Boolean(hypothesis.contradictory_evidence?.status) && Boolean(hypothesis.contradictory_evidence?.assessment), 'public hypothesis must preserve contradictory-evidence assessment');
-  validateNewCandidateCanonicalContract(hypothesis);
 
   const bindingIds = new Set();
   for (const binding of bindings) {
