@@ -15,6 +15,7 @@
     "contributor_provenance",
     "proposal",
     "review",
+    "acceptance_meaning",
     "clinical_use"
   ],
   "properties": {
@@ -96,6 +97,7 @@
     },
     "example": {"type": "boolean"},
     "acceptance_meaning": {
+      "description": "Required machine-readable boundary: repository review state does not establish clinical benefit, treatment guidance or patient-specific applicability.",
       "const": "Contribution state records repository review only; it does not establish clinical benefit, treatment guidance or patient-specific applicability."
     },
     "clinical_use": {"const": false}
