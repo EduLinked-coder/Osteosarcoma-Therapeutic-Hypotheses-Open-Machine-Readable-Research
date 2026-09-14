@@ -46,6 +46,8 @@
     "publication_transaction": "scripts/publication-transaction.js",
     "publication_review": "scripts/publication-review.js",
     "publication_review_contract": "docs/publication-review.md",
+    "protected_review_register": "governance/evidence-relationship-review-exceptions.json",
+    "protected_review_projection": "review/",
     "evidence_binding_examples": "examples/evidence-bindings/*.example.json",
     "evidence_human_page": "evidence/"
   },
@@ -79,7 +81,7 @@
     "SUPERSESSION_RECORDED",
     "WITHDRAWAL_RECORDED"
   ],
-  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; scripts/publication-review.js can compose that same validated transaction into a bounded review-ready branch, commit and pull request without merge or publication authority; governed contribution objects are checked by scripts/validate-contributions.js; append-only evidence change history is checked by scripts/validate-evidence-events.js; living-research activity is deterministically rendered through scripts/render-research-activity.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; deterministic Schema.org JSON-LD is rendered through scripts/render-structured-metadata.js; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, publication-review boundaries, contribution governance, evidence-history integrity, research-activity freshness, generated-output freshness, structured metadata freshness, schemas and public research boundaries before deployment.",
+  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; scripts/publication-review.js can compose that same validated transaction into a bounded review-ready branch, commit and pull request without merge or publication authority; governed contribution objects are checked by scripts/validate-contributions.js; append-only evidence change history is checked by scripts/validate-evidence-events.js; living-research activity is deterministically rendered through scripts/render-research-activity.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; deterministic Schema.org JSON-LD is rendered through scripts/render-structured-metadata.js; protected relationship-review state remains source-owned by governance/evidence-relationship-review-exceptions.json and is exposed through review/ without resolving the scientific interpretation; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, publication-review boundaries, contribution governance, evidence-history integrity, research-activity freshness, generated-output freshness, structured metadata freshness, schemas and public research boundaries before deployment.",
   "publication_status_semantics": {
     "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
@@ -158,6 +160,15 @@
     "clinical_use_boundary_must_be_preserved": true,
     "independent_easy_read_certification_claimed": false
   },
+  "protected_review_boundary": {
+    "source_of_truth": "governance/evidence-relationship-review-exceptions.json",
+    "human_projection": "review/",
+    "scientific_resolution_created_by_projection": false,
+    "registered_exception_allows_autonomous_normalisation": false,
+    "requires_attributable_scientific_decision": true,
+    "clinical_use_authority_transferred": false,
+    "publication_authority_transferred": false
+  },
   "clinical_use": false,
   "machine_entry_points": [
     "manifest.json",
@@ -165,6 +176,7 @@
     "indexes/hypotheses.json",
     "indexes/evidence-events.json",
     "structured-data/hypotheses.jsonld",
+    "governance/evidence-relationship-review-exceptions.json",
     "schemas/therapeutic-hypothesis.schema.json",
     "schemas/evidence-binding.schema.json",
     "schemas/evidence-change-event.schema.json",
@@ -189,6 +201,7 @@
     "README.md",
     "search/",
     "activity/",
+    "review/",
     "docs/quickstart/",
     "evidence/",
     "evidence/index.html",
