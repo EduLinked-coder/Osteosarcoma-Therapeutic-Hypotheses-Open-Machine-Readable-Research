@@ -43,7 +43,7 @@ expectFailure('clinical-use boundary removed', (fixture) => {
 });
 
 expectFailure('quickstart human review route removed', (fixture) => {
-  fixture.quickstartHtml = fixture.quickstartHtml.replace('href="../../review/"', 'href="../../"');
+  fixture.quickstartHtml = fixture.quickstartHtml.split('href="../../review/"').join('href="../../"');
 });
 
 expectFailure('quickstart autonomous-interpretation warning removed', (fixture) => {
