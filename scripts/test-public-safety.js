@@ -66,8 +66,29 @@ try {
     'utf8'
   );
   assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
+
+  const reviewDir = path.join(textFixtureRoot, 'review');
+  fs.mkdirSync(reviewDir, { recursive: true });
+  const reviewPath = path.join(reviewDir, 'index.html');
+  fs.writeFileSync(
+    reviewPath,
+    '<!doctype html><html><body><main><h1>Protected review</h1><p>The patient should start methotrexate.</p></main></body></html>\n',
+    'utf8'
+  );
+  const unsafeReviewResult = validateRepositoryPublicSafety(textFixtureRoot);
+  assert.ok(
+    unsafeReviewResult.errors.some((message) => message.includes('review/index.html') && message.includes('patient-directed treatment instruction')),
+    'expected protected review projection to be included in the public text safety boundary'
+  );
+
+  fs.writeFileSync(
+    reviewPath,
+    '<!doctype html><html><body><main><h1>Protected review</h1><p>Known disagreement remains under human scientific review and is not clinical guidance.</p></main></body></html>\n',
+    'utf8'
+  );
+  assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
 } finally {
   fs.rmSync(textFixtureRoot, { recursive: true, force: true });
 }
 
-console.log('Public safety payload tests passed: prohibited fields, high-confidence credential material and patient-directed clinical language fail closed across structured and human-readable public surfaces.');
+console.log('Public safety payload tests passed: prohibited fields, high-confidence credential material and patient-directed clinical language fail closed across structured and human-readable public surfaces, including the protected review projection.');

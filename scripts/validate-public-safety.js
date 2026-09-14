@@ -20,6 +20,7 @@ const PUBLIC_TEXT_ROOTS = [
   'evidence',
   'search',
   'activity',
+  'review',
   'indexes',
   'evidence-bindings',
   'contributions',
