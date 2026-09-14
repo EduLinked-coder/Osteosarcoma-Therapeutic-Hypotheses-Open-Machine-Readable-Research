@@ -24,6 +24,7 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - Browse current public hypotheses from the GitHub Pages site or `indexes/hypotheses.json`.
 - Use `activity/` for the generated living-research activity view and `indexes/evidence-events.json` for the machine-readable event/activity index.
 - Use `structured-data/hypotheses.jsonld` for deterministic Schema.org JSON-LD discovery metadata derived from the same canonical public hypotheses.
+- Use `review/` to inspect protected unresolved scientific interpretation differences and `governance/evidence-relationship-review-exceptions.json` for the governed machine-readable exception register. A registered exception is an unresolved human scientific-review state, not permission to normalise the relationship automatically.
 - Use `search/` to search and filter the portfolio by canonical-object fields such as mechanism/target text, evidence stage, publication/review state, uncertainty, novelty and ranking state.
 - Use `hypotheses/{OS-TH-####}/easy-read/` for the generated accessibility projection of the same canonical hypothesis object; see `docs/accessibility-projection.md` for its governance and limitations.
 - Use `.github/ISSUE_TEMPLATE/` to submit governed review inputs for new evidence, contradictory evidence, failed replication, a new hypothesis, a mechanism proposal, a falsification experiment, an error report, a successor hypothesis, or safety/privacy review. Issue creation records a proposal only; it does not accept scientific evidence or grant publication authority.
@@ -39,6 +40,8 @@ Transitions are evidence gates, not automatic claims of efficacy.
 - `indexes/hypotheses.json` — machine-readable hypothesis discovery index
 - `indexes/evidence-events.json` — deterministic living-evidence activity index
 - `structured-data/hypotheses.jsonld` — deterministic Schema.org JSON-LD collection projection
+- `governance/evidence-relationship-review-exceptions.json` — governed register of unresolved evidence-relationship interpretation differences that require attributable human scientific review
+- `review/` — human projection of that governed protected-review state; it does not decide which scientific interpretation is correct
 - `schemas/therapeutic-hypothesis.schema.json` — hypothesis object schema
 - `schemas/evidence-binding.schema.json` — evidence binding schema
 - `schemas/evidence-change-event.schema.json` — append-only evidence change event schema
@@ -73,4 +76,4 @@ The initial cycle publishes research hypotheses generated from the osteosarcoma 
 
 ## Reuse
 
-Agents may discover, compare and propose extensions to hypotheses, but must preserve provenance, distinguish source evidence from derived reasoning, surface contradictory evidence, preserve uncertainty, and label proposed combinations as hypotheses until experimentally supported.
+Agents may discover, compare and propose extensions to hypotheses, but must preserve provenance, distinguish source evidence from derived reasoning, surface contradictory evidence, preserve uncertainty, and label proposed combinations as hypotheses until experimentally supported. Before normalising a known evidence-relationship mismatch, agents must inspect `governance/evidence-relationship-review-exceptions.json`; a registered protected-review exception remains unresolved until an attributable human scientific decision exists.
