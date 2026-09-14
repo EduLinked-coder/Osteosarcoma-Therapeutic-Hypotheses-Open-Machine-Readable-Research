@@ -82,6 +82,31 @@
         },
         {
           "@type": "PropertyValue",
+          "name": "protectedScientificReviewRequired",
+          "value": true
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "protectedScientificReviewExceptionCount",
+          "value": 1
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "protectedScientificReviewRoute",
+          "value": "https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/review/"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "protectedScientificReviewRegister",
+          "value": "https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/governance/evidence-relationship-review-exceptions.json"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "protectedScientificReviewMeaning",
+          "value": "A registered protected-review exception records unresolved scientific interpretation and requires attributable human scientific review; it does not resolve the relationship or grant clinical or publication authority."
+        },
+        {
+          "@type": "PropertyValue",
           "name": "uncertaintyLevel",
           "value": "high"
         },
