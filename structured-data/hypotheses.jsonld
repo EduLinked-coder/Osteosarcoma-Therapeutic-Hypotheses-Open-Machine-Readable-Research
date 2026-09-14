@@ -23,6 +23,7 @@
       "genre": "Research hypothesis",
       "about": [
         "osteosarcoma",
+        "metastatic osteosarcoma",
         "CD44",
         "transendothelial migration",
         "bone/pulmonary immune niche"
@@ -39,6 +40,26 @@
         }
       ],
       "additionalProperty": [
+        {
+          "@type": "PropertyValue",
+          "name": "researchClassification",
+          "value": "therapeutic-hypothesis"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "disease",
+          "value": "osteosarcoma"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "diseaseContextStatus",
+          "value": "specified"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "diseaseContext",
+          "value": "metastatic osteosarcoma"
+        },
         {
           "@type": "PropertyValue",
           "name": "evidenceStage",
@@ -71,8 +92,48 @@
         },
         {
           "@type": "PropertyValue",
+          "name": "rankingStatus",
+          "value": "pending-recalculation"
+        },
+        {
+          "@type": "PropertyValue",
           "name": "rankingMeaning",
           "value": "Research priority only; never expected patient benefit."
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "rankingExplanation",
+          "value": "No numeric research-priority score is assigned while ranking is pending recalculation; this state does not imply expected patient benefit."
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "noveltyStatus",
+          "value": "unverified"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "noveltyConfidence",
+          "value": "unverified"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "plainLanguageSummarySource",
+          "value": "canonical"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "easyReadProjection",
+          "value": "https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/hypotheses/OS-TH-0001/easy-read/"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "accessibilityProjectionStatus",
+          "value": "generated"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "accessibilityMeaning",
+          "value": "Accessibility projections derive from the canonical hypothesis object and do not add scientific facts or claim independent certification."
         },
         {
           "@type": "PropertyValue",
