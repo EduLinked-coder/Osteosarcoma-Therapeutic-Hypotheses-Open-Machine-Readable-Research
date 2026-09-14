@@ -200,6 +200,7 @@ const sitemapEntries = [
   ['activity/', latestDate],
   ['docs/quickstart/', latestDate],
   ['evidence/', latestDate],
+  ['review/', latestDate],
   ...records.flatMap(({ object: h }) => [
     ['hypotheses/' + h.hypothesis_id + '/', h.provenance.updated_at.slice(0, 10)],
     ['hypotheses/' + h.hypothesis_id + '/easy-read/', h.provenance.updated_at.slice(0, 10)]
