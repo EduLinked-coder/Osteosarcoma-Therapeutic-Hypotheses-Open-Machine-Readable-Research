@@ -6,16 +6,16 @@
 <title>Search hypotheses | Open osteosarcoma research</title>
 <meta name="description" content="Search and filter public osteosarcoma research hypotheses directly from canonical repository objects.">
 <style>
-:root{color-scheme:light dark;--bg:#fff;--text:#172033;--muted:#526079;--surface:#f7f5ff;--border:#c9c3e6;--accent:#2349a6;--focus:#8a4fff;--warning:#7a5200}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;background:var(--bg);color:var(--text)}main{width:min(100% - 2rem,78rem);margin:auto;padding:2rem 0 4rem}a{color:var(--accent)}h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.1}.lede{max-width:70ch;font-size:1.15rem;color:var(--muted)}.boundary{border-left:6px solid #d9a52f;background:#fff8e7;color:#342400;padding:1rem 1.25rem;border-radius:.5rem;margin:1.5rem 0}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:1rem;padding:1.25rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface);margin:2rem 0}.field{display:flex;flex-direction:column;gap:.35rem}.wide{grid-column:1/-1}label{font-weight:800}input,select,button{font:inherit;min-height:44px;border:1px solid var(--border);border-radius:.6rem;padding:.6rem .75rem;background:var(--bg);color:var(--text)}button{cursor:pointer;font-weight:800}.actions{display:flex;gap:.75rem;align-items:end;flex-wrap:wrap}.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:1.25rem}.card{border:1px solid var(--border);border-radius:1rem;padding:1.25rem;background:var(--bg)}.meta,.status{color:var(--muted);font-size:.95rem}.chips{display:flex;flex-wrap:wrap;gap:.45rem;margin:.75rem 0}.chip{display:inline-block;border:1px solid var(--border);background:var(--surface);padding:.25rem .55rem;border-radius:999px;font-size:.9rem}.count{font-weight:800;margin-bottom:1rem}.empty{padding:2rem;border:1px dashed var(--border);border-radius:1rem}.loading{padding:1rem 0}.error{color:#8b1a1a;font-weight:700}.hint{color:var(--muted);font-size:.9rem}.skip{position:absolute;left:-9999px}.skip:focus{left:1rem;top:1rem;background:#fff;color:#111;padding:.75rem;z-index:10}*:focus-visible{outline:3px solid var(--focus);outline-offset:2px}@media(prefers-color-scheme:dark){:root{--bg:#131722;--text:#f2f4fb;--muted:#c1c8da;--surface:#1d2230;--border:#4a5268;--accent:#9ab7ff}.boundary{background:#2c260e;color:#fff0b3}}
+:root{color-scheme:light dark;--bg:#fff;--text:#172033;--muted:#526079;--surface:#f7f5ff;--border:#c9c3e6;--accent:#2349a6;--focus:#8a4fff;--warning:#7a5200}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;background:var(--bg);color:var(--text)}main{width:min(100% - 2rem,78rem);margin:auto;padding:2rem 0 4rem}a{color:var(--accent)}h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.1}.lede{max-width:70ch;font-size:1.15rem;color:var(--muted)}.boundary{border-left:6px solid #d9a52f;background:#fff8e7;color:#342400;padding:1rem 1.25rem;border-radius:.5rem;margin:1.5rem 0}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:1rem;padding:1.25rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface);margin:2rem 0}.field{display:flex;flex-direction:column;gap:.35rem}.wide{grid-column:1/-1}label{font-weight:800}input,select,button{font:inherit;min-height:44px;border:1px solid var(--border);border-radius:.6rem;padding:.6rem .75rem;background:var(--bg);color:var(--text)}button{cursor:pointer;font-weight:800}.actions{display:flex;gap:.75rem;align-items:end;flex-wrap:wrap}.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:1.25rem}.card{border:1px solid var(--border);border-radius:1rem;padding:1.25rem;background:var(--bg)}.meta,.status{color:var(--muted);font-size:.95rem}.review-note{border-left:4px solid #d9a52f;padding:.75rem 1rem;background:var(--surface);border-radius:.4rem}.chips{display:flex;flex-wrap:wrap;gap:.45rem;margin:.75rem 0}.chip{display:inline-block;border:1px solid var(--border);background:var(--surface);padding:.25rem .55rem;border-radius:999px;font-size:.9rem}.count{font-weight:800;margin-bottom:1rem}.empty{padding:2rem;border:1px dashed var(--border);border-radius:1rem}.loading{padding:1rem 0}.error{color:#8b1a1a;font-weight:700}.hint{color:var(--muted);font-size:.9rem}.skip{position:absolute;left:-9999px}.skip:focus{left:1rem;top:1rem;background:#fff;color:#111;padding:.75rem;z-index:10}*:focus-visible{outline:3px solid var(--focus);outline-offset:2px}@media(prefers-color-scheme:dark){:root{--bg:#131722;--text:#f2f4fb;--muted:#c1c8da;--surface:#1d2230;--border:#4a5268;--accent:#9ab7ff}.boundary{background:#2c260e;color:#fff0b3}}
 </style>
 </head>
 <body>
 <a class="skip" href="#results">Skip to results</a>
 <main>
-<nav aria-label="Repository"><a href="../">Research portfolio</a> · <a href="../evidence/">Evidence</a> · <a href="../docs/quickstart/">Quickstart</a></nav>
+<nav aria-label="Repository"><a href="../">Research portfolio</a> · <a href="../evidence/">Evidence</a> · <a href="../review/">Protected review</a> · <a href="../docs/quickstart/">Quickstart</a></nav>
 <h1>Search public research hypotheses</h1>
 <p class="lede">This interface loads the generated hypothesis index, then reads each canonical <code>hypothesis.json</code> object. Filters are projections of those objects; this page does not maintain a second scientific database.</p>
-<div class="boundary"><strong>Research boundary:</strong> results are research hypotheses for investigation, not medical advice, treatment recommendations, dosing instructions or claims of patient benefit.</div>
+<div class="boundary"><strong>Research boundary:</strong> results are research hypotheses for investigation, not medical advice, treatment recommendations, dosing instructions or claims of patient benefit. Protected evidence-relationship review state is loaded from the governed exception register; a registered disagreement is unresolved scientific state, not permission for autonomous normalisation or accepted evidence.</div>
 <form class="controls" id="filters" role="search" aria-label="Filter research hypotheses">
 <div class="field wide"><label for="query">Search text</label><input id="query" type="search" autocomplete="off" placeholder="Title, disease context, mechanism, target, pathway, summary…"></div>
 <div class="field"><label for="disease-context">Disease context</label><select id="disease-context" aria-describedby="disease-context-hint"><option value="">All disease contexts</option></select></div>
@@ -24,6 +24,7 @@
 <div class="field"><label for="evidence-stage">Evidence stage</label><select id="evidence-stage"><option value="">All stages</option></select></div>
 <div class="field"><label for="publication-class">Publication class</label><select id="publication-class"><option value="">All classes</option></select></div>
 <div class="field"><label for="review-state">Review state</label><select id="review-state"><option value="">All review states</option></select></div>
+<div class="field"><label for="protected-review">Protected scientific review</label><select id="protected-review" aria-describedby="protected-review-hint"><option value="">All protected-review states</option><option value="required">Registered protected review required</option><option value="none">No registered protected review exception</option></select></div>
 <div class="field"><label for="uncertainty">Uncertainty</label><select id="uncertainty"><option value="">All levels</option></select></div>
 <div class="field"><label for="novelty">Novelty</label><select id="novelty"><option value="">All novelty states</option></select></div>
 <div class="field"><label for="ranking">Ranking state</label><select id="ranking"><option value="">All ranking states</option></select></div>
@@ -31,19 +32,22 @@
 <div class="field"><label for="updated-before">Last evidence update: on or before</label><input id="updated-before" type="date" aria-describedby="evidence-update-hint"></div>
 <div class="field"><label for="sort">Sort</label><select id="sort"><option value="updated-desc">Most recently updated</option><option value="title-asc">Title A–Z</option><option value="ranking-desc">Highest research-priority score</option></select></div>
 <p class="hint wide" id="disease-context-hint">Disease context is research-object metadata, not patient-specific clinical information. Missing or unresolved context remains absent rather than inferred.</p>
+<p class="hint wide" id="protected-review-hint">Protected-review filtering derives only from the governed evidence-relationship review-exception register. A registered exception records an unresolved interpretation and does not decide which relationship is correct.</p>
 <p class="hint wide" id="evidence-update-hint">Date filters use the canonical hypothesis provenance update date. They do not imply that literature searches are complete through that date.</p>
 <div class="actions wide"><button type="reset">Reset filters</button></div>
 </form>
-<p id="loading" class="loading">Loading canonical research objects…</p>
+<p id="loading" class="loading">Loading canonical research objects and governed review state…</p>
 <p id="count" class="count" aria-live="polite"></p>
 <div id="results" class="results" tabindex="-1"></div>
-<noscript><p class="error">JavaScript is required for this client-side search interface. The canonical machine index remains available at <a href="../indexes/hypotheses.json">indexes/hypotheses.json</a>.</p></noscript>
+<noscript><p class="error">JavaScript is required for this client-side search interface. The canonical machine index remains available at <a href="../indexes/hypotheses.json">indexes/hypotheses.json</a>, and the governed protected-review register remains available at <a href="../governance/evidence-relationship-review-exceptions.json">governance/evidence-relationship-review-exceptions.json</a>.</p></noscript>
 </main>
 <script>
 (() => {
   'use strict';
   const indexPath = '../indexes/hypotheses.json';
+  const reviewRegisterPath = '../governance/evidence-relationship-review-exceptions.json';
   const safeCanonicalPath = /^hypotheses\/OS-TH-[0-9]{4}\/hypothesis\.json$/;
+  const stableIdPattern = /^OS-TH-[0-9]{4}$/;
   const form = document.getElementById('filters');
   const resultsNode = document.getElementById('results');
   const countNode = document.getElementById('count');
@@ -56,6 +60,7 @@
     evidenceStage: document.getElementById('evidence-stage'),
     publicationClass: document.getElementById('publication-class'),
     reviewState: document.getElementById('review-state'),
+    protectedReview: document.getElementById('protected-review'),
     uncertainty: document.getElementById('uncertainty'),
     novelty: document.getElementById('novelty'),
     ranking: document.getElementById('ranking'),
@@ -64,6 +69,7 @@
     sort: document.getElementById('sort')
   };
   let records = [];
+  let protectedReviewByHypothesis = new Map();
 
   const text = (value) => String(value ?? '').trim();
   const normal = (value) => text(value).toLocaleLowerCase('en-AU');
@@ -78,6 +84,7 @@
   const diseaseContextValues = (h) => [text(h.disease_context?.disease), text(h.disease_context?.context)].filter(Boolean);
   const diseaseContextLabel = (h) => text(h.disease_context?.context) || text(h.disease_context?.disease);
   const targetValues = (h) => (h.targets_pathways || []).map((item) => text(item.name)).filter(Boolean);
+  const reviewExceptionsFor = (h) => protectedReviewByHypothesis.get(h.hypothesis_id) || [];
   const searchText = (h) => normal([
     h.hypothesis_id,
     h.title,
@@ -89,13 +96,15 @@
     h.research_classification,
     h.mechanism?.summary,
     ...((h.mechanism?.relationships || []).flatMap((item) => [item.subject, item.predicate, item.object])),
-    ...((h.targets_pathways || []).flatMap((item) => [item.name, item.kind, item.role]))
+    ...((h.targets_pathways || []).flatMap((item) => [item.name, item.kind, item.role])),
+    ...reviewExceptionsFor(h).map((item) => item.status)
   ].join(' '));
 
   function render() {
     const query = normal(controls.query.value);
     const filtered = records.filter((h) => {
       const updateDate = canonicalUpdateDate(h);
+      const protectedReview = reviewExceptionsFor(h);
       if (query && !searchText(h).includes(query)) return false;
       if (controls.diseaseContext.value && !diseaseContextValues(h).includes(controls.diseaseContext.value)) return false;
       if (controls.researchClassification.value && h.research_classification !== controls.researchClassification.value) return false;
@@ -103,6 +112,8 @@
       if (controls.evidenceStage.value && h.evidence_stage !== controls.evidenceStage.value) return false;
       if (controls.publicationClass.value && h.review_state?.publication_class !== controls.publicationClass.value) return false;
       if (controls.reviewState.value && h.review_state?.status !== controls.reviewState.value) return false;
+      if (controls.protectedReview.value === 'required' && protectedReview.length === 0) return false;
+      if (controls.protectedReview.value === 'none' && protectedReview.length !== 0) return false;
       if (controls.uncertainty.value && h.uncertainty?.level !== controls.uncertainty.value) return false;
       if (controls.novelty.value && h.novelty?.status !== controls.novelty.value) return false;
       if (controls.ranking.value && h.ranking?.status !== controls.ranking.value) return false;
@@ -132,6 +143,7 @@
     }
 
     sorted.forEach((h) => {
+      const protectedReview = reviewExceptionsFor(h);
       const card = document.createElement('article');
       card.className = 'card';
       const heading = document.createElement('h2');
@@ -163,16 +175,49 @@
       status.className = 'status';
       status.textContent = 'Review: ' + text(h.review_state?.status) + ' · Last evidence update: ' + text(h.provenance?.updated_at);
       card.append(heading, id, summary, chips, status);
+      if (protectedReview.length) {
+        const reviewNote = document.createElement('p');
+        reviewNote.className = 'review-note';
+        const reviewLink = document.createElement('a');
+        reviewLink.href = '../review/';
+        reviewLink.textContent = 'Open protected review state';
+        reviewNote.append(
+          document.createTextNode('Protected scientific review: ' + protectedReview.length + ' governed evidence-relationship exception' + (protectedReview.length === 1 ? '' : 's') + ' remain unresolved. '),
+          reviewLink,
+          document.createTextNode('. A registered disagreement is not scientific resolution.')
+        );
+        card.appendChild(reviewNote);
+      }
       resultsNode.appendChild(card);
     });
   }
 
   async function load() {
     try {
-      const indexResponse = await fetch(indexPath, { cache: 'no-store' });
+      const [indexResponse, reviewResponse] = await Promise.all([
+        fetch(indexPath, { cache: 'no-store' }),
+        fetch(reviewRegisterPath, { cache: 'no-store' })
+      ]);
       if (!indexResponse.ok) throw new Error('Could not load hypothesis index.');
+      if (!reviewResponse.ok) throw new Error('Could not load governed protected-review register.');
       const index = await indexResponse.json();
+      const reviewRegister = await reviewResponse.json();
       if (!Array.isArray(index.hypotheses)) throw new Error('Hypothesis index is malformed.');
+      if (!Array.isArray(reviewRegister.exceptions)) throw new Error('Protected-review register is malformed.');
+      if (!text(reviewRegister.authority_boundary)) throw new Error('Protected-review register is missing its authority boundary.');
+      const indexedIds = new Set(index.hypotheses.map((entry) => text(entry.hypothesis_id)));
+      const nextProtectedReview = new Map();
+      for (const exception of reviewRegister.exceptions) {
+        const hypothesisId = text(exception.hypothesis_id);
+        if (!stableIdPattern.test(hypothesisId)) throw new Error('Protected-review register contains an invalid hypothesis identifier.');
+        if (!indexedIds.has(hypothesisId)) throw new Error('Protected-review register references a hypothesis outside the canonical index.');
+        if (exception.status !== 'HUMAN_SCIENTIFIC_REVIEW_REQUIRED') throw new Error('Protected-review register contains a non-protected review state.');
+        if (exception.clinical_use !== false) throw new Error('Protected-review register must preserve clinical_use:false.');
+        const grouped = nextProtectedReview.get(hypothesisId) || [];
+        grouped.push(exception);
+        nextProtectedReview.set(hypothesisId, grouped);
+      }
+      protectedReviewByHypothesis = nextProtectedReview;
       const objects = await Promise.all(index.hypotheses.map(async (entry) => {
         const canonicalPath = text(entry.canonical_object_path);
         if (!safeCanonicalPath.test(canonicalPath)) throw new Error('Unsafe canonical path in index.');
