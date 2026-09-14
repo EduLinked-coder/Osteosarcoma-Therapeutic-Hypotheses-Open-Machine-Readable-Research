@@ -17,7 +17,9 @@
 <p class="lede">This interface loads the generated hypothesis index, then reads each canonical <code>hypothesis.json</code> object. Filters are projections of those objects; this page does not maintain a second scientific database.</p>
 <div class="boundary"><strong>Research boundary:</strong> results are research hypotheses for investigation, not medical advice, treatment recommendations, dosing instructions or claims of patient benefit.</div>
 <form class="controls" id="filters" role="search" aria-label="Filter research hypotheses">
-<div class="field wide"><label for="query">Search text</label><input id="query" type="search" autocomplete="off" placeholder="Title, mechanism, target, pathway, summary…"></div>
+<div class="field wide"><label for="query">Search text</label><input id="query" type="search" autocomplete="off" placeholder="Title, disease context, mechanism, target, pathway, summary…"></div>
+<div class="field"><label for="disease-context">Disease context</label><select id="disease-context" aria-describedby="disease-context-hint"><option value="">All disease contexts</option></select></div>
+<div class="field"><label for="research-classification">Research classification</label><select id="research-classification"><option value="">All research classes</option></select></div>
 <div class="field"><label for="target">Target or pathway</label><select id="target"><option value="">All targets/pathways</option></select></div>
 <div class="field"><label for="evidence-stage">Evidence stage</label><select id="evidence-stage"><option value="">All stages</option></select></div>
 <div class="field"><label for="publication-class">Publication class</label><select id="publication-class"><option value="">All classes</option></select></div>
@@ -28,6 +30,7 @@
 <div class="field"><label for="updated-since">Last evidence update: on or after</label><input id="updated-since" type="date" aria-describedby="evidence-update-hint"></div>
 <div class="field"><label for="updated-before">Last evidence update: on or before</label><input id="updated-before" type="date" aria-describedby="evidence-update-hint"></div>
 <div class="field"><label for="sort">Sort</label><select id="sort"><option value="updated-desc">Most recently updated</option><option value="title-asc">Title A–Z</option><option value="ranking-desc">Highest research-priority score</option></select></div>
+<p class="hint wide" id="disease-context-hint">Disease context is research-object metadata, not patient-specific clinical information. Missing or unresolved context remains absent rather than inferred.</p>
 <p class="hint wide" id="evidence-update-hint">Date filters use the canonical hypothesis provenance update date. They do not imply that literature searches are complete through that date.</p>
 <div class="actions wide"><button type="reset">Reset filters</button></div>
 </form>
@@ -47,6 +50,8 @@
   const loadingNode = document.getElementById('loading');
   const controls = {
     query: document.getElementById('query'),
+    diseaseContext: document.getElementById('disease-context'),
+    researchClassification: document.getElementById('research-classification'),
     target: document.getElementById('target'),
     evidenceStage: document.getElementById('evidence-stage'),
     publicationClass: document.getElementById('publication-class'),
@@ -70,12 +75,18 @@
     option.textContent = value;
     select.appendChild(option);
   });
+  const diseaseContextValues = (h) => [text(h.disease_context?.disease), text(h.disease_context?.context)].filter(Boolean);
+  const diseaseContextLabel = (h) => text(h.disease_context?.context) || text(h.disease_context?.disease);
   const targetValues = (h) => (h.targets_pathways || []).map((item) => text(item.name)).filter(Boolean);
   const searchText = (h) => normal([
     h.hypothesis_id,
     h.title,
     h.plain_language_summary,
     h.hypothesis_statement,
+    h.disease_context?.disease,
+    h.disease_context?.status,
+    h.disease_context?.context,
+    h.research_classification,
     h.mechanism?.summary,
     ...((h.mechanism?.relationships || []).flatMap((item) => [item.subject, item.predicate, item.object])),
     ...((h.targets_pathways || []).flatMap((item) => [item.name, item.kind, item.role]))
@@ -86,6 +97,8 @@
     const filtered = records.filter((h) => {
       const updateDate = canonicalUpdateDate(h);
       if (query && !searchText(h).includes(query)) return false;
+      if (controls.diseaseContext.value && !diseaseContextValues(h).includes(controls.diseaseContext.value)) return false;
+      if (controls.researchClassification.value && h.research_classification !== controls.researchClassification.value) return false;
       if (controls.target.value && !targetValues(h).includes(controls.target.value)) return false;
       if (controls.evidenceStage.value && h.evidence_stage !== controls.evidenceStage.value) return false;
       if (controls.publicationClass.value && h.review_state?.publication_class !== controls.publicationClass.value) return false;
@@ -134,11 +147,13 @@
       const chips = document.createElement('div');
       chips.className = 'chips';
       [
+        diseaseContextLabel(h) ? 'disease context: ' + diseaseContextLabel(h) : '',
+        text(h.research_classification) ? 'research class: ' + text(h.research_classification) : '',
         'uncertainty: ' + text(h.uncertainty?.level),
         'novelty: ' + text(h.novelty?.status),
         'ranking: ' + text(h.ranking?.status),
         ...targetValues(h)
-      ].filter((value) => !value.endsWith(': ')).forEach((value) => {
+      ].filter((value) => value && !value.endsWith(': ')).forEach((value) => {
         const chip = document.createElement('span');
         chip.className = 'chip';
         chip.textContent = value;
@@ -168,6 +183,8 @@
         return object;
       }));
       records = objects;
+      addOptions(controls.diseaseContext, records.flatMap(diseaseContextValues));
+      addOptions(controls.researchClassification, records.map((h) => h.research_classification));
       addOptions(controls.target, records.flatMap(targetValues));
       addOptions(controls.evidenceStage, records.map((h) => h.evidence_stage));
       addOptions(controls.publicationClass, records.map((h) => h.review_state?.publication_class));
