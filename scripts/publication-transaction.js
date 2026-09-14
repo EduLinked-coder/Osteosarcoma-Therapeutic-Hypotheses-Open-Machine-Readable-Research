@@ -18,6 +18,30 @@ const GIT_SHA = /^[0-9a-f]{40}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const allowedEnvelopeKeys = new Set(['contract_id', 'contract_version', 'source', 'target', 'authority', 'public_projection', 'handoff_digest']);
 
+const PROJECTION_RENDER_PIPELINE = Object.freeze([
+  Object.freeze({ script: 'scripts/render-public-research.js', args: [] }),
+  Object.freeze({ script: 'scripts/render-research-activity.js', args: [] }),
+  Object.freeze({ script: 'scripts/render-public-research.js', args: [] }),
+  Object.freeze({ script: 'scripts/render-structured-metadata.js', args: [] }),
+  Object.freeze({ script: 'scripts/render-machine-manifest.js', args: [] })
+]);
+
+const POST_STAGE_VALIDATION_PIPELINE = Object.freeze([
+  Object.freeze({ script: 'scripts/validate-schema.js', args: [] }),
+  Object.freeze({ script: 'scripts/render-public-research.js', args: ['--check'] }),
+  Object.freeze({ script: 'scripts/render-research-activity.js', args: ['--check'] }),
+  Object.freeze({ script: 'scripts/render-structured-metadata.js', args: ['--check'] }),
+  Object.freeze({ script: 'scripts/render-machine-manifest.js', args: ['--check'] }),
+  Object.freeze({ script: 'scripts/validate-evidence-events.js', args: [] }),
+  Object.freeze({ script: 'scripts/validate-lifecycle-bindings.js', args: [] }),
+  Object.freeze({ script: 'scripts/validate-evidence-context.js', args: [] }),
+  Object.freeze({ script: 'scripts/validate-evidence-relationship-consistency.js', args: [] }),
+  Object.freeze({ script: 'scripts/validate-search.js', args: [] }),
+  Object.freeze({ script: 'scripts/validate-public-interface.js', args: [] }),
+  Object.freeze({ script: 'scripts/validate-public-safety.js', args: [] }),
+  Object.freeze({ script: 'scripts/validate-public-research.js', args: [] })
+]);
+
 class PublicationTransactionBlocked extends Error {}
 
 const readJson = (relativeOrAbsolute) => JSON.parse(fs.readFileSync(path.isAbsolute(relativeOrAbsolute) ? relativeOrAbsolute : path.join(root, relativeOrAbsolute), 'utf8'));
@@ -141,7 +165,22 @@ function validateHandoff(envelope) {
   return { hypothesis, bindings };
 }
 
-function stageHandoff(envelope) {
+function runNodePipeline(pipeline) {
+  for (const { script, args } of pipeline) {
+    execFileSync(process.execPath, [script, ...args], { cwd: root, stdio: 'inherit' });
+  }
+}
+
+function restoreCanonicalProjections() {
+  runNodePipeline(PROJECTION_RENDER_PIPELINE);
+}
+
+function runPostStagePipeline() {
+  runNodePipeline(PROJECTION_RENDER_PIPELINE);
+  runNodePipeline(POST_STAGE_VALIDATION_PIPELINE);
+}
+
+function stageHandoff(envelope, options = {}) {
   const { hypothesis, bindings } = validateHandoff(envelope);
   const hypothesisPath = path.join(root, 'hypotheses', hypothesis.hypothesis_id, 'hypothesis.json');
   requireGate(!fs.existsSync(hypothesisPath), hypothesis.hypothesis_id + ' already exists; autonomous overwrite/revision is blocked');
@@ -162,17 +201,34 @@ function stageHandoff(envelope) {
   fs.writeFileSync(hypothesisPath, JSON.stringify(hypothesis, null, 2) + '\n', 'utf8');
   for (const { targetPath, binding } of newEvidence) fs.writeFileSync(targetPath, JSON.stringify(binding, null, 2) + '\n', 'utf8');
 
-  execFileSync(process.execPath, ['scripts/render-public-research.js'], { cwd: root, stdio: 'inherit' });
-  execFileSync(process.execPath, ['scripts/validate-schema.js'], { cwd: root, stdio: 'inherit' });
-  execFileSync(process.execPath, ['scripts/render-public-research.js', '--check'], { cwd: root, stdio: 'inherit' });
-  execFileSync(process.execPath, ['scripts/validate-public-safety.js'], { cwd: root, stdio: 'inherit' });
-  execFileSync(process.execPath, ['scripts/validate-public-research.js'], { cwd: root, stdio: 'inherit' });
+  const executePipeline = options.executePipeline || runPostStagePipeline;
+  const restoreProjections = options.restoreProjections || restoreCanonicalProjections;
+  try {
+    executePipeline();
+  } catch (error) {
+    fs.rmSync(path.dirname(hypothesisPath), { recursive: true, force: true });
+    for (const { targetPath } of newEvidence) fs.rmSync(targetPath, { force: true });
+
+    let restorationError = null;
+    try {
+      restoreProjections();
+    } catch (restoreError) {
+      restorationError = restoreError;
+    }
+
+    const restorationMessage = restorationError
+      ? ' Projection restoration also failed: ' + restorationError.message
+      : ' Candidate files were removed and canonical generated projections were restored.';
+    throw new PublicationTransactionBlocked('post-stage rendering or validation failed; candidate staging was rolled back: ' + error.message + restorationMessage);
+  }
 
   return {
     hypothesis_id: hypothesis.hypothesis_id,
     hypothesis_path: path.relative(root, hypothesisPath),
     new_evidence_ids: newEvidence.map(({ binding }) => binding.evidence_id),
-    reused_evidence_ids: bindings.filter((binding) => !newEvidence.some(({ binding: created }) => created.evidence_id === binding.evidence_id)).map((binding) => binding.evidence_id)
+    reused_evidence_ids: bindings.filter((binding) => !newEvidence.some(({ binding: created }) => created.evidence_id === binding.evidence_id)).map((binding) => binding.evidence_id),
+    projection_pipeline: PROJECTION_RENDER_PIPELINE.map(({ script, args }) => [script, ...args].join(' ')),
+    validation_pipeline: POST_STAGE_VALIDATION_PIPELINE.map(({ script, args }) => [script, ...args].join(' '))
   };
 }
 
@@ -186,7 +242,7 @@ function cli() {
     return;
   }
   const result = stageHandoff(envelope);
-  console.log('Staged public candidate ' + result.hypothesis_id + '. No merge or scientific approval was performed.');
+  console.log('Staged and validated public candidate ' + result.hypothesis_id + '. No merge or scientific approval was performed.');
   console.log(JSON.stringify(result, null, 2));
 }
 
@@ -203,10 +259,14 @@ module.exports = {
   CONTRACT_VERSION,
   SUPPORTED_CONTRACT_VERSIONS,
   TARGET_REPOSITORY,
+  PROJECTION_RENDER_PIPELINE,
+  POST_STAGE_VALIDATION_PIPELINE,
   PublicationTransactionBlocked,
   canonicalJson,
   computeHandoffDigest,
   validatePublicProjectionSafety,
   validateHandoff,
+  restoreCanonicalProjections,
+  runPostStagePipeline,
   stageHandoff
 };

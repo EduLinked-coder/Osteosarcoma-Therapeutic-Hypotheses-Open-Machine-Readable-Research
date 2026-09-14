@@ -28,9 +28,10 @@ A publication transaction moves material from candidate research intelligence in
 4. The relationship is classified as supporting, limiting, contradictory, contextual, failed replication or successor context.
 5. Uncertainty, evidence maturity, replication state and contradictory evidence are retained.
 6. Human scientific review is required for reviewed or clinically validated classifications.
-7. Canonical JSON is updated first.
-8. Generated projections are rendered from canonical JSON using `scripts/render-public-research.js`.
-9. CI validates schema, generated-output freshness and public research boundaries.
+7. Canonical JSON is staged first.
+8. Deterministic public projections are regenerated from canonical state: hypothesis/index/site/sitemap, living-research activity, the public site again so activity metrics are current, structured JSON-LD and the generated machine manifest.
+9. The staged working tree is validated against schema, generated-output freshness, evidence history, lifecycle, evidence context, relationship consistency, search, public interface, public safety and the overall public-research boundary.
+10. If post-write rendering or validation fails, newly staged candidate files are removed and canonical generated projections are restored before the transaction reports failure.
 
 ## Executable candidate handoff staging
 
@@ -50,9 +51,13 @@ Stage a **new** candidate into a working branch:
 node scripts/publication-transaction.js --stage path/to/public-safe-handoff.json
 ```
 
-The transaction fails closed unless the handoff digest is intact, the target schemas match, source revision and report digest are attributable, disclosure authority is explicitly referenced, scientific review remains required, `clinical_use` remains false, uncertainty and contradictory-evidence assessment survive, evidence is public HTTP(S) candidate evidence bound to the same hypothesis, and every embedded object validates against the repository schemas. The handoff validator reuses the same public-payload safety policy as `scripts/validate-public-safety.js`, so prohibited public field names and high-confidence credential material are rejected before staging. It also reuses the repository's evidence-binding identity rules before any filesystem path is constructed. After deterministic rendering, the repository-level public-safety scan runs again before the transaction reports success.
+The transaction fails closed unless the handoff digest is intact, the target schemas match, source revision and report digest are attributable, disclosure authority is explicitly referenced, scientific review remains required, `clinical_use` remains false, uncertainty and contradictory-evidence assessment survive, evidence is public HTTP(S) candidate evidence bound to the same hypothesis, and every embedded object validates against the repository schemas. The handoff validator reuses the same public-payload safety policy as `scripts/validate-public-safety.js`, so prohibited public field names and high-confidence credential material are rejected before staging. It also reuses the repository's evidence-binding identity rules before any filesystem path is constructed.
 
-The handoff envelope itself is not persisted into this public repository. Private/source routing remains source-owned. Existing hypothesis IDs cannot be autonomously overwritten by this transaction; revisions, supersession and replacement remain separate governed operations. After staging a new candidate, the script reuses the existing renderer and validators before reporting success. A Git branch or pull request must still be created through the normal bounded review path, and merge remains outside autonomous authority.
+After writing a new candidate, the transaction refreshes the existing deterministic projections in dependency order: `scripts/render-public-research.js`, `scripts/render-research-activity.js`, `scripts/render-public-research.js` again so homepage activity metrics consume the refreshed activity index, `scripts/render-structured-metadata.js`, then `scripts/render-machine-manifest.js`. It then runs the relevant repository validators before reporting success. This does not replace pull-request CI; it prevents a staging command from claiming success while leaving known generated surfaces stale.
+
+Post-write staging is transactional at the working-tree boundary. If a renderer or validator fails, the transaction removes the newly created hypothesis directory and only evidence-binding files that were newly created by that transaction, leaves pre-existing/reused evidence untouched, regenerates canonical projections from the restored repository state, and reports a blocked transaction. This rollback is an engineering safety property only; it does not grant disclosure, merge, scientific-review or publication authority.
+
+The handoff envelope itself is not persisted into this public repository. Private/source routing remains source-owned. Existing hypothesis IDs cannot be autonomously overwritten by this transaction; revisions, supersession and replacement remain separate governed operations. A Git branch or pull request must still be created through the normal bounded review path, and merge remains outside autonomous authority.
 
 ## Executable public payload safety gate
 
@@ -87,23 +92,31 @@ Agents must not publish:
 
 ## Generated-output freshness
 
-The generated files are projections, not source authority:
+The generated files are projections, not source authority. They include:
 
 - `index.html`
 - `hypotheses/*/index.html`
+- `hypotheses/*/easy-read/index.html`
 - `indexes/hypotheses.json`
+- `activity/index.html`
+- `indexes/evidence-events.json`
+- `structured-data/hypotheses.jsonld`
+- `manifest.json`
 - `sitemap.xml`
 
-The homepage, portfolio cards, register, individual hypothesis pages, discovery index and sitemap must all derive from canonical hypothesis JSON rather than independently maintained scientific facts.
+The homepage, portfolio cards, register, individual hypothesis pages, activity view, discovery index, structured metadata, machine manifest and sitemap must derive from canonical repository state rather than independently maintained scientific facts.
 
-After changing canonical hypothesis JSON, run:
+After changing canonical hypothesis JSON outside the transaction, regenerate the dependent projections in the same order used by the transaction:
 
 ```sh
 node scripts/render-public-research.js
-node scripts/render-public-research.js --check
+node scripts/render-research-activity.js
+node scripts/render-public-research.js
+node scripts/render-structured-metadata.js
+node scripts/render-machine-manifest.js
 ```
 
-CI must fail if generated outputs are stale.
+CI independently checks these generated surfaces and must fail if they are stale.
 
 ## Evidence-binding governance
 
