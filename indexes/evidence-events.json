@@ -1,12 +1,13 @@
 {
   "schema_version": "1.0.0",
   "generated_by": "scripts/render-research-activity.js",
-  "source": "Append-only public evidence events plus canonical hypothesis objects. This is a discovery projection, not a scientific authority surface.",
+  "source": "Append-only public evidence events plus canonical hypothesis objects and the governed protected scientific-review exception register. This is a discovery projection, not a scientific authority surface.",
   "clinical_use_boundary": "Research activity only. Not medical advice, treatment recommendations or claims of patient benefit.",
   "event_count": 0,
   "latest_event_at": null,
   "metrics": {
     "hypotheses_requiring_review": 1,
+    "protected_scientific_review_exceptions": 1,
     "new_evidence_events": 0,
     "ranking_changes": 0,
     "evidence_stage_changes": 0,
