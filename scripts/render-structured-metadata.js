@@ -49,6 +49,15 @@ const hasPart = hypotheses.map((h) => {
   if (h.hypothesis_id !== h.hypothesis_id.match(idPattern)?.[0]) throw new Error('Invalid stable hypothesis ID: ' + h.hypothesis_id);
   if (h.clinical_use !== false) throw new Error(h.hypothesis_id + ' must retain clinical_use:false.');
   if (!h.review_state || h.review_state.scientific_review_required !== true) throw new Error(h.hypothesis_id + ' must retain explicit scientific review requirement.');
+  if (!h.disease_context || typeof h.disease_context !== 'object' || Array.isArray(h.disease_context)) throw new Error(h.hypothesis_id + ' must retain canonical disease_context metadata.');
+  if (h.research_classification !== 'therapeutic-hypothesis') throw new Error(h.hypothesis_id + ' must retain canonical research_classification.');
+  if (!h.ranking || typeof h.ranking.explanation !== 'string' || h.ranking.explanation.length === 0) throw new Error(h.hypothesis_id + ' must retain ranking.explanation.');
+  if (!h.novelty || typeof h.novelty.confidence !== 'string' || h.novelty.confidence.length === 0) throw new Error(h.hypothesis_id + ' must retain novelty.confidence.');
+  if (!h.accessibility || typeof h.accessibility !== 'object' || Array.isArray(h.accessibility)) throw new Error(h.hypothesis_id + ' must retain canonical accessibility metadata.');
+
+  const easyReadPath = h.accessibility.easy_read_projection;
+  const expectedEasyReadPath = 'hypotheses/' + h.hypothesis_id + '/easy-read/';
+  if (easyReadPath !== expectedEasyReadPath) throw new Error(h.hypothesis_id + ' must bind structured metadata to its stable Easy Read projection.');
 
   const evidenceIds = [...(h.supporting_evidence || []), ...((h.contradictory_evidence || {}).items || [])]
     .map((item) => item.evidence_id)
@@ -57,6 +66,12 @@ const hasPart = hypotheses.map((h) => {
     if (!evidenceById.has(id)) throw new Error(h.hypothesis_id + ' references missing public evidence binding ' + id + '.');
     return evidenceById.get(id);
   }))];
+
+  const about = [...new Set([
+    h.disease_context.disease,
+    h.disease_context.context,
+    ...(h.targets_pathways || []).map((item) => item.name)
+  ].filter(Boolean))];
 
   return {
     '@type': 'CreativeWork',
@@ -70,7 +85,7 @@ const hasPart = hypotheses.map((h) => {
     dateModified: h.provenance.updated_at,
     isAccessibleForFree: true,
     genre: 'Research hypothesis',
-    about: ['osteosarcoma', ...(h.targets_pathways || []).map((item) => item.name)],
+    about,
     citation: citations,
     encoding: [{
       '@type': 'MediaObject',
@@ -78,13 +93,25 @@ const hasPart = hypotheses.map((h) => {
       contentUrl: siteBase + 'hypotheses/' + h.hypothesis_id + '/hypothesis.json'
     }],
     additionalProperty: [
+      { '@type': 'PropertyValue', name: 'researchClassification', value: h.research_classification },
+      { '@type': 'PropertyValue', name: 'disease', value: h.disease_context.disease },
+      { '@type': 'PropertyValue', name: 'diseaseContextStatus', value: h.disease_context.status },
+      { '@type': 'PropertyValue', name: 'diseaseContext', value: h.disease_context.context },
       { '@type': 'PropertyValue', name: 'evidenceStage', value: h.evidence_stage },
       { '@type': 'PropertyValue', name: 'reviewState', value: h.review_state.status },
       { '@type': 'PropertyValue', name: 'publicationClass', value: h.review_state.publication_class },
       { '@type': 'PropertyValue', name: 'scientificReviewRequired', value: h.review_state.scientific_review_required },
       { '@type': 'PropertyValue', name: 'uncertaintyLevel', value: h.uncertainty.level },
       { '@type': 'PropertyValue', name: 'contradictoryEvidenceStatus', value: h.contradictory_evidence.status },
+      { '@type': 'PropertyValue', name: 'rankingStatus', value: h.ranking.status },
       { '@type': 'PropertyValue', name: 'rankingMeaning', value: h.ranking.meaning },
+      { '@type': 'PropertyValue', name: 'rankingExplanation', value: h.ranking.explanation },
+      { '@type': 'PropertyValue', name: 'noveltyStatus', value: h.novelty.status },
+      { '@type': 'PropertyValue', name: 'noveltyConfidence', value: h.novelty.confidence },
+      { '@type': 'PropertyValue', name: 'plainLanguageSummarySource', value: h.accessibility.plain_language_summary },
+      { '@type': 'PropertyValue', name: 'easyReadProjection', value: siteBase + easyReadPath },
+      { '@type': 'PropertyValue', name: 'accessibilityProjectionStatus', value: h.accessibility.projection_status },
+      { '@type': 'PropertyValue', name: 'accessibilityMeaning', value: h.accessibility.meaning },
       { '@type': 'PropertyValue', name: 'clinicalUse', value: false },
       { '@type': 'PropertyValue', name: 'researchBoundary', value: 'Research hypothesis only; not medical advice, a treatment recommendation, a dosing instruction or a claim of patient benefit.' }
     ]
