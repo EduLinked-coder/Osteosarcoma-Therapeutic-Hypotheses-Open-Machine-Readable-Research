@@ -11,6 +11,10 @@ const fail = (message) => {
   failed = true;
 };
 
+const requireSchemaField = (rule, field, pointer) => {
+  if (!(rule?.required || []).includes(field)) fail(pointer + ' must require ' + field + ' for operating-contract completeness');
+};
+
 const typeMatches = (value, type) => {
   if (type === 'null') return value === null;
   if (type === 'array') return Array.isArray(value);
@@ -63,6 +67,35 @@ const validate = (value, rule, pointer, rootSchema) => {
   }
 };
 
+for (const field of [
+  'hypothesis_id',
+  'title',
+  'plain_language_summary',
+  'hypothesis_statement',
+  'mechanism',
+  'targets_pathways',
+  'disease_context',
+  'research_classification',
+  'evidence_stage',
+  'supporting_evidence',
+  'contradictory_evidence',
+  'uncertainty',
+  'ranking',
+  'novelty',
+  'falsifiability',
+  'validation_requirements',
+  'provenance',
+  'review_state',
+  'supersession',
+  'accessibility',
+  'clinical_use'
+]) requireSchemaField(schema, field, 'therapeutic-hypothesis schema');
+requireSchemaField(schema.properties?.ranking, 'explanation', 'therapeutic-hypothesis schema ranking');
+requireSchemaField(schema.properties?.novelty, 'confidence', 'therapeutic-hypothesis schema novelty');
+for (const field of ['created_at', 'updated_at']) requireSchemaField(schema.properties?.provenance, field, 'therapeutic-hypothesis schema provenance');
+requireSchemaField(schema.properties?.review_state, 'publication_class', 'therapeutic-hypothesis schema review_state');
+requireSchemaField(schema.properties?.supersession, 'status', 'therapeutic-hypothesis schema supersession');
+
 for (const entry of index.hypotheses || []) {
   const file = entry.canonical_object_path;
   const object = JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
@@ -70,4 +103,4 @@ for (const entry of index.hypotheses || []) {
 }
 
 if (failed) process.exitCode = 1;
-else console.log('Therapeutic hypothesis schema validation passed for ' + (index.hypotheses || []).length + ' object(s).');
+else console.log('Therapeutic hypothesis schema validation passed for ' + (index.hypotheses || []).length + ' object(s), including required operating-contract fields.');
