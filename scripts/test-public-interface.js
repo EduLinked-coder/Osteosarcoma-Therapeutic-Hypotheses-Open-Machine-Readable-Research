@@ -45,10 +45,20 @@ const runFixture = (name, html, shouldPass, extraFiles = { 'data.json': '{}\n' }
 };
 
 runFixture('valid accessible page', validHtml(), true);
+runFixture('valid heading hierarchy', validHtml({ extra: '<section><h2>Section</h2><h3>Detail</h3></section>' }), true);
+runFixture('skipped heading level', validHtml({ extra: '<h3>Skipped level</h3>' }), false);
 runFixture('broken local link', validHtml({ href: 'missing.json' }), false, {});
 runFixture('missing language', validHtml().replace(' lang="en-AU"', ''), false);
 runFixture('missing image alt', validHtml({ img: '<img src="figure.png">' }), false);
 runFixture('positive tabindex', validHtml({ extra: '<button tabindex="2">Unsafe order</button>' }), false);
+runFixture('labelled form control', validHtml({ extra: '<label for="query">Search</label><input id="query" type="search">' }), true);
+runFixture('aria-labelled form control', validHtml({ extra: '<span id="query-label">Search</span><input type="search" aria-labelledby="query-label">' }), true);
+runFixture('direct aria-label form control', validHtml({ extra: '<select aria-label="Evidence stage"><option>All</option></select>' }), true);
+runFixture('unlabelled form control', validHtml({ extra: '<input id="query" type="search">' }), false);
+runFixture('missing aria-labelledby target', validHtml({ extra: '<input type="search" aria-labelledby="missing-label">' }), false);
+runFixture('hidden input without label', validHtml({ extra: '<input type="hidden" value="state">' }), true);
+runFixture('unnamed button', validHtml({ extra: '<button></button>' }), false);
+runFixture('aria-labelled button', validHtml({ extra: '<button aria-label="Reset filters"></button>' }), true);
 runFixture('unsafe new window', validHtml({ extra: '<a href="https://example.org" target="_blank">External</a>' }), false);
 runFixture('safe new window', validHtml({ extra: '<a href="https://example.org" target="_blank" rel="noopener noreferrer">External</a>' }), true);
 
