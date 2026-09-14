@@ -32,6 +32,18 @@ Every public evidence binding must explicitly assess experimental model, populat
 
 A `reported` context value must be attributable to the public source represented by that binding. Evidence-context completeness establishes machine-readable provenance discipline only; it does not establish scientific relevance, evidence quality, replication, acceptance, clinical validity, disclosure authority or publication authority.
 
+## Protected Scientific Review State
+
+Use the existing `governance/evidence-relationship-review-exceptions.json` register and `/review/` projection for governed relationship disagreements that genuinely require scientific interpretation. Do not create a second exception register, copy an unresolved relationship into another scientific record, or silently normalise the canonical hypothesis and evidence binding merely to make them agree.
+
+A registered exception means that the disagreement is known and bounded; it does not decide which relationship is scientifically correct. Preserve both governed representations, `clinical_use:false`, uncertainty and contradictory-evidence state until an attributable human scientific decision authorises a change. The public review route is a discovery and escalation surface, not evidence acceptance, clinical authority or publication authority.
+
+## Bounded Publication Review
+
+Reuse `scripts/publication-transaction.js` for target-side validation/staging and `scripts/publication-review.js` for the bounded branch -> commit -> review-PR boundary. Do not create a parallel publication mechanism or general repository-mutation channel when these existing runtimes can perform the work.
+
+A successful publication transaction, clean bounded commit, green CI or opened pull request does not grant scientific-review, disclosure, merge, clinical-use or publication authority. Never merge or auto-merge a publication PR without explicit authorised human action. Keep the source handoff envelope outside the public checkout and do not persist private/source routing, disclosure-authority details, credentials or secret values in public commits or PR bodies.
+
 ## Public Safety Rules
 
 Never publish patient names, patient-specific tumour characteristics, treatment histories, medical records, private clinical notes, credentials, secrets, tokens, private repository content or restricted unpublished research.
