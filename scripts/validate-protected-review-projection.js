@@ -80,8 +80,8 @@ function validateProjection(register, reviewHtml, quickstartHtml) {
     quickstartRel + ' must retain the human protected-review entry point.');
   invariant(quickstartHtml.includes('<code>' + registerRel + '</code>'),
     quickstartRel + ' must retain the machine-readable protected-review register pointer.');
-  invariant(quickstartHtml.includes('not permission to normalise it autonomously'),
-    quickstartRel + ' must retain the no-autonomous-normalisation instruction.');
+  invariant(quickstartHtml.includes('not permission to choose an interpretation'),
+    quickstartRel + ' must retain the no-autonomous-scientific-interpretation instruction.');
 }
 
 function loadLive() {
