@@ -24,6 +24,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Test fail-closed publication transaction
         run: node scripts/test-publication-transaction.js
+      - name: Test bounded publication review orchestration
+        run: node scripts/test-publication-review.js
       - name: Validate governed research contributions
         run: node scripts/validate-contributions.js
       - name: Test contribution intake completeness

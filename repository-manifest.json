@@ -7,9 +7,9 @@
     "role": "PUBLIC_RESEARCH_PROJECTION_AND_DISCOVERY_CONSUMER",
     "discovery_rule": "Authorised agents must resolve the canonical EduLinked repository ecosystem registry and existing Universal Research Engine federation capability before creating new research, evidence, provenance or publication machinery.",
     "private_routing_rule": "Private repository topology and restricted source content are intentionally not embedded in this public manifest. Resolve private/source-owned routing only through authorised ecosystem systems.",
-    "authority_rule": "Candidate evidence generation, export success, validation success and generated projections do not transfer scientific-review, clinical-use or publication authority.",
+    "authority_rule": "Candidate evidence generation, export success, validation success, generated projections and review-PR creation do not transfer scientific-review, clinical-use, merge or publication authority.",
     "source_routing_state": "DOMAIN_SOURCE_RESOLVABLE_THROUGH_AUTHORISED_ECOSYSTEM_ROUTING",
-    "automation_readiness": "TARGET_HANDOFF_VALIDATION_AND_STAGING_IMPLEMENTED_END_TO_END_PUBLICATION_BLOCKED_UNTIL_ATTRIBUTABLE_SOURCE_ENVELOPE_EXISTS"
+    "automation_readiness": "TARGET_HANDOFF_VALIDATION_STAGING_AND_BOUNDED_REVIEW_PR_IMPLEMENTED_END_TO_END_PUBLICATION_BLOCKED_UNTIL_ATTRIBUTABLE_SOURCE_ENVELOPE_EXISTS"
   },
   "manifest_projection": {
     "contract_entry_point": "manifest.json",
@@ -44,6 +44,8 @@
     "quickstart_source": "docs/quickstart.md",
     "publication_lifecycle": "docs/publication-lifecycle.md",
     "publication_transaction": "scripts/publication-transaction.js",
+    "publication_review": "scripts/publication-review.js",
+    "publication_review_contract": "docs/publication-review.md",
     "evidence_binding_examples": "examples/evidence-bindings/*.example.json",
     "evidence_human_page": "evidence/"
   },
@@ -77,7 +79,7 @@
     "SUPERSESSION_RECORDED",
     "WITHDRAWAL_RECORDED"
   ],
-  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; governed contribution objects are checked by scripts/validate-contributions.js; append-only evidence change history is checked by scripts/validate-evidence-events.js; living-research activity is deterministically rendered through scripts/render-research-activity.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; deterministic Schema.org JSON-LD is rendered through scripts/render-structured-metadata.js; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, contribution governance, evidence-history integrity, research-activity freshness, generated-output freshness, structured metadata freshness, schemas and public research boundaries before deployment.",
+  "update_mechanism": "A validated public-safe handoff may be checked or staged through scripts/publication-transaction.js; scripts/publication-review.js can compose that same validated transaction into a bounded review-ready branch, commit and pull request without merge or publication authority; governed contribution objects are checked by scripts/validate-contributions.js; append-only evidence change history is checked by scripts/validate-evidence-events.js; living-research activity is deterministically rendered through scripts/render-research-activity.js; canonical hypothesis objects are rendered through scripts/render-public-research.js into standard and Easy Read human projections, machine indexes and discovery metadata; deterministic Schema.org JSON-LD is rendered through scripts/render-structured-metadata.js; manifest.json is deterministically projected from repository-manifest.json by scripts/render-machine-manifest.js; CI verifies transaction gates, publication-review boundaries, contribution governance, evidence-history integrity, research-activity freshness, generated-output freshness, structured metadata freshness, schemas and public research boundaries before deployment.",
   "publication_status_semantics": {
     "public-research-candidate": "Public-safe research hypothesis requiring scientific review.",
     "reviewed-public-hypothesis": "Public-safe hypothesis reviewed under the repository authority model.",
@@ -87,6 +89,11 @@
   "publication_transaction_boundary": {
     "candidate_handoff_contract_id": "OSTEOSARCOMA-PUBLIC-PROJECTION-HANDOFF-001",
     "target_staging_runtime_implemented": true,
+    "bounded_review_pr_runtime_implemented": true,
+    "review_pr_requires_validated_public_safe_handoff": true,
+    "review_pr_requires_clean_exact_main": true,
+    "review_pr_change_allowlist_required": true,
+    "review_pr_may_include_private_source_routing": false,
     "requires_public_or_release_authorised_source": true,
     "requires_attributable_object_lineage": true,
     "requires_disclosure_authority": true,
@@ -97,6 +104,7 @@
     "private_source_copy_allowed": false,
     "source_owner_inference_allowed": false,
     "autonomous_existing_hypothesis_overwrite_allowed": false,
+    "autonomous_merge_allowed": false,
     "scientific_review_authority_transferred": false,
     "clinical_use_authority_transferred": false,
     "cross_repository_automation_ready": false
@@ -162,6 +170,7 @@
     "schemas/evidence-change-event.schema.json",
     "schemas/research-contribution.schema.json",
     "scripts/publication-transaction.js",
+    "scripts/publication-review.js",
     "scripts/validate-contributions.js",
     "scripts/validate-evidence-events.js",
     "scripts/render-research-activity.js",
@@ -191,6 +200,7 @@
     "docs/quickstart/index.html",
     "docs/quickstart.md",
     "docs/publication-lifecycle.md",
+    "docs/publication-review.md",
     "docs/contribution-lifecycle.md",
     ".github/ISSUE_TEMPLATE/new-evidence.md",
     ".github/ISSUE_TEMPLATE/contradictory-evidence.md",
