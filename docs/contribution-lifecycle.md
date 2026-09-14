@@ -73,11 +73,12 @@ Every public contribution object must:
 - preserve contributor provenance without requiring private contact data;
 - keep `clinical_use:false`;
 - retain `scientific_review_required:true`;
+- retain the canonical `acceptance_meaning` statement that repository review state does not establish clinical benefit, treatment guidance or patient-specific applicability;
 - use public HTTP(S) source references where source references are supplied;
 - avoid patient information, private clinical context, credentials, secrets and restricted research;
 - require an attributable `decision_reference` and `reviewed_at` timestamp for `ACCEPTED` or `REJECTED` state.
 
-The contribution validator also fails closed on common prohibited public fields and duplicate contribution identifiers.
+The contribution validator also fails closed on common prohibited public fields and duplicate contribution identifiers. The acceptance-boundary fixture fails closed if the canonical machine-readable meaning is omitted or weakened.
 
 ## Contribution type is not acceptance
 
@@ -99,6 +100,7 @@ A contribution must not bypass the canonical evidence-binding schema, hypothesis
 Run:
 
 ```sh
+node scripts/test-contribution-acceptance-boundary.js
 node scripts/validate-contributions.js
 node scripts/test-contribution-intake.js
 node scripts/validate-contribution-intake.js
