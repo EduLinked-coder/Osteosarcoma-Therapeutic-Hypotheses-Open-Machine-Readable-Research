@@ -76,11 +76,58 @@ for (const htmlPath of htmlFiles) {
   const h1Count = (html.match(/<h1\b/gi) || []).length;
   if (h1Count !== 1) fail(rel + ' must contain exactly one h1; found ' + h1Count + '.');
 
+  const headingLevels = [...html.matchAll(/<h([1-6])\b[^>]*>/gi)].map((match) => Number(match[1]));
+  for (let index = 1; index < headingLevels.length; index += 1) {
+    const previous = headingLevels[index - 1];
+    const current = headingLevels[index];
+    if (current > previous + 1) {
+      fail(rel + ' skips heading levels from h' + previous + ' to h' + current + '.');
+    }
+  }
+
   const positiveTabindex = [...html.matchAll(/\btabindex\s*=\s*["']?([1-9][0-9]*)["']?/gi)];
   if (positiveTabindex.length) fail(rel + ' uses positive tabindex, which can break logical keyboard order.');
 
   for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
     if (!/\balt\s*=\s*["'][^"']*["']/i.test(match[0])) fail(rel + ' contains an img without an explicit alt attribute.');
+  }
+
+  const elementIds = new Set([...html.matchAll(/\bid\s*=\s*["']([^"']+)["']/gi)].map((match) => match[1]));
+  const labelForIds = new Set([...html.matchAll(/<label\b[^>]*\bfor\s*=\s*["']([^"']+)["'][^>]*>/gi)].map((match) => match[1]));
+
+  for (const match of html.matchAll(/<(input|select|textarea)\b[^>]*>/gi)) {
+    const tagName = match[1].toLowerCase();
+    const markup = match[0];
+    const typeMatch = markup.match(/\btype\s*=\s*["']?([^"'\s>]+)/i);
+    const inputType = typeMatch ? typeMatch[1].toLowerCase() : '';
+    if (tagName === 'input' && inputType === 'hidden') continue;
+
+    const idMatch = markup.match(/\bid\s*=\s*["']([^"']+)["']/i);
+    const ariaLabel = markup.match(/\baria-label\s*=\s*["']([^"']+)["']/i);
+    const ariaLabelledby = markup.match(/\baria-labelledby\s*=\s*["']([^"']+)["']/i);
+    const labelledByIds = ariaLabelledby ? ariaLabelledby[1].trim().split(/\s+/).filter(Boolean) : [];
+    const labelledByExistingIds = labelledByIds.length > 0 && labelledByIds.every((id) => elementIds.has(id));
+    const intrinsicButtonName = tagName === 'input' && ['submit', 'reset', 'button'].includes(inputType) && /\bvalue\s*=\s*["'][^"']+\S[^"']*["']/i.test(markup);
+    const isLabelled = Boolean(
+      (idMatch && labelForIds.has(idMatch[1])) ||
+      (ariaLabel && ariaLabel[1].trim()) ||
+      labelledByExistingIds ||
+      intrinsicButtonName
+    );
+
+    if (!isLabelled) fail(rel + ' contains an unlabelled ' + tagName + ' form control.');
+  }
+
+  for (const match of html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)) {
+    const openingMarkup = '<button' + match[1] + '>';
+    const ariaLabel = openingMarkup.match(/\baria-label\s*=\s*["']([^"']+)["']/i);
+    const ariaLabelledby = openingMarkup.match(/\baria-labelledby\s*=\s*["']([^"']+)["']/i);
+    const labelledByIds = ariaLabelledby ? ariaLabelledby[1].trim().split(/\s+/).filter(Boolean) : [];
+    const labelledByExistingIds = labelledByIds.length > 0 && labelledByIds.every((id) => elementIds.has(id));
+    const textName = match[2].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!(textName || (ariaLabel && ariaLabel[1].trim()) || labelledByExistingIds)) {
+      fail(rel + ' contains a button without an accessible name.');
+    }
   }
 
   for (const match of html.matchAll(/<a\b[^>]*\btarget\s*=\s*["']_blank["'][^>]*>/gi)) {
