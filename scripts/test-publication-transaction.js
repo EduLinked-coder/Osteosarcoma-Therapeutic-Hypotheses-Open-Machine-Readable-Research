@@ -30,7 +30,28 @@ const hypothesisSchema = readJson('schemas/therapeutic-hypothesis.schema.json');
 const evidenceSchema = readJson('schemas/evidence-binding.schema.json');
 const targetEvidenceBindingVersion = evidenceSchema.properties.evidence_binding_version.const;
 
+const accessibilityMeaning = 'Accessibility projections derive from the canonical hypothesis object and do not add scientific facts or claim independent certification.';
+
+function addCompleteCandidateContract(h) {
+  h.disease_context = {
+    disease: 'osteosarcoma',
+    status: 'not-yet-assessed',
+    context: null
+  };
+  h.research_classification = 'therapeutic-hypothesis';
+  h.ranking.explanation = 'No numeric research-priority score is assigned while ranking is pending recalculation; this state does not imply expected patient benefit.';
+  h.novelty.confidence = 'unverified';
+  h.accessibility = {
+    plain_language_summary: 'canonical',
+    easy_read_projection: 'hypotheses/' + h.hypothesis_id + '/easy-read/',
+    projection_status: 'generated',
+    meaning: accessibilityMeaning
+  };
+  return h;
+}
+
 function fixture() {
+  const publicHypothesis = addCompleteCandidateContract(clone(hypothesis));
   const envelope = {
     contract_id: CONTRACT_ID,
     contract_version: CONTRACT_VERSION,
@@ -54,7 +75,7 @@ function fixture() {
       meaning: 'Synthetic CI fixture only; this does not assert real disclosure or publication authority.'
     },
     public_projection: {
-      hypothesis: clone(hypothesis),
+      hypothesis: publicHypothesis,
       evidence_bindings: clone(evidenceBindings)
     }
   };
@@ -68,6 +89,7 @@ function rollbackFixture() {
   const evidenceId = 'SOURCE-SYNTHETIC-ROLLBACK';
   const h = envelope.public_projection.hypothesis;
   h.hypothesis_id = hypothesisId;
+  h.accessibility.easy_read_projection = 'hypotheses/' + hypothesisId + '/easy-read/';
   h.provenance.generated_from = [evidenceId, 'synthetic rollback fixture'];
   h.supporting_evidence = [clone(h.supporting_evidence[0])];
   h.supporting_evidence[0].evidence_id = evidenceId;
@@ -183,6 +205,36 @@ clinicalUse.public_projection.hypothesis.clinical_use = true;
 clinicalUse.handoff_digest = computeHandoffDigest(clinicalUse);
 expectBlocked(() => validateHandoff(clinicalUse), /schema failed|clinical_use:false/);
 
+const missingDiseaseContext = fixture();
+delete missingDiseaseContext.public_projection.hypothesis.disease_context;
+missingDiseaseContext.handoff_digest = computeHandoffDigest(missingDiseaseContext);
+expectBlocked(() => validateHandoff(missingDiseaseContext), /explicitly preserve disease context/);
+
+const missingResearchClassification = fixture();
+delete missingResearchClassification.public_projection.hypothesis.research_classification;
+missingResearchClassification.handoff_digest = computeHandoffDigest(missingResearchClassification);
+expectBlocked(() => validateHandoff(missingResearchClassification), /explicitly set research classification/);
+
+const missingRankingExplanation = fixture();
+delete missingRankingExplanation.public_projection.hypothesis.ranking.explanation;
+missingRankingExplanation.handoff_digest = computeHandoffDigest(missingRankingExplanation);
+expectBlocked(() => validateHandoff(missingRankingExplanation), /explain its research-priority ranking state/);
+
+const missingNoveltyConfidence = fixture();
+delete missingNoveltyConfidence.public_projection.hypothesis.novelty.confidence;
+missingNoveltyConfidence.handoff_digest = computeHandoffDigest(missingNoveltyConfidence);
+expectBlocked(() => validateHandoff(missingNoveltyConfidence), /explicitly preserve novelty confidence/);
+
+const missingAccessibility = fixture();
+delete missingAccessibility.public_projection.hypothesis.accessibility;
+missingAccessibility.handoff_digest = computeHandoffDigest(missingAccessibility);
+expectBlocked(() => validateHandoff(missingAccessibility), /include accessibility projection metadata/);
+
+const mismatchedAccessibilityPath = fixture();
+mismatchedAccessibilityPath.public_projection.hypothesis.accessibility.easy_read_projection = 'hypotheses/OS-TH-9999/easy-read/';
+mismatchedAccessibilityPath.handoff_digest = computeHandoffDigest(mismatchedAccessibilityPath);
+expectBlocked(() => validateHandoff(mismatchedAccessibilityPath), /bind to its stable Easy Read projection/);
+
 const prohibitedField = fixture();
 prohibitedField.public_projection.hypothesis.client_id = 'synthetic-variable-name-only';
 prohibitedField.handoff_digest = computeHandoffDigest(prohibitedField);
@@ -254,4 +306,4 @@ expectBlocked(
 assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'failed staging must remove the new hypothesis directory');
 assert.equal(fs.existsSync(rollbackEvidencePath), false, 'failed staging must remove newly created evidence files');
 
-console.log('Publication transaction tests passed: v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, public-safety, explicit evidence-context, canonical evidence-identity/reference, full projection/validation coverage, transactional rollback and overwrite gates fail closed.');
+console.log('Publication transaction tests passed: v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, complete new-candidate contract metadata, public-safety, explicit evidence-context, canonical evidence-identity/reference, full projection/validation coverage, transactional rollback and overwrite gates fail closed.');

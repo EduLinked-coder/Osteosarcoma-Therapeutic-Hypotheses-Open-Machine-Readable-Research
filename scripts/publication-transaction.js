@@ -85,6 +85,18 @@ function validatePublicProjectionSafety(projection) {
   requireGate(errors.length === 0, 'public projection safety validation failed: ' + errors.join(' | '));
 }
 
+function validateNewCandidateCanonicalContract(hypothesis) {
+  requireGate(hypothesis.disease_context && typeof hypothesis.disease_context === 'object' && !Array.isArray(hypothesis.disease_context), 'new public candidate must explicitly preserve disease context');
+  requireGate(hypothesis.research_classification === 'therapeutic-hypothesis', 'new public candidate must explicitly set research classification');
+  requireGate(typeof hypothesis.ranking?.explanation === 'string' && hypothesis.ranking.explanation.trim().length >= 20, 'new public candidate must explain its research-priority ranking state');
+  requireGate(typeof hypothesis.novelty?.confidence === 'string' && hypothesis.novelty.confidence.trim(), 'new public candidate must explicitly preserve novelty confidence');
+
+  const accessibility = hypothesis.accessibility;
+  requireGate(accessibility && typeof accessibility === 'object' && !Array.isArray(accessibility), 'new public candidate must include accessibility projection metadata');
+  requireGate(accessibility.plain_language_summary === 'canonical', 'new public candidate accessibility metadata must bind to the canonical plain-language summary');
+  requireGate(accessibility.easy_read_projection === 'hypotheses/' + hypothesis.hypothesis_id + '/easy-read/', 'new public candidate accessibility metadata must bind to its stable Easy Read projection');
+}
+
 function validateHandoff(envelope) {
   requireGate(envelope && typeof envelope === 'object' && !Array.isArray(envelope), 'handoff must be a JSON object');
   for (const key of Object.keys(envelope)) requireGate(allowedEnvelopeKeys.has(key), 'handoff has unsupported top-level property ' + key);
@@ -133,6 +145,7 @@ function validateHandoff(envelope) {
   requireGate(hypothesis.review_state?.publication_class === 'public-research-candidate', 'automatic transaction is limited to public-research-candidate objects');
   requireGate(Boolean(hypothesis.uncertainty?.summary), 'public hypothesis must preserve uncertainty');
   requireGate(Boolean(hypothesis.contradictory_evidence?.status) && Boolean(hypothesis.contradictory_evidence?.assessment), 'public hypothesis must preserve contradictory-evidence assessment');
+  validateNewCandidateCanonicalContract(hypothesis);
 
   const bindingIds = new Set();
   for (const binding of bindings) {
@@ -265,6 +278,7 @@ module.exports = {
   canonicalJson,
   computeHandoffDigest,
   validatePublicProjectionSafety,
+  validateNewCandidateCanonicalContract,
   validateHandoff,
   restoreCanonicalProjections,
   runPostStagePipeline,
