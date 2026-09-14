@@ -46,8 +46,8 @@ expectFailure('quickstart human review route removed', (fixture) => {
   fixture.quickstartHtml = fixture.quickstartHtml.replace('href="../../review/"', 'href="../../"');
 });
 
-expectFailure('quickstart autonomous-normalisation warning removed', (fixture) => {
-  fixture.quickstartHtml = fixture.quickstartHtml.replace('not permission to normalise it autonomously', 'may be normalised automatically');
+expectFailure('quickstart autonomous-interpretation warning removed', (fixture) => {
+  fixture.quickstartHtml = fixture.quickstartHtml.replace('not permission to choose an interpretation', 'may be normalised automatically');
 });
 
 console.log('Protected scientific-review projection fail-closed fixtures passed.');
