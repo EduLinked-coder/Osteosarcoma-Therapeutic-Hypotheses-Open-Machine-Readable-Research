@@ -5,6 +5,7 @@ const { spawnSync } = require('child_process');
 
 const validator = path.join(__dirname, 'validate-public-interface.js');
 const siteBase = 'https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/';
+const requiredDiscoveryRoutes = ['', 'search/', 'activity/', 'docs/quickstart/', 'evidence/', 'review/'];
 let failed = false;
 
 const fail = (message) => {
@@ -18,9 +19,20 @@ const validHtml = ({ href = 'data.json', img = '<img src="figure.png" alt="Decor
 <body><main><h1>Fixture</h1><a href="${href}">Data</a>${img}${extra}</main></body>
 </html>`;
 
+const discoverySitemap = (routes = requiredDiscoveryRoutes) => `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${routes.map((route) => `  <url><loc>${siteBase}${route}</loc></url>`).join('\n')}
+</urlset>
+`;
+
 const validDiscoveryFiles = () => ({
   'robots.txt': `User-agent: *\nAllow: /\n\nSitemap: ${siteBase}sitemap.xml\n`,
-  'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${siteBase}</loc></url>\n</urlset>\n`
+  'sitemap.xml': discoverySitemap(),
+  'search/index.html': validHtml({ href: 'https://example.org/data' }),
+  'activity/index.html': validHtml({ href: 'https://example.org/data' }),
+  'docs/quickstart/index.html': validHtml({ href: 'https://example.org/data' }),
+  'evidence/index.html': validHtml({ href: 'https://example.org/data' }),
+  'review/index.html': validHtml({ href: 'https://example.org/data' })
 });
 
 const runFixture = (name, html, shouldPass, extraFiles = { 'data.json': '{}\n' }, discovery = false) => {
@@ -67,6 +79,18 @@ runFixture(
   validHtml(),
   true,
   { 'data.json': '{}\n', ...validDiscoveryFiles() },
+  true
+);
+
+runFixture(
+  'sitemap missing protected review route',
+  validHtml(),
+  false,
+  {
+    'data.json': '{}\n',
+    ...validDiscoveryFiles(),
+    'sitemap.xml': discoverySitemap(requiredDiscoveryRoutes.filter((route) => route !== 'review/'))
+  },
   true
 );
 

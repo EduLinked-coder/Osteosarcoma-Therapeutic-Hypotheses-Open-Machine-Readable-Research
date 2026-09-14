@@ -28,6 +28,7 @@ const publicEntries = isFixtureRoot
       path.join(root, 'activity'),
       path.join(root, 'search'),
       path.join(root, 'evidence'),
+      path.join(root, 'review'),
       path.join(root, 'docs', 'quickstart'),
       path.join(root, 'hypotheses')
     ];
@@ -208,12 +209,10 @@ if (validateDiscovery) {
       }
     }
 
-    if (!isFixtureRoot) {
-      const requiredHumanRoutes = ['', 'search/', 'activity/', 'docs/quickstart/', 'evidence/'];
-      for (const route of requiredHumanRoutes) {
-        const expected = canonicalSiteBase + route;
-        if (!seenLocations.has(expected)) fail('sitemap.xml is missing required human discovery route: ' + expected);
-      }
+    const requiredHumanRoutes = ['', 'search/', 'activity/', 'docs/quickstart/', 'evidence/', 'review/'];
+    for (const route of requiredHumanRoutes) {
+      const expected = canonicalSiteBase + route;
+      if (!seenLocations.has(expected)) fail('sitemap.xml is missing required human discovery route: ' + expected);
     }
   }
 }
