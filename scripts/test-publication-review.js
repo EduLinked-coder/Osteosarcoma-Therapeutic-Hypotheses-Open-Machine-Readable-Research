@@ -29,9 +29,10 @@ const plan = {
 };
 const args = buildPullRequestArgs(plan);
 assert.deepStrictEqual(args.slice(0, 2), ['pr', 'create']);
-assert.ok(args.includes('--draft'), 'publication review PR must be created as draft');
+assert.ok(!args.includes('--draft'), 'publication review PR must be ready for review');
 assert.ok(!args.includes('merge'), 'publication review orchestration must not invoke merge');
 assert.ok(!args.includes('--fill'), 'publication review PR body must remain explicitly bounded');
+assert.ok(args.includes('--base') && args.includes('--head'), 'publication review PR must bind an explicit base and bounded branch');
 
 const allowed = allowedReviewPaths(id, ['PMID-12345678', 'DOI-10.1000%2Fexample']);
 const expected = [
@@ -72,4 +73,4 @@ assert.strictEqual(
   'fatal: https://github.com/owner/repo.git [REDACTED_TOKEN]'
 );
 
-console.log('Publication review orchestration authority, draft-PR, path-allowlist and redaction checks passed.');
+console.log('Publication review orchestration authority, ready-for-review PR, path-allowlist and redaction checks passed.');
