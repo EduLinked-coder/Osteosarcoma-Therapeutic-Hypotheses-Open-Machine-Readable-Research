@@ -5,6 +5,8 @@ const root = process.cwd();
 const registerRel = 'governance/evidence-relationship-review-exceptions.json';
 const reviewRel = 'review/index.html';
 const quickstartRel = 'docs/quickstart/index.html';
+const quickstartSourceRel = 'docs/quickstart.md';
+const readmeRel = 'README.md';
 const expectedReviewHref = '../governance/evidence-relationship-review-exceptions.json';
 const expectedQuickstartReviewHref = '../../review/';
 const repositoryIssuePrefix = 'https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/issues/';
@@ -43,7 +45,17 @@ function validateRegister(register) {
   }
 }
 
-function validateProjection(register, reviewHtml, quickstartHtml) {
+function validateTextDiscovery(text, rel) {
+  invariant(typeof text === 'string' && text.length > 0, rel + ' must exist.');
+  invariant(text.includes('review/'), rel + ' must expose the human protected-review route.');
+  invariant(text.includes(registerRel), rel + ' must expose the machine-readable protected-review register.');
+  invariant(text.includes('attributable human scientific decision') || text.includes('attributable scientific decision'),
+    rel + ' must preserve the attributable human scientific-decision boundary.');
+  invariant(text.includes('not permission') || text.includes('must not be normalised automatically') || text.includes('must not be normalized automatically'),
+    rel + ' must state that registered protected-review state is not autonomous scientific-resolution authority.');
+}
+
+function validateProjection(register, reviewHtml, quickstartHtml, quickstartSource, readme) {
   validateRegister(register);
   invariant(typeof reviewHtml === 'string' && reviewHtml.length > 0, reviewRel + ' must exist.');
   invariant(reviewHtml.includes('href="' + expectedReviewHref + '"'),
@@ -82,20 +94,25 @@ function validateProjection(register, reviewHtml, quickstartHtml) {
     quickstartRel + ' must retain the machine-readable protected-review register pointer.');
   invariant(quickstartHtml.includes('not permission to choose an interpretation'),
     quickstartRel + ' must retain the no-autonomous-scientific-interpretation instruction.');
+
+  validateTextDiscovery(quickstartSource, quickstartSourceRel);
+  validateTextDiscovery(readme, readmeRel);
 }
 
 function loadLive() {
   return {
     register: JSON.parse(fs.readFileSync(path.join(root, registerRel), 'utf8')),
     reviewHtml: fs.readFileSync(path.join(root, reviewRel), 'utf8'),
-    quickstartHtml: fs.readFileSync(path.join(root, quickstartRel), 'utf8')
+    quickstartHtml: fs.readFileSync(path.join(root, quickstartRel), 'utf8'),
+    quickstartSource: fs.readFileSync(path.join(root, quickstartSourceRel), 'utf8'),
+    readme: fs.readFileSync(path.join(root, readmeRel), 'utf8')
   };
 }
 
 if (require.main === module) {
   const live = loadLive();
-  validateProjection(live.register, live.reviewHtml, live.quickstartHtml);
-  console.log('Protected scientific-review projection matches the governed review register boundary.');
+  validateProjection(live.register, live.reviewHtml, live.quickstartHtml, live.quickstartSource, live.readme);
+  console.log('Protected scientific-review projection and text discovery surfaces match the governed review register boundary.');
 }
 
 module.exports = { validateRegister, validateProjection, loadLive };

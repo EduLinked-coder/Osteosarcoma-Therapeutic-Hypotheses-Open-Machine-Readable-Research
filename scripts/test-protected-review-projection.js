@@ -7,17 +7,25 @@ function expectFailure(name, mutate) {
   const fixture = {
     register: JSON.parse(JSON.stringify(live.register)),
     reviewHtml: live.reviewHtml,
-    quickstartHtml: live.quickstartHtml
+    quickstartHtml: live.quickstartHtml,
+    quickstartSource: live.quickstartSource,
+    readme: live.readme
   };
   mutate(fixture);
   assert.throws(
-    () => validateProjection(fixture.register, fixture.reviewHtml, fixture.quickstartHtml),
+    () => validateProjection(
+      fixture.register,
+      fixture.reviewHtml,
+      fixture.quickstartHtml,
+      fixture.quickstartSource,
+      fixture.readme
+    ),
     Error,
     name + ' should fail closed.'
   );
 }
 
-validateProjection(live.register, live.reviewHtml, live.quickstartHtml);
+validateProjection(live.register, live.reviewHtml, live.quickstartHtml, live.quickstartSource, live.readme);
 
 expectFailure('missing runtime register binding', (fixture) => {
   fixture.reviewHtml = fixture.reviewHtml.replace(
@@ -48,6 +56,22 @@ expectFailure('quickstart human review route removed', (fixture) => {
 
 expectFailure('quickstart autonomous-interpretation warning removed', (fixture) => {
   fixture.quickstartHtml = fixture.quickstartHtml.replace('not permission to choose an interpretation', 'may be normalised automatically');
+});
+
+expectFailure('markdown quickstart protected-review register removed', (fixture) => {
+  fixture.quickstartSource = fixture.quickstartSource.split('governance/evidence-relationship-review-exceptions.json').join('governance/other.json');
+});
+
+expectFailure('markdown quickstart autonomous-resolution boundary removed', (fixture) => {
+  fixture.quickstartSource = fixture.quickstartSource.replace('It is not permission', 'It is permission');
+});
+
+expectFailure('README protected-review route removed', (fixture) => {
+  fixture.readme = fixture.readme.split('review/').join('review-disabled/');
+});
+
+expectFailure('README attributable-decision boundary removed', (fixture) => {
+  fixture.readme = fixture.readme.split('attributable human scientific decision').join('automated normalisation');
 });
 
 console.log('Protected scientific-review projection fail-closed fixtures passed.');

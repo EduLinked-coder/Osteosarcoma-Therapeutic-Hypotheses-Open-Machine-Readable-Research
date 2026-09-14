@@ -11,12 +11,15 @@ This repository publishes public, evidence-bound osteosarcoma therapeutic resear
 | Inspect the canonical object | Use the hypothesis page's JSON link | Read `hypotheses/{OS-TH-####}/hypothesis.json` |
 | Validate a hypothesis | Check review state, uncertainty and evidence stage | Validate against `schemas/therapeutic-hypothesis.schema.json` |
 | Inspect evidence bindings | Read `evidence-bindings/*.json` | Validate against `schemas/evidence-binding.schema.json` |
+| Inspect unresolved scientific interpretation differences | Open `review/` | Read `governance/evidence-relationship-review-exceptions.json` |
 | Propose a governed contribution | Use the relevant GitHub issue template | Start from `schemas/research-contribution.schema.json` and `examples/contributions/` |
 | Propose new evidence | Use the New public evidence issue template | Copy `examples/evidence-bindings/supports.example.json` |
 | Report a contradiction | Use the Contradictory evidence issue template | Copy `examples/evidence-bindings/contradicts.example.json` |
 | Report failed replication | Use the Failed replication issue template | Copy `examples/evidence-bindings/failed-replication.example.json` |
 
 The search interface does not maintain a duplicate research database. It loads the generated index and then fetches the canonical hypothesis objects, so mechanism, target/pathway, evidence stage, review/publication state, uncertainty, novelty and ranking filters remain projections of canonical JSON.
+
+The protected review page reads `governance/evidence-relationship-review-exceptions.json` rather than maintaining a second scientific record. A registered exception is a known unresolved human scientific-review state. It is not permission to choose, rewrite or normalise an evidence relationship automatically.
 
 ## Contribution boundary
 
@@ -35,10 +38,11 @@ Do not include patient information, private clinical context, client information
 1. Use a public identifier or durable public URL.
 2. Classify the relationship: `SUPPORTS`, `CONTRADICTS`, `LIMITS`, `NEUTRAL`, `CONTEXTUALISES`, `FAILED_REPLICATION` or `SUCCESSOR_CONTEXT`.
 3. Use `NEUTRAL` only when the source is relevant to the hypothesis but, after scientific assessment, does not support, contradict or limit the hypothesis claim. `NEUTRAL` is an evidence relationship, not a synonym for unknown or unassessed; uncertain classification must remain unresolved rather than being normalised automatically.
-4. Keep `clinical_use` as `false`.
-5. Keep `acceptance_state.status` as `candidate-public-evidence` unless explicit review authority says otherwise.
-6. Add the binding to `evidence-bindings/{evidence_id}.json`.
-7. Run:
+4. Before changing a known relationship mismatch, inspect `governance/evidence-relationship-review-exceptions.json`. If an exception is registered, preserve both governed representations until an attributable human scientific decision resolves the discrepancy.
+5. Keep `clinical_use` as `false`.
+6. Keep `acceptance_state.status` as `candidate-public-evidence` unless explicit review authority says otherwise.
+7. Add the binding to `evidence-bindings/{evidence_id}.json`.
+8. Run:
 
 ```sh
 node scripts/validate-contributions.js
