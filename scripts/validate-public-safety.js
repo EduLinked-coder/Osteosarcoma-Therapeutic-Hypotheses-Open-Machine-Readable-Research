@@ -200,6 +200,10 @@ function validateRepositoryPublicSafety(root = DEFAULT_ROOT) {
       for (const message of scanStructuredValue(value)) {
         errors.push(relativePath + ' ' + message);
       }
+    } else {
+      for (const message of scanClinicalBoundaryLanguage(text, '$text')) {
+        errors.push(relativePath + ' ' + message);
+      }
     }
   }
 

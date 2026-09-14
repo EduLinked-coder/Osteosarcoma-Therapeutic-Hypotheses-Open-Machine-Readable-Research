@@ -1,9 +1,13 @@
 'use strict';
 
 const assert = require('assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const {
   scanStructuredValue,
-  scanSecretMaterial
+  scanSecretMaterial,
+  validateRepositoryPublicSafety
 } = require('./validate-public-safety');
 
 function expectStructuredBlocked(payload, pattern) {
@@ -44,4 +48,26 @@ expectSecretBlocked('prefix ' + 'AKIA' + 'A'.repeat(16) + ' suffix', /AWS access
 
 assert.deepStrictEqual(scanSecretMaterial('No credential material is present here.', 'synthetic-fixture.txt'), []);
 
-console.log('Public safety payload tests passed: prohibited fields, high-confidence credential material and patient-directed clinical language fail closed.');
+const textFixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-public-safety-'));
+try {
+  const docsDir = path.join(textFixtureRoot, 'docs');
+  fs.mkdirSync(docsDir, { recursive: true });
+  const fixturePath = path.join(docsDir, 'synthetic.md');
+  fs.writeFileSync(fixturePath, '# Synthetic\n\nThe patient should start methotrexate.\n', 'utf8');
+  const unsafeResult = validateRepositoryPublicSafety(textFixtureRoot);
+  assert.ok(
+    unsafeResult.errors.some((message) => message.includes('docs/synthetic.md') && message.includes('patient-directed treatment instruction')),
+    'expected human-readable public text to fail closed on patient-directed treatment language'
+  );
+
+  fs.writeFileSync(
+    fixturePath,
+    '# Synthetic\n\nThis is a research hypothesis only and does not recommend treatment for any patient.\n',
+    'utf8'
+  );
+  assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
+} finally {
+  fs.rmSync(textFixtureRoot, { recursive: true, force: true });
+}
+
+console.log('Public safety payload tests passed: prohibited fields, high-confidence credential material and patient-directed clinical language fail closed across structured and human-readable public surfaces.');
