@@ -1,0 +1,155 @@
+{
+  "schema": "edulinked.upstream_consumption_manifest.v1",
+  "binding_id": "OSTEOSARCOMA-PUBLIC-RESEARCH-ACCESSIBILITY-UPSTREAM-CONSUMPTION-001",
+  "observed_at": "2026-09-20",
+  "queue_item": "UPSTREAM-BACKFILL-002",
+  "downstream_repository": "EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research",
+  "work_surface": "Public osteosarcoma research hypothesis pages and deterministic Easy Read HTML projections",
+  "source_trigger": "EduLinked-Systems/canonical-repository-ecosystem-registry bindings/estate-upstream-consumption-backfill-queue.json -> UPSTREAM-BACKFILL-002",
+  "problem_class": "ESTATE_WIDE_INHERITANCE_AND_CONSUMPTION_FAILURE",
+  "classification": ["REUSE", "BIND", "INTEGRATE"],
+  "governing_control": {
+    "repository": "EduLinked-Systems/canonical-repository-ecosystem-registry",
+    "binding": "bindings/estate-upstream-consumption-control-binding.json",
+    "backfill_queue": "bindings/estate-upstream-consumption-backfill-queue.json",
+    "rule": "INSPECT_REUSE_BIND_CONFIGURE_COMPOSE_EXTEND_CREATE_ONLY_IF_REQUIRED"
+  },
+  "existing_local_capability": {
+    "contract": "docs/accessibility-projection.md",
+    "renderer": "scripts/render-public-research.js",
+    "interface_validator": "scripts/validate-public-interface.js",
+    "projection_pattern": "hypotheses/{OS-TH-####}/easy-read/index.html",
+    "state": "DETERMINISTIC_ACCESSIBILITY_PROJECTION_ACTIVE",
+    "authority_boundary": "The Easy Read page is a projection of the canonical hypothesis object and is not an independent scientific record, Easy Read certification, accessibility approval, user-testing result or clinical advice."
+  },
+  "upstream_assets_considered": [
+    {
+      "repository": "EduLinked-Pty-Ltd/core-machine-objects",
+      "role": "Easy Read semantic/composition authority and accessibility lifecycle semantics",
+      "authority_retained_by_source": true,
+      "observed_assets": [
+        "objects/education/easy-read-adaptive-instructional-composition-v0.1.json",
+        "objects/accessibility-capability-layer/contracts/accessible-document-lifecycle-v1.json"
+      ],
+      "decision": "REUSE_AND_BIND"
+    },
+    {
+      "repository": "EduLinked-Systems/edulinked-accessibility-system",
+      "role": "current Easy Read implementation/navigation projection and human-review routing",
+      "authority_retained_by_source": true,
+      "observed_assets": [
+        "adapters/easy-read/entrypoints.yaml",
+        "adapters/review-gates/review-status.adapter.yaml"
+      ],
+      "decision": "REUSE_AND_BIND_REVIEW_ROUTE"
+    },
+    {
+      "repository": "EduLinked-Systems/easy-read",
+      "role": "Easy Read successor/discovery boundary",
+      "authority_retained_by_source": true,
+      "decision": "CONSIDERED_NOT_SELECTED_AS_CURRENT_IMPLEMENTATION_FRONT_DOOR",
+      "reason": "Current accessibility-system evidence retains Core semantic authority and the edulinked-accessibility-system implementation/navigation projection; no successor authority is inferred."
+    },
+    {
+      "repository": "EduLinked-Pty-Ltd/accessible-RTO",
+      "role": "AccessFlow v1.2.0 production route for accessible DOCX/PDF/Canva derivatives",
+      "authority_retained_by_source": true,
+      "observed_assets": [
+        "evidence/accessflow-v1.2.0-ai-accessibility-production-system-binding-2026-08-31.yml"
+      ],
+      "decision": "CONSIDERED_CONDITIONAL_REUSE_ONLY",
+      "reason": "The active public accessibility projection is HTML. Reuse AccessFlow only if a governed document, PDF or Canva derivative is selected; do not create one for symmetry."
+    },
+    {
+      "repository": "EduLinked-Systems/edulinked-learning-system",
+      "role": "learner-facing learning-resource materialisation and publication QA",
+      "authority_retained_by_source": true,
+      "decision": "CONSIDERED_NOT_SELECTED_FOR_CURRENT_RESEARCH_PROJECTION",
+      "reason": "The current public hypothesis pages are research-discovery projections, not a course, Byte sequence, curriculum or assessed learning resource. Re-enter only if a legitimate learner-facing learning surface is selected."
+    }
+  ],
+  "assets_reused": [
+    "Core Easy Read adaptive composition semantics for meaning-preserving accessible projection",
+    "edulinked-accessibility-system Easy Read entrypoint and human-review routing boundary",
+    "the repository's existing canonical-hypothesis renderer and public-interface validator"
+  ],
+  "assets_bound": [
+    {
+      "downstream_output": "hypotheses/{OS-TH-####}/easy-read/index.html",
+      "local_binding": "docs/accessibility-projection.md",
+      "upstream": "EduLinked-Pty-Ltd/core-machine-objects + EduLinked-Systems/edulinked-accessibility-system",
+      "state": "SOURCE_BOUND_ACCESSIBILITY_PROJECTION_HUMAN_REVIEW_GATED",
+      "review_gate": "Machine rendering and deterministic interface checks do not establish Easy Read quality, accessibility conformance, participant comprehension, scientific review or publication approval."
+    }
+  ],
+  "assets_extended_at_source": [],
+  "creation_justification_if_any": "No new accessibility ontology, Easy Read system, scientific record, learning architecture, review registry, publication pipeline or evidence store is created. This source-owned manifest binds an already-active accessibility projection to existing EduLinked authority and review mechanisms.",
+  "explicit_non_use_decisions": [
+    {
+      "asset": "Independent Easy Read scientific record",
+      "decision": "DO_NOT_CREATE",
+      "reason": "Accessibility representations must remain deterministic projections of the canonical hypothesis object so scientific facts, uncertainty, contradiction, review state and provenance cannot silently diverge."
+    },
+    {
+      "asset": "EduLinked-Systems/easy-read as production authority",
+      "decision": "NOT_SELECTED_CURRENTLY",
+      "reason": "The current proven route retains Core semantic authority and edulinked-accessibility-system implementation/navigation authority."
+    },
+    {
+      "asset": "New AAC, symbol-supported or Auslan projection",
+      "decision": "NOT_ACTIVATED_FROM_CURRENT_EVIDENCE",
+      "reason": "Core supports these projection types, but the inspected public-research source does not yet contain an attributable user, audience or publication requirement authorising a new modality. Re-enter on evidenced need rather than portfolio symmetry."
+    },
+    {
+      "asset": "AccessFlow document/PDF/Canva production route",
+      "decision": "CONDITIONAL_ONLY",
+      "reason": "Current delivery is HTML. Reuse AccessFlow if a document, PDF or Canva derivative is actually selected."
+    }
+  ],
+  "review_gates": [
+    "Scientific meaning, evidence status, contradictions, uncertainty and clinical_use:false remain controlled by the canonical research object and scientific review lifecycle.",
+    "Easy Read semantic preservation and accessibility quality require human review; generated markup alone is insufficient.",
+    "Participant or audience comprehension must not be inferred from rendering success or interface validation.",
+    "AAC, symbol-supported, Auslan or other alternative modalities require attributable communication-access need and specialist/person review where applicable.",
+    "Public research publication authority and accessibility approval remain separate protected decisions."
+  ],
+  "authority_boundaries": [
+    "ACCESSIBILITY_PROJECTION != SECOND_SCIENTIFIC_RECORD",
+    "MACHINE_GENERATED != HUMAN_VALIDATED_EASY_READ",
+    "PUBLIC_INTERFACE_VALIDATION_PASS != ACCESSIBILITY_CONFORMANCE",
+    "ACCESSIBLE_RESOURCE != PARTICIPANT_COMPREHENSION",
+    "PLAIN_LANGUAGE != EASY_READ",
+    "SYMBOL_PRESENT != EASY_READ",
+    "RESEARCH_DISCOVERY_PAGE != LEARNING_PROGRAMME",
+    "SCIENTIFIC_REVIEW != ACCESSIBILITY_REVIEW",
+    "ACCESSIBILITY_REVIEW != SCIENTIFIC_REVIEW",
+    "PUBLICATION_RENDERED != PUBLICATION_APPROVED",
+    "REUSE != AUTHORITY_TRANSFER",
+    "RESEARCH_PRIORITY != EXPECTED_PATIENT_BENEFIT",
+    "PUBLIC_RESEARCH_PROJECTION != CLINICAL_ADVICE"
+  ],
+  "remaining_gaps": [
+    "No human Easy Read/accessibility review receipt is established for the generated hypothesis projection.",
+    "No participant or audience comprehension evidence is established.",
+    "No attributable requirement currently activates AAC, symbol-supported, Auslan, audio, video or other alternate representation for this research surface.",
+    "No accessibility-conformance or Easy Read certification claim is established by this binding."
+  ],
+  "reentry_triggers": [
+    "Core Easy Read/accessibility semantic authority changes or is superseded.",
+    "The edulinked-accessibility-system implementation/navigation authority changes.",
+    "An attributable audience, participant or publication requirement activates AAC, symbols, Auslan, audio, video or another alternative representation.",
+    "A document, PDF or Canva derivative is selected and AccessFlow becomes applicable.",
+    "Human accessibility review, participant comprehension evidence or scientific-publication state materially changes.",
+    "A downstream worker attempts to create a second accessibility or Easy Read record for the same hypothesis."
+  ],
+  "validation_receipt": {
+    "status": "PASS_SOURCE_BOUND_PUBLIC_RESEARCH_ACCESSIBILITY_NO_AUTHORITY_TRANSFER",
+    "silent_bypass_closed_for_this_surface": true,
+    "scientific_authority_transferred": false,
+    "accessibility_approval_inferred": false,
+    "participant_comprehension_inferred": false,
+    "publication_approval_inferred": false,
+    "clinical_authority_inferred": false,
+    "new_parallel_architecture_created": false
+  }
+}
