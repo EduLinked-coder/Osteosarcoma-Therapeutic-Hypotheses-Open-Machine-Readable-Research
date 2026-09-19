@@ -8,6 +8,18 @@ Every accessibility-facing representation must be generated from the same canoni
 
 Do not manually maintain a separate Easy Read hypothesis with different scientific facts, evidence status, uncertainty, review state or provenance.
 
+## EduLinked accessibility authority chain
+
+This repository reuses existing EduLinked accessibility authority rather than defining a local Easy Read or accessibility model. The source-owned consumption receipt is `governance/public-research-accessibility-upstream-consumption-manifest-2026-09-20.json`.
+
+- `EduLinked-Pty-Ltd/core-machine-objects:objects/education/easy-read-adaptive-instructional-composition-v0.1.json` supplies the current Easy Read semantic/composition authority. Its guards include `MACHINE_GENERATED != HUMAN_VALIDATED_EASY_READ` and `COMPLIANCE_OUTPUT != COMPREHENSION_EVIDENCE`.
+- `EduLinked-Systems/edulinked-accessibility-system:adapters/easy-read/entrypoints.yaml` supplies the current implementation/navigation and human-review route while retaining Core as semantic authority.
+- `EduLinked-Systems/easy-read` is not treated here as an activated replacement production authority without its own source-owned authority proof.
+- `EduLinked-Pty-Ltd/accessible-RTO` AccessFlow v1.2.0 remains available for a selected accessible document/PDF/Canva derivative, but the current research projection is HTML and does not activate that route by default.
+- `EduLinked-Systems/edulinked-learning-system` is not activated merely because an Easy Read page exists. These pages are research-discovery projections, not courses, curriculum, Byte sequences or assessed learning resources.
+
+AAC, symbol-supported, Auslan, audio, video or other alternate representations are not created for portfolio symmetry. They require attributable communication-access or publication need and the relevant human/specialist/person review. Reuse of any upstream capability does not transfer scientific, accessibility, clinical or publication authority into this repository.
+
 ## Easy Read projection
 
 `scripts/render-public-research.js` generates:
