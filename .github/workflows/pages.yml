@@ -20,8 +20,30 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout exact source revision
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      - name: Validate governed Pages deployment receipt contract
+        env:
+          GITHUB_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/write-pages-deployment-receipt.py \
+            --page-url 'https://example.invalid/public-research/' \
+            --output /tmp/pages-receipt-validation.json \
+            --generated-at '2026-01-01T00:00:00Z'
+          python - <<'PY'
+          import json, os
+          receipt=json.load(open('/tmp/pages-receipt-validation.json', encoding='utf-8'))
+          assert receipt['receipt_type']=='github_pages_deployment'
+          assert receipt['repository']==os.environ['GITHUB_REPOSITORY']
+          assert receipt['commit_sha']==os.environ['GITHUB_SHA']
+          assert receipt['workflow']['workflow_file']=='.github/workflows/pages.yml'
+          assert receipt['environment']=='github-pages'
+          assert 'does not grant scientific review' in receipt['authority_boundary']
+          PY
       - name: Test fail-closed publication transaction
         run: node scripts/test-publication-transaction.js
       - name: Test bounded publication review orchestration
@@ -87,8 +109,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout exact deployment source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site
@@ -106,51 +130,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/pages-receipt
-          python - <<'PY'
-          import json, os, re
-          from datetime import datetime, timezone
-          from urllib.parse import urlparse
-
-          workflow_file = ".github/workflows/pages.yml"
-          receipt = {
-              "schema_version": "1.0",
-              "receipt_type": "github_pages_deployment",
-              "repository": os.environ["GITHUB_REPOSITORY"],
-              "commit_sha": os.environ["GITHUB_SHA"],
-              "workflow": {
-                  "run_id": int(os.environ["GITHUB_RUN_ID"]),
-                  "run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
-                  "run_url": f'{os.environ["GITHUB_SERVER_URL"]}/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{os.environ["GITHUB_RUN_ID"]}',
-                  "workflow_file": workflow_file,
-              },
-              "environment": "github-pages",
-              "page_url": os.environ["PAGE_URL"],
-              "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "authority_boundary": "Technical provenance for the public research projection URL emitted by GitHub Pages only. This receipt does not grant scientific review, clinical-use, publication, accessibility-conformance, source-authority, merge, or canonical-destination approval."
-          }
-          expected_top_level = {
-              "schema_version", "receipt_type", "repository", "commit_sha", "workflow",
-              "environment", "page_url", "generated_at", "authority_boundary"
-          }
-          expected_workflow = {"run_id", "run_attempt", "run_url", "workflow_file"}
-          if set(receipt) != expected_top_level:
-              raise SystemExit("receipt fields do not match the governed Pages deployment receipt contract")
-          if set(receipt["workflow"]) != expected_workflow:
-              raise SystemExit("workflow fields do not match the governed Pages deployment receipt contract")
-          if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", receipt["repository"]):
-              raise SystemExit("repository must use owner/name form")
-          if not re.fullmatch(r"[0-9a-f]{40}", receipt["commit_sha"]):
-              raise SystemExit("commit_sha must be an exact 40-character source revision")
-          parsed = urlparse(receipt["page_url"])
-          if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
-              raise SystemExit("page_url must be a plain HTTPS URL")
-          if receipt["workflow"]["run_url"] != f'https://github.com/{receipt["repository"]}/actions/runs/{receipt["workflow"]["run_id"]}':
-              raise SystemExit("workflow.run_url must match repository and run_id")
-          with open("/tmp/pages-receipt/latest.json", "w", encoding="utf-8") as handle:
-              json.dump(receipt, handle, indent=2, sort_keys=True)
-              handle.write("\n")
-          PY
+          python scripts/write-pages-deployment-receipt.py \
+            --page-url "$PAGE_URL" \
+            --output /tmp/pages-receipt/latest.json
           sha256sum /tmp/pages-receipt/latest.json | cut -d' ' -f1 | sed 's/^/sha256=/' >> "$GITHUB_OUTPUT"
 
       - name: Upload Pages deployment receipt artifact
