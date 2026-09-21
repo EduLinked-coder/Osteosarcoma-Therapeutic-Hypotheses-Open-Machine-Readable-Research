@@ -20,8 +20,30 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout exact source revision
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      - name: Validate governed Pages deployment receipt contract
+        env:
+          GITHUB_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/write-pages-deployment-receipt.py \
+            --page-url 'https://example.invalid/public-research/' \
+            --output /tmp/pages-receipt-validation.json \
+            --generated-at '2026-01-01T00:00:00Z'
+          python - <<'PY'
+          import json, os
+          receipt=json.load(open('/tmp/pages-receipt-validation.json', encoding='utf-8'))
+          assert receipt['receipt_type']=='github_pages_deployment'
+          assert receipt['repository']==os.environ['GITHUB_REPOSITORY']
+          assert receipt['commit_sha']==os.environ['GITHUB_SHA']
+          assert receipt['workflow']['workflow_file']=='.github/workflows/pages.yml'
+          assert receipt['environment']=='github-pages'
+          assert 'does not grant scientific review' in receipt['authority_boundary']
+          PY
       - name: Test fail-closed publication transaction
         run: node scripts/test-publication-transaction.js
       - name: Test bounded publication review orchestration
@@ -78,13 +100,19 @@ jobs:
   deploy:
     if: github.event_name != 'pull_request'
     needs: validate
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout exact deployment source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site
@@ -94,3 +122,124 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Write governed Pages deployment receipt
+        id: receipt
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/write-pages-deployment-receipt.py \
+            --page-url "$PAGE_URL" \
+            --output /tmp/pages-receipt/latest.json
+          sha256sum /tmp/pages-receipt/latest.json | cut -d' ' -f1 | sed 's/^/sha256=/' >> "$GITHUB_OUTPUT"
+
+      - name: Upload Pages deployment receipt artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-deployment-receipt-${{ github.sha }}
+          path: /tmp/pages-receipt/latest.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Persist source-owned deployment receipt immutably
+        id: persist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch=deployment-evidence
+          path=deployment-receipts/pages/latest.json
+          if ! gh api "repos/$GITHUB_REPOSITORY/branches/$branch" >/dev/null 2>&1; then
+            gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/heads/$branch" -f sha="$GITHUB_SHA" >/dev/null
+          fi
+          existing_sha="$(gh api "repos/$GITHUB_REPOSITORY/contents/$path?ref=$branch" --jq '.sha' 2>/dev/null || true)"
+          content="$(base64 -w0 /tmp/pages-receipt/latest.json)"
+          if [ -n "$existing_sha" ]; then
+            gh api -X PUT "repos/$GITHUB_REPOSITORY/contents/$path" -f message="automation: persist Pages deployment receipt" -f content="$content" -f branch="$branch" -f sha="$existing_sha" > /tmp/pages-persist.json
+          else
+            gh api -X PUT "repos/$GITHUB_REPOSITORY/contents/$path" -f message="automation: persist Pages deployment receipt" -f content="$content" -f branch="$branch" > /tmp/pages-persist.json
+          fi
+          echo "commit_sha=$(jq -er '.commit.sha' /tmp/pages-persist.json)" >> "$GITHUB_OUTPUT"
+          echo "blob_sha=$(jq -er '.content.sha' /tmp/pages-persist.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Verify governed GitHub App configuration for Core receipt dispatch
+        id: core-app-config
+        env:
+          CLIENT_ID: ${{ vars.CLIENT_ID }}
+          EDULINKED_APP_ID: ${{ vars.EDULINKED_APP_ID }}
+          ENTERPRISE_APP_PRIVATE_KEY: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$CLIENT_ID" ]; then
+            echo 'client_id_available=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'client_id_available=false' >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$EDULINKED_APP_ID" ]; then
+            echo 'app_id_available=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'app_id_available=false' >> "$GITHUB_OUTPUT"
+          fi
+          if [ -z "$CLIENT_ID" ] && [ -z "$EDULINKED_APP_ID" ]; then
+            echo '::error::Missing governed GitHub App identity: CLIENT_ID or EDULINKED_APP_ID'
+            exit 1
+          fi
+          test -n "$ENTERPRISE_APP_PRIVATE_KEY" || { echo '::error::Missing governed GitHub App private-key configuration'; exit 1; }
+
+      - name: Create Core dispatch token with client ID
+        if: steps.core-app-config.outputs.client_id_available == 'true'
+        id: core-dispatch-token-client-id
+        continue-on-error: true
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.CLIENT_ID }}
+          private-key: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
+          owner: EduLinked-Pty-Ltd
+          repositories: core-machine-objects
+          permission-contents: write
+
+      - name: Create Core dispatch token with app ID fallback
+        if: always() && steps.core-app-config.outputs.app_id_available == 'true' && steps.core-dispatch-token-client-id.outcome != 'success'
+        id: core-dispatch-token-app-id
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.EDULINKED_APP_ID }}
+          private-key: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
+          owner: EduLinked-Pty-Ltd
+          repositories: core-machine-objects
+          permission-contents: write
+
+      - name: Verify Core dispatch token creation
+        if: always() && steps.core-app-config.outcome == 'success'
+        env:
+          CORE_DISPATCH_TOKEN: ${{ steps.core-dispatch-token-client-id.outputs.token || steps.core-dispatch-token-app-id.outputs.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CORE_DISPATCH_TOKEN" || { echo '::error::Unable to mint governed Core dispatch token with CLIENT_ID or EDULINKED_APP_ID'; exit 1; }
+
+      - name: Dispatch bounded Pages deployment observation to Core
+        env:
+          GH_TOKEN: ${{ steps.core-dispatch-token-client-id.outputs.token || steps.core-dispatch-token-app-id.outputs.token }}
+          RECEIPT_PERSISTENCE_REF: ${{ steps.persist.outputs.commit_sha }}
+          RECEIPT_BLOB_SHA: ${{ steps.persist.outputs.blob_sha }}
+          RECEIPT_SHA256: ${{ steps.receipt.outputs.sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload="$(jq -cn \
+            --arg source_repository "$GITHUB_REPOSITORY" \
+            --arg deployment_source_ref "$GITHUB_SHA" \
+            --arg persistence_ref "$RECEIPT_PERSISTENCE_REF" \
+            --arg blob_sha "$RECEIPT_BLOB_SHA" \
+            --arg path "deployment-receipts/pages/latest.json" \
+            --arg sha256 "$RECEIPT_SHA256" \
+            --arg receipt_type "github_pages_deployment" \
+            --arg materialisation_id "EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research:PUBLIC_RESEARCH_PROJECTION" \
+            --arg publication_composition_ref "canonical-repository-ecosystem-registry:bindings/osteosarcoma-open-research-publication-binding.json" \
+            '{kind:"PublicationDeploymentReceiptObserved",canonicality:"source-owned-deployment-receipt-reference",source_repository:$source_repository,deployment_source_ref:$deployment_source_ref,receipt_locator:{persistence_ref:$persistence_ref,blob_sha:$blob_sha,path:$path,sha256:$sha256},receipt_type:$receipt_type,materialisation_id:$materialisation_id,publication_composition_ref:$publication_composition_ref}')"
+          gh api -X POST repos/EduLinked-Pty-Ltd/core-machine-objects/dispatches --input <(jq -cn --arg event_type "publication.deployment.receipt.observed" --argjson client_payload "$payload" '{event_type:$event_type,client_payload:$client_payload}')
