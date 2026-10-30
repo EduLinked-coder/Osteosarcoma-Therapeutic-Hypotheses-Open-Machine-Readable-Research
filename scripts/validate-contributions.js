@@ -3,10 +3,10 @@
 const fs = require('fs');
 const path = require('path');
 const { validateJsonSchema } = require('./lib/schema-lite');
+const { validateContributionObjectIdentity } = require('./lib/contribution-object-integrity');
 
 const root = process.cwd();
 const schema = JSON.parse(fs.readFileSync(path.join(root, 'schemas/research-contribution.schema.json'), 'utf8'));
-const idPattern = /^OS-CONTRIB-[0-9]{4}$/;
 const finalStates = new Set(['ACCEPTED', 'REJECTED']);
 const expectedAcceptanceMeaning = 'Contribution state records repository review only; it does not establish clinical benefit, treatment guidance or patient-specific applicability.';
 const prohibitedKeys = new Set([
@@ -15,7 +15,8 @@ const prohibitedKeys = new Set([
   'secret', 'secrets', 'private_key', 'api_key'
 ]);
 let failed = false;
-const seen = new Set();
+const liveIds = new Set();
+const exampleIds = new Set();
 
 function fail(message) {
   console.error('CONTRIBUTION VALIDATION FAILED: ' + message);
@@ -58,9 +59,7 @@ function validateFile(relativePath) {
   errors.forEach(fail);
   scan(object, relativePath);
 
-  if (!idPattern.test(object.contribution_id || '')) fail(relativePath + ' has invalid contribution_id.');
-  if (seen.has(object.contribution_id)) fail(relativePath + ' duplicates contribution_id ' + object.contribution_id + '.');
-  seen.add(object.contribution_id);
+  for (const error of validateContributionObjectIdentity({ root, relativePath, object, liveIds, exampleIds })) fail(error);
 
   if (object.acceptance_meaning !== expectedAcceptanceMeaning) {
     fail(relativePath + ' must preserve the governed acceptance_meaning boundary exactly.');
@@ -76,9 +75,6 @@ function validateFile(relativePath) {
     }
   } else if (object.review?.reviewed_at && !object.review?.decision_reference) {
     fail(relativePath + ' reviewed_at requires a decision_reference.');
-  }
-  if (object.example === true && object.state !== 'SUBMITTED') {
-    fail(relativePath + ' example objects must remain SUBMITTED so examples cannot imply scientific acceptance.');
   }
 }
 

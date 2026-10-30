@@ -69,7 +69,9 @@ A review decision has declined the proposed contribution. Preserve the proposal,
 
 Every public contribution object must:
 
-- preserve a stable contribution identifier;
+- preserve a stable contribution identifier; live files must be named `contributions/{contribution_id}.json` and their filenames must match their `OS-CONTRIB-####` IDs;
+- keep template examples separate from live identifier allocation: `examples/contributions/` must explicitly set `example:true` and remain `SUBMITTED`, while live contributions must not be marked as examples;
+- reference an existing canonical `hypotheses/{OS-TH-####}/hypothesis.json` when `target_hypothesis_id` is populated; keep it `null` when no established canonical hypothesis is the target, rather than inventing an ID;
 - preserve contributor provenance without requiring private contact data;
 - keep `clinical_use:false`;
 - retain `scientific_review_required:true`;
@@ -78,7 +80,7 @@ Every public contribution object must:
 - avoid patient information, private clinical context, credentials, secrets and restricted research;
 - require an attributable `decision_reference` and `reviewed_at` timestamp for `ACCEPTED` or `REJECTED` state.
 
-The contribution validator fails closed if the canonical schema stops requiring the governed `acceptance_meaning`, if its fixed meaning changes, if an object omits or changes that meaning, or if common prohibited public fields or duplicate contribution identifiers appear. The focused acceptance-boundary fixture is also available for direct regression testing.
+The contribution validator fails closed if the canonical schema stops requiring the governed `acceptance_meaning`, if its fixed meaning changes, if an object omits or changes that meaning, or if common prohibited public fields or duplicate contribution identifiers appear within the live or example namespace. Live contributions additionally fail on filename/ID mismatch, unresolved non-null target hypotheses or example-marker leakage; example IDs do not reserve live IDs. The focused acceptance-boundary fixture is also available for direct regression testing.
 
 ## Contribution type is not acceptance
 
@@ -101,6 +103,7 @@ Run:
 
 ```sh
 node scripts/test-contribution-acceptance-boundary.js
+node scripts/test-contribution-object-integrity.js
 node scripts/validate-contributions.js
 node scripts/test-contribution-intake.js
 node scripts/validate-contribution-intake.js
