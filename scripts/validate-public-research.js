@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { isPathSafeEvidenceId, validateEvidenceBindingIdentity } = require('./lib/evidence-binding-integrity');
+const { validateContradictoryEvidenceIntegrity } = require('./lib/contradictory-evidence-integrity');
 
 const root = process.cwd();
 const fail = (message) => {
@@ -119,7 +120,11 @@ for (const entry of index.hypotheses) {
   if (!h.review_state || h.review_state.scientific_review_required !== true) fail(entry.hypothesis_id + ' must require scientific review until explicitly reviewed.');
   if (!h.ranking || h.ranking.meaning !== 'Research priority only; never expected patient benefit.') fail(entry.hypothesis_id + ' ranking meaning must preserve clinical boundary.');
 
-  const evidenceItems = [...(h.supporting_evidence || []), ...((h.contradictory_evidence || {}).items || [])];
+  const contradictoryEvidence = h.contradictory_evidence || {};
+  for (const integrityError of validateContradictoryEvidenceIntegrity(contradictoryEvidence, entry.hypothesis_id)) fail(integrityError);
+  const contradictoryItems = Array.isArray(contradictoryEvidence.items) ? contradictoryEvidence.items : [];
+
+  const evidenceItems = [...(h.supporting_evidence || []), ...contradictoryItems];
   for (const evidence of evidenceItems) {
     if (!isPathSafeEvidenceId(evidence.evidence_id)) {
       fail(entry.hypothesis_id + ' references an unsafe evidence_id path segment: ' + evidence.evidence_id);
