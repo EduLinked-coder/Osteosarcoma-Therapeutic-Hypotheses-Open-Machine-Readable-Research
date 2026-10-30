@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { validateJsonSchema } = require('./lib/schema-lite');
-const { validateContributionObjectIdentity } = require('./lib/contribution-object-integrity');
+const { discoverContributionFiles, validateContributionObjectIdentity } = require('./lib/contribution-object-integrity');
 
 const root = process.cwd();
 const schema = JSON.parse(fs.readFileSync(path.join(root, 'schemas/research-contribution.schema.json'), 'utf8'));
@@ -80,15 +80,8 @@ function validateFile(relativePath) {
 
 validateAcceptanceBoundaryContract();
 
-const roots = ['examples/contributions', 'contributions'];
-const files = [];
-for (const relativeRoot of roots) {
-  const dir = path.join(root, relativeRoot);
-  if (!fs.existsSync(dir)) continue;
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isFile() && entry.name.endsWith('.json')) files.push(relativeRoot + '/' + entry.name);
-  }
-}
+const { files, errors: discoveryErrors } = discoverContributionFiles(root);
+discoveryErrors.forEach(fail);
 
 if (files.length === 0) fail('No research contribution examples or objects found.');
 files.sort().forEach(validateFile);

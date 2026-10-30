@@ -71,6 +71,7 @@ Every public contribution object must:
 
 - preserve a stable contribution identifier; live files must be named `contributions/{contribution_id}.json` and their filenames must match their `OS-CONTRIB-####` IDs;
 - keep template examples separate from live identifier allocation: `examples/contributions/` must explicitly set `example:true` and remain `SUBMITTED`, while live contributions must not be marked as examples;
+- fail validation on nested directories and symbolic-link entries under either contribution root, rather than silently skipping potential unreviewed public objects;
 - reference an existing canonical `hypotheses/{OS-TH-####}/hypothesis.json` when `target_hypothesis_id` is populated; keep it `null` when no established canonical hypothesis is the target, rather than inventing an ID;
 - preserve contributor provenance without requiring private contact data;
 - keep `clinical_use:false`;

@@ -6,6 +6,25 @@ const path = require('path');
 const CONTRIBUTION_ID = /^OS-CONTRIB-[0-9]{4}$/;
 const HYPOTHESIS_ID = /^OS-TH-[0-9]{4}$/;
 
+function discoverContributionFiles(root) {
+  const files = [];
+  const errors = [];
+  for (const relativeRoot of ['examples/contributions', 'contributions']) {
+    const dir = path.join(root, relativeRoot);
+    if (!fs.existsSync(dir)) continue;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const relativePath = relativeRoot + '/' + entry.name;
+      if (entry.isDirectory() || entry.isSymbolicLink()) {
+        errors.push(relativePath + ' is not a direct governed contribution JSON file; nested directories and symlinks are prohibited.');
+      } else if (entry.isFile() && entry.name.endsWith('.json')) {
+        files.push(relativePath);
+      }
+    }
+  }
+  files.sort();
+  return { files, errors };
+}
+
 function validateContributionObjectIdentity({ root, relativePath, object, liveIds, exampleIds }) {
   const errors = [];
   const isExample = relativePath.startsWith('examples/contributions/');
@@ -27,8 +46,8 @@ function validateContributionObjectIdentity({ root, relativePath, object, liveId
     return errors;
   }
 
-  if (path.posix.basename(relativePath) !== id + '.json') {
-    errors.push(relativePath + ' filename must match contribution_id ' + String(id) + '.');
+  if (relativePath !== 'contributions/' + String(id) + '.json') {
+    errors.push(relativePath + ' filename must match contribution_id ' + String(id) + ' at contributions/{contribution_id}.json.');
   }
   if (object.example === true) errors.push(relativePath + ' live contribution must not be marked example:true.');
 
@@ -52,4 +71,4 @@ function validateContributionObjectIdentity({ root, relativePath, object, liveId
   return errors;
 }
 
-module.exports = { validateContributionObjectIdentity };
+module.exports = { discoverContributionFiles, validateContributionObjectIdentity };
