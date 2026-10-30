@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { isPathSafeEvidenceId, validateEvidenceBindingIdentity } = require('./lib/evidence-binding-integrity');
+const { validateContradictoryEvidenceIntegrity } = require('./lib/contradictory-evidence-integrity');
 
 const root = process.cwd();
 const fail = (message) => {
@@ -120,13 +121,8 @@ for (const entry of index.hypotheses) {
   if (!h.ranking || h.ranking.meaning !== 'Research priority only; never expected patient benefit.') fail(entry.hypothesis_id + ' ranking meaning must preserve clinical boundary.');
 
   const contradictoryEvidence = h.contradictory_evidence || {};
-  const contradictoryItems = contradictoryEvidence.items || [];
-  if (contradictoryEvidence.status === 'identified' && contradictoryItems.length === 0) {
-    fail(entry.hypothesis_id + ' contradictory_evidence.status identified requires at least one evidence item.');
-  }
-  if (['none-identified', 'not-yet-assessed'].includes(contradictoryEvidence.status) && contradictoryItems.length !== 0) {
-    fail(entry.hypothesis_id + ' contradictory_evidence.status ' + contradictoryEvidence.status + ' requires an empty items array.');
-  }
+  for (const integrityError of validateContradictoryEvidenceIntegrity(contradictoryEvidence, entry.hypothesis_id)) fail(integrityError);
+  const contradictoryItems = Array.isArray(contradictoryEvidence.items) ? contradictoryEvidence.items : [];
 
   const evidenceItems = [...(h.supporting_evidence || []), ...contradictoryItems];
   for (const evidence of evidenceItems) {

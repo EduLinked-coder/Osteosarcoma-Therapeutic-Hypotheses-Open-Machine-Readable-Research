@@ -94,6 +94,8 @@ jobs:
         run: node scripts/render-structured-metadata.js --check
       - name: Check contract manifest entry point
         run: node scripts/render-machine-manifest.js --check
+      - name: Test contradictory-evidence state integrity
+        run: node scripts/test-contradictory-evidence-integrity.js
       - name: Validate public research boundary
         run: node scripts/validate-public-research.js
 
