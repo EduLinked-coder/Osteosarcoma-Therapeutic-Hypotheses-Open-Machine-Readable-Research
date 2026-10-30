@@ -1,16 +1,16 @@
 {
   "authority_boundary": "Technical provenance for the public research projection URL emitted by GitHub Pages only. This receipt does not grant scientific review, clinical-use, publication, accessibility-conformance, source-authority, merge, or canonical-destination approval.",
-  "commit_sha": "02ac8832fa6fe944a01853a52eb756b676db6d7c",
+  "commit_sha": "4b14c8e67c1a87482988633975156021371053b8",
   "environment": "github-pages",
-  "generated_at": "2026-09-22T18:29:53Z",
+  "generated_at": "2026-10-30T13:15:04Z",
   "page_url": "https://edulinked-coder.github.io/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/",
   "receipt_type": "github_pages_deployment",
   "repository": "EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research",
   "schema_version": "1.0",
   "workflow": {
     "run_attempt": 1,
-    "run_id": 35767467778,
-    "run_url": "https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/actions/runs/35767467778",
+    "run_id": 41061581465,
+    "run_url": "https://github.com/EduLinked-coder/Osteosarcoma-Therapeutic-Hypotheses-Open-Machine-Readable-Research/actions/runs/41061581465",
     "workflow_file": ".github/workflows/pages.yml"
   }
 }
