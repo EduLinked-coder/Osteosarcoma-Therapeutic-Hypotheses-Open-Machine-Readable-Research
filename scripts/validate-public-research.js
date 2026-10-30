@@ -119,7 +119,16 @@ for (const entry of index.hypotheses) {
   if (!h.review_state || h.review_state.scientific_review_required !== true) fail(entry.hypothesis_id + ' must require scientific review until explicitly reviewed.');
   if (!h.ranking || h.ranking.meaning !== 'Research priority only; never expected patient benefit.') fail(entry.hypothesis_id + ' ranking meaning must preserve clinical boundary.');
 
-  const evidenceItems = [...(h.supporting_evidence || []), ...((h.contradictory_evidence || {}).items || [])];
+  const contradictoryEvidence = h.contradictory_evidence || {};
+  const contradictoryItems = contradictoryEvidence.items || [];
+  if (contradictoryEvidence.status === 'identified' && contradictoryItems.length === 0) {
+    fail(entry.hypothesis_id + ' contradictory_evidence.status identified requires at least one evidence item.');
+  }
+  if (['none-identified', 'not-yet-assessed'].includes(contradictoryEvidence.status) && contradictoryItems.length !== 0) {
+    fail(entry.hypothesis_id + ' contradictory_evidence.status ' + contradictoryEvidence.status + ' requires an empty items array.');
+  }
+
+  const evidenceItems = [...(h.supporting_evidence || []), ...contradictoryItems];
   for (const evidence of evidenceItems) {
     if (!isPathSafeEvidenceId(evidence.evidence_id)) {
       fail(entry.hypothesis_id + ' references an unsafe evidence_id path segment: ' + evidence.evidence_id);
