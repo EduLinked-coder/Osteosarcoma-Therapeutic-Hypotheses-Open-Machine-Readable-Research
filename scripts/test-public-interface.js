@@ -138,6 +138,37 @@ runFixture('valid media sources and caption track', validHtml({ extra:
   '<video src="clip.mp4" poster="cover.jpg"><track src="captions.vtt" kind="captions"></video>' }), true,
   { 'data.json': '{}', 'clip.mp4': 'test', 'cover.jpg': 'test', 'captions.vtt': 'WEBVTT' });
 
+runFixture('missing local preload resource', validHtml({ extra:
+  '<link rel="preload" as="script" href="assets/missing.js">' }), false);
+runFixture('missing local modulepreload resource', validHtml({ extra:
+  '<link rel="modulepreload" href="missing.mjs">' }), false);
+runFixture('missing local prefetch resource', validHtml({ extra:
+  '<link rel="prefetch" href="missing.json">' }), false);
+runFixture('missing local icon resource', validHtml({ extra:
+  '<link rel="icon" href="missing.svg">' }), false);
+runFixture('missing local PWA manifest', validHtml({ extra:
+  '<link rel="manifest" href="missing.webmanifest">' }), false);
+runFixture('valid local preload, icon and modulepreload resources', validHtml({ extra:
+  '<link rel="preload" as="script" href="assets/app.js">' +
+  '<link rel="icon" href="assets/icon.svg">' +
+  '<link rel="modulepreload" href="assets/module.js">' }), true,
+  { 'data.json': '{}', 'assets/app.js': '// synthetic', 'assets/icon.svg': '<svg></svg>',
+    'assets/module.js': '// synthetic' });
+runFixture('external HTTPS preload remains valid', validHtml({ extra:
+  '<link rel="preload" as="script" href="https://example.org/app.js">' }), true);
+runFixture('canonical and connection-hint relations remain exempt', validHtml({ extra:
+  '<link rel="canonical" href="https://example.org/research">' +
+  '<link rel="preconnect" href="https://example.org">' +
+  '<link rel="dns-prefetch" href="//example.org">' }), true);
+runFixture('unsafe inline-data preload is rejected', validHtml({ extra:
+  '<link rel="preload" href="data:text/html,unsafe">' }), false);
+runFixture('encoded executable icon URL is rejected', validHtml({ extra:
+  '<link rel="icon" href="java&#x73;cript:alert(1)">' }), false);
+runFixture('missing asset-link href is rejected', validHtml({ extra:
+  '<link rel="preload" as="script">' }), false);
+runFixture('fragment-only asset-link href is rejected', validHtml({ extra:
+  '<link rel="icon" href="#fragment">' }), false);
+
 runFixture('positive tabindex', validHtml({ extra: '<button tabindex="2">Unsafe order</button>' }), false);
 runFixture('labelled form control', validHtml({ extra: '<label for="query">Search</label><input id="query" type="search">' }), true);
 runFixture('aria-labelled form control', validHtml({ extra: '<span id="query-label">Search</span><input type="search" aria-labelledby="query-label">' }), true);

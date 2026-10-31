@@ -289,11 +289,23 @@ for (const htmlPath of htmlFiles) {
     if (poster) validateResourceUrl(poster, 'video poster resource');
   }
 
+  // Link resource hints and icons are part of the staged Pages dependency graph.
+  // Canonical, preconnect and DNS-prefetch links are not local asset declarations.
+  const assetLinkRels = new Set([
+    'stylesheet', 'preload', 'modulepreload', 'prefetch', 'icon',
+    'apple-touch-icon', 'mask-icon', 'manifest'
+  ]);
   for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
     const relValue = match[0].match(/\brel\s*=\s*["']([^"']+)["']/i)?.[1] || '';
-    if (!relValue.toLowerCase().split(/\s+/).includes('stylesheet')) continue;
-    const href = match[0].match(/\shref\s*=\s*["']([^"']+)["']/i)?.[1];
-    if (href) validateResourceUrl(href, 'stylesheet');
+    const assetRels = relValue.toLowerCase().split(/\s+/).filter((token) => assetLinkRels.has(token));
+    if (!assetRels.length) continue;
+    const href = match[0].match(/\shref\s*=\s*["']([^"']*)["']/i)?.[1];
+    if (!href || !href.trim() || href.trim().startsWith('#')) {
+      fail(rel + ' contains a public asset link without a usable href.');
+      continue;
+    }
+    const kind = assetRels.includes('stylesheet') ? 'stylesheet' : 'linked ' + assetRels[0] + ' resource';
+    validateResourceUrl(href, kind);
   }
 }
 

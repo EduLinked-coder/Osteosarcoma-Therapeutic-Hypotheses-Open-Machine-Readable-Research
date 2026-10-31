@@ -109,6 +109,13 @@ HTML page; missing files and executable/inline-data schemes fail closed
 without echoing untrusted URL contents. The bounded check cannot validate
 runtime-generated CSS or replace human review of rendered output.
 
+The staged-site link check also validates asset-bearing `<link>` relations such
+as preload, modulepreload, prefetch, icon, manifest and stylesheets. It rejects
+missing or fragment-only asset URLs and missing local targets, while leaving
+canonical and connection-hint links outside this asset inventory check. All
+rejected URLs remain absent from CI diagnostics; this check does not establish
+browser-runtime security, scientific acceptance or publication authority.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:
