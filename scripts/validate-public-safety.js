@@ -30,20 +30,6 @@ const PUBLIC_TEXT_ROOTS = [
   'evidence-events'
 ];
 
-const STRUCTURED_DATA_ROOTS = [
-  'manifest.json',
-  'repository-manifest.json',
-  'hypotheses',
-  'indexes',
-  'evidence-bindings',
-  'contributions',
-  'examples/contributions',
-  'examples/evidence-bindings',
-  'governance',
-  'structured-data',
-  'evidence-events'
-];
-
 const TEXT_EXTENSIONS = new Set(['.json', '.jsonld', '.html', '.md', '.txt', '.xml', '.yml', '.yaml']);
 const PROHIBITED_KEYS = new Set([
   'patientname',
@@ -210,7 +196,14 @@ function collectUnique(root, roots, extensions = null, errors = []) {
 function validateRepositoryPublicSafety(root = DEFAULT_ROOT) {
   const errors = [];
   const textFiles = collectUnique(root, PUBLIC_TEXT_ROOTS, TEXT_EXTENSIONS, errors);
-  const structuredFiles = new Set(collectUnique(root, STRUCTURED_DATA_ROOTS, new Set(['.json', '.jsonld']), errors));
+  // Scan every public JSON document for prohibited fields, including future
+  // review, documentation and discovery payloads outside the canonical roots.
+  const structuredFiles = new Set(
+    textFiles.filter((relativePath) => {
+      const extension = path.extname(relativePath).toLowerCase();
+      return extension === '.json' || extension === '.jsonld';
+    })
+  );
 
   for (const relativePath of textFiles) {
     let text;

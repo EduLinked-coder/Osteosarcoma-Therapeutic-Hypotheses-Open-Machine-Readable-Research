@@ -88,6 +88,35 @@ try {
   );
   assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
 
+  // Public JSON outside canonical machine roots must also enforce field-level
+  // privacy screening; these paths are included in the deployed public site.
+  const reviewMetadataPath = path.join(reviewDir, 'metadata.json');
+  fs.writeFileSync(reviewMetadataPath, JSON.stringify({ patient_name: 'Synthetic only' }), 'utf8');
+  assert.ok(
+    validateRepositoryPublicSafety(textFixtureRoot).errors.some((message) =>
+      message.includes('review/metadata.json') && message.includes('prohibited public field name')),
+    'public review JSON must not bypass prohibited-field screening'
+  );
+  fs.writeFileSync(reviewMetadataPath, JSON.stringify({ status: 'public-research-candidate' }), 'utf8');
+  assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
+  fs.unlinkSync(reviewMetadataPath);
+
+  const docsMetadataPath = path.join(docsDir, 'invalid-metadata.json');
+  const syntheticMetadataMarker = 'SYNTHETIC_PRIVATE_METADATA_DO_NOT_ECHO';
+  fs.writeFileSync(docsMetadataPath, '{"patient_name":' + syntheticMetadataMarker, 'utf8');
+  const invalidMetadataResult = validateRepositoryPublicSafety(textFixtureRoot);
+  assert.ok(
+    invalidMetadataResult.errors.some((message) =>
+      message.includes('docs/invalid-metadata.json') && message.includes('not valid JSON')),
+    'invalid documentation JSON must fail with bounded diagnostics'
+  );
+  assert.ok(
+    invalidMetadataResult.errors.every((message) => !message.includes(syntheticMetadataMarker)),
+    'invalid public JSON must not echo its contents in diagnostics'
+  );
+  fs.unlinkSync(docsMetadataPath);
+  assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
+
   // Public roots must not silently omit symlinks, including dangling links.
   // An external target is not scanned or copied into the public projection.
   const outside = path.join(textFixtureRoot, 'outside-public-roots.md');
