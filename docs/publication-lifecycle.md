@@ -90,6 +90,20 @@ public roots) must exactly match the reviewed file selection; unexpected files
 block staging and clear the output. This is a deterministic publishing
 surface restriction, **not** human disclosure approval or proof of de-identification.
 
+After each successful staging operation, the existing public-interface validator is
+run against `_pages_site/` itself, including before deployment. This checks that
+staged human-readable pages, local navigation links, image/script/media resources,
+stylesheets, robots.txt and sitemap targets resolve inside the exact artifact being
+uploaded. Repository-local validation alone cannot prove that excluded files are
+still reachable after staging. This remains an engineering check, not publication
+or scientific-review authority.
+
+The public-interface check additionally rejects executable or inline-data link
+schemes in anchors (including common numeric-character-reference and whitespace
+obfuscation). Unsafe or broken local links fail without reproducing their
+untrusted URLs in CI diagnostics. This bounded check supplements, but does not
+replace, review of rendered HTML, privacy and publication authority.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:
