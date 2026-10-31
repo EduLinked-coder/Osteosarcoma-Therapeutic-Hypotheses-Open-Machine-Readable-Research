@@ -96,6 +96,12 @@ uploaded. Repository-local validation alone cannot prove that excluded files are
 still reachable after staging. This remains an engineering check, not publication
 or scientific-review authority.
 
+The public-interface check additionally rejects executable or inline-data link
+schemes in anchors (including common numeric-character-reference and whitespace
+obfuscation). Unsafe or broken local links fail without reproducing their
+untrusted URLs in CI diagnostics. This bounded check supplements, but does not
+replace, review of rendered HTML, privacy and publication authority.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:

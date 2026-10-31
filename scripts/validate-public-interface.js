@@ -39,13 +39,27 @@ if (!htmlFiles.length) fail('No public HTML files were found to validate.');
 const stripQueryAndFragment = (href) => href.split('#')[0].split('?')[0];
 const isExternal = (href) => /^(?:https?:|mailto:|tel:|data:|javascript:)/i.test(href) || href.startsWith('//');
 
+
+// HTML URLs can conceal executable schemes behind character references or tabs.
+// This is a bounded, conservative safeguard; it is not a full HTML sanitizer.
+const isUnsafeAnchorUrl = (href) => {
+  const decoded = href
+    .replace(/&#(?:x([0-9a-f]+)|([0-9]+));?/gi, (_match, hex, decimal) => {
+      const codePoint = Number.parseInt(hex || decimal, hex ? 16 : 10);
+      return codePoint >= 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : '';
+    })
+    .replace(/&colon;/gi, ':')
+    .replace(/&(?:tab|newline);/gi, '');
+  return /^(?:javascript|vbscript|data):/i.test(decoded.replace(/[\x00-\x20\x7f]/g, ''));
+};
+
 const resolveLocalTarget = (htmlPath, href) => {
   let cleaned = stripQueryAndFragment(href.trim());
   if (!cleaned || cleaned === '.') return null;
   try {
     cleaned = decodeURIComponent(cleaned);
   } catch {
-    fail(path.relative(root, htmlPath) + ' contains a malformed URL encoding in href="' + href + '".');
+    fail(path.relative(root, htmlPath) + ' contains malformed percent-encoding in a local reference.');
     return null;
   }
 
@@ -55,7 +69,7 @@ const resolveLocalTarget = (htmlPath, href) => {
 
   const relative = path.relative(root, candidate);
   if (relative.startsWith('..') || path.isAbsolute(relative)) {
-    fail(path.relative(root, htmlPath) + ' contains a local href that escapes the public repository root: ' + href);
+    fail(path.relative(root, htmlPath) + ' contains a local reference outside the public artifact.');
     return null;
   }
 
@@ -141,10 +155,14 @@ for (const htmlPath of htmlFiles) {
 
   for (const match of html.matchAll(/<a\b[^>]*\bhref\s*=\s*["']([^"']*)["'][^>]*>/gi)) {
     const href = match[1].trim();
+    if (isUnsafeAnchorUrl(href)) {
+      fail(rel + ' contains an unsafe inline-data or executable anchor URL.');
+      continue;
+    }
     if (!href || href.startsWith('#') || isExternal(href)) continue;
     const target = resolveLocalTarget(htmlPath, href);
     if (target && !fs.existsSync(target)) {
-      fail(rel + ' contains broken local href "' + href + '" -> ' + path.relative(root, target).replace(/\\/g, '/'));
+      fail(rel + ' contains a broken local navigation link.');
     }
   }
 

@@ -60,6 +60,12 @@ runFixture('valid accessible page', validHtml(), true);
 runFixture('valid heading hierarchy', validHtml({ extra: '<section><h2>Section</h2><h3>Detail</h3></section>' }), true);
 runFixture('skipped heading level', validHtml({ extra: '<h3>Skipped level</h3>' }), false);
 runFixture('broken local link', validHtml({ href: 'missing.json' }), false, {});
+runFixture('literal JavaScript anchor is blocked', validHtml({ href: 'javascript:alert(1)' }), false, {});
+runFixture('encoded JavaScript anchor is blocked', validHtml({ href: 'java&#x73;cript:alert(1)' }), false, {});
+runFixture('tab-obfuscated JavaScript anchor is blocked', validHtml({ href: 'java&#x09;script:alert(1)' }), false, {});
+runFixture('inline HTML data anchor is blocked', validHtml({ href: 'data:text/html,unsafe' }), false, {});
+runFixture('safe external HTTPS anchor', validHtml({ href: 'https://example.org/research' }), true, {});
+runFixture('safe fragment anchor', validHtml({ href: '#summary' }), true, {});
 runFixture('missing language', validHtml().replace(' lang="en-AU"', ''), false);
 runFixture('missing image alt', validHtml({ img: '<img src="figure.png">' }), false);
 
