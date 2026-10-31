@@ -69,16 +69,19 @@ A review decision has declined the proposed contribution. Preserve the proposal,
 
 Every public contribution object must:
 
-- preserve a stable contribution identifier;
+- preserve a stable contribution identifier; live files must be named `contributions/{contribution_id}.json` and their filenames must match their `OS-CONTRIB-####` IDs;
+- keep template examples separate from live identifier allocation: `examples/contributions/` must explicitly set `example:true` and remain `SUBMITTED`, while live contributions must not be marked as examples;
+- fail validation on nested directories and symbolic-link entries under either contribution root, rather than silently skipping potential unreviewed public objects;
+- reference an existing canonical `hypotheses/{OS-TH-####}/hypothesis.json` when `target_hypothesis_id` is populated; keep it `null` when no established canonical hypothesis is the target, rather than inventing an ID;
 - preserve contributor provenance without requiring private contact data;
 - keep `clinical_use:false`;
 - retain `scientific_review_required:true`;
 - retain the canonical `acceptance_meaning` statement that repository review state does not establish clinical benefit, treatment guidance or patient-specific applicability;
-- use public HTTP(S) source references where source references are supplied;
+- use public HTTP(S) source references without embedded credentials, credential-style query parameters, literal IP addresses or internal/reserved DNS names;
 - avoid patient information, private clinical context, credentials, secrets and restricted research;
 - require an attributable `decision_reference` and `reviewed_at` timestamp for `ACCEPTED` or `REJECTED` state.
 
-The contribution validator fails closed if the canonical schema stops requiring the governed `acceptance_meaning`, if its fixed meaning changes, if an object omits or changes that meaning, or if common prohibited public fields or duplicate contribution identifiers appear. The focused acceptance-boundary fixture is also available for direct regression testing.
+The contribution validator fails closed if the canonical schema stops requiring the governed `acceptance_meaning`, if its fixed meaning changes, if an object omits or changes that meaning, or if common prohibited public fields or duplicate contribution identifiers appear within the live or example namespace. Live contributions additionally fail on filename/ID mismatch, unresolved non-null target hypotheses or example-marker leakage; example IDs do not reserve live IDs. Malformed or non-array `proposal.source_refs` fields produce bounded, path-specific errors rather than uncaught runtime exceptions. URL screening also rejects credential-bearing and non-public destinations without echoing the rejected URL in logs. The check is syntactic, does not resolve DNS or verify an actual publication, and does not replace source verification or scientific review. The focused acceptance-boundary fixture is also available for direct regression testing.
 
 ## Contribution type is not acceptance
 
@@ -101,6 +104,7 @@ Run:
 
 ```sh
 node scripts/test-contribution-acceptance-boundary.js
+node scripts/test-contribution-object-integrity.js
 node scripts/validate-contributions.js
 node scripts/test-contribution-intake.js
 node scripts/validate-contribution-intake.js
