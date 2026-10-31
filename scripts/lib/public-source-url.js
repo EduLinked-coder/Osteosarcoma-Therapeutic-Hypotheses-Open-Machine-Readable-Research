@@ -12,6 +12,27 @@ const credentialQueryKeys = new Set([
   'credential', 'privatekey'
 ]);
 
+// Inspect query-like parameters after bounded decoding so semicolon separators,
+// encoded delimiters and nested encodings cannot conceal credential keys.
+// Unexpected encoding remains a fail-closed URL error at the caller.
+function containsCredentialParameter(raw) {
+  let text = raw;
+  for (let pass = 0; pass < 4; pass++) {
+    for (const parameter of text.split(/[?&;]/)) {
+      const separator = parameter.indexOf('=');
+      if (separator < 0) continue;
+      const key = parameter.slice(0, separator).toLowerCase().replace(/[-_]/g, '');
+      if (credentialQueryKeys.has(key)) return true;
+    }
+    if (!text.includes('%')) return false;
+    const decoded = decodeURIComponent(text);
+    if (decoded === text) return false;
+    text = decoded;
+  }
+  // Do not accept an arbitrarily deep encoded parameter after the check budget.
+  return /%[0-9a-f]{2}/i.test(text);
+}
+
 function isPublicSourceUrl(value) {
   if (typeof value !== 'string') return false;
   try {
@@ -23,18 +44,9 @@ function isPublicSourceUrl(value) {
     // Literal IPs and internal/reserved DNS names are not approved public source links.
     if (net.isIP(hostname) || !hostname.includes('.') ||
         nonPublicHostSuffix.test(hostname) || hostname.endsWith('.home.arpa')) return false;
-    for (const key of parsed.searchParams.keys()) {
-      if (credentialQueryKeys.has(key.toLowerCase().replace(/[-_]/g, ''))) return false;
-    }
-    // Fragments may embed credentials after an anchor, route or encoded delimiter.
-    // Fail closed on invalid encoding without logging untrusted source URL values.
-    const fragment = decodeURIComponent(parsed.hash.slice(1));
-    for (const parameter of fragment.split(/[?&;]/)) {
-      const separator = parameter.indexOf('=');
-      if (separator < 0) continue;
-      const key = parameter.slice(0, separator).toLowerCase().replace(/[-_]/g, '');
-      if (credentialQueryKeys.has(key)) return false;
-    }
+    // Validate both components without reflecting untrusted URL values in errors.
+    if (containsCredentialParameter(parsed.search.slice(1)) ||
+        containsCredentialParameter(parsed.hash.slice(1))) return false;
     return true;
   } catch {
     return false;
