@@ -30,7 +30,8 @@ const PUBLIC_TEXT_ROOTS = [
   'evidence-events'
 ];
 
-const TEXT_EXTENSIONS = new Set(['.json', '.jsonld', '.html', '.md', '.txt', '.xml', '.yml', '.yaml']);
+// Explicitly scan common public text assets; reject other file types instead of silently skipping them.
+const TEXT_EXTENSIONS = new Set(['.json', '.jsonld', '.html', '.md', '.txt', '.xml', '.yml', '.yaml', '.csv', '.tsv', '.css', '.js', '.svg']);
 const PROHIBITED_KEYS = new Set([
   'patientname',
   'patientfullname',
@@ -168,6 +169,7 @@ function collectFiles(root, relativeRoot, extensions = null, errors = []) {
   if (stat.isFile()) {
     const ext = path.extname(relativeRoot).toLowerCase();
     if (!extensions || extensions.has(ext) || path.basename(relativeRoot) === 'robots.txt') return [relativeRoot];
+    errors.push(relativeRoot + ' has an unscanned file type in a public safety root.');
     return [];
   }
   if (!stat.isDirectory()) {
@@ -192,6 +194,7 @@ function collectFiles(root, relativeRoot, extensions = null, errors = []) {
     } else if (entry.isFile()) {
       const ext = path.extname(entry.name).toLowerCase();
       if (!extensions || extensions.has(ext) || entry.name === 'robots.txt') files.push(child);
+      else errors.push(child + ' has an unscanned file type in a public safety root.');
     } else {
       errors.push(child + ' is not a regular file or directory in the public safety scan.');
     }

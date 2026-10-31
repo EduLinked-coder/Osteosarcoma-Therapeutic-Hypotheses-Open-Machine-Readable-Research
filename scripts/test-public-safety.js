@@ -140,6 +140,38 @@ try {
   fs.unlinkSync(docsMetadataPath);
   assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
 
+  // Public text directories are shipped with the site. Text extensions beyond
+  // Markdown/JSON must be scanned, and unknown file types must fail closed.
+  const csvPath = path.join(docsDir, 'candidate-data.csv');
+  fs.writeFileSync(csvPath, 'note\\nThe patient should start methotrexate.\\n', 'utf8');
+  assert.ok(
+    validateRepositoryPublicSafety(textFixtureRoot).errors.some((message) =>
+      message.includes('docs/candidate-data.csv') && message.includes('patient-directed treatment instruction')),
+    'public CSV content must not bypass the clinical-language safety scan'
+  );
+  fs.writeFileSync(csvPath, 'note\\nResearch hypothesis only.\\n', 'utf8');
+  assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
+  fs.unlinkSync(csvPath);
+
+  const svgPath = path.join(docsDir, 'diagram.svg');
+  fs.writeFileSync(svgPath, '<svg><text>The patient should start methotrexate.</text></svg>', 'utf8');
+  assert.ok(
+    validateRepositoryPublicSafety(textFixtureRoot).errors.some((message) =>
+      message.includes('docs/diagram.svg') && message.includes('patient-directed treatment instruction')),
+    'public SVG text must receive public safety screening'
+  );
+  fs.unlinkSync(svgPath);
+
+  const unsupportedPath = path.join(docsDir, 'unreviewed-evidence.pdf');
+  fs.writeFileSync(unsupportedPath, 'synthetic placeholder, not a PDF', 'utf8');
+  assert.ok(
+    validateRepositoryPublicSafety(textFixtureRoot).errors.some((message) =>
+      message.includes('docs/unreviewed-evidence.pdf') && message.includes('unscanned file type')),
+    'an unsupported public asset must fail closed rather than be silently omitted'
+  );
+  fs.unlinkSync(unsupportedPath);
+  assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
+
   // Public roots must not silently omit symlinks, including dangling links.
   // An external target is not scanned or copied into the public projection.
   const outside = path.join(textFixtureRoot, 'outside-public-roots.md');
