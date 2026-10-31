@@ -143,13 +143,13 @@ try {
   // Public text directories are shipped with the site. Text extensions beyond
   // Markdown/JSON must be scanned, and unknown file types must fail closed.
   const csvPath = path.join(docsDir, 'candidate-data.csv');
-  fs.writeFileSync(csvPath, 'note\\nThe patient should start methotrexate.\\n', 'utf8');
+  fs.writeFileSync(csvPath, 'note\nThe patient should start methotrexate.\n', 'utf8');
   assert.ok(
     validateRepositoryPublicSafety(textFixtureRoot).errors.some((message) =>
       message.includes('docs/candidate-data.csv') && message.includes('patient-directed treatment instruction')),
     'public CSV content must not bypass the clinical-language safety scan'
   );
-  fs.writeFileSync(csvPath, 'note\\nResearch hypothesis only.\\n', 'utf8');
+  fs.writeFileSync(csvPath, 'note\nResearch hypothesis only.\n', 'utf8');
   assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
   fs.unlinkSync(csvPath);
 
