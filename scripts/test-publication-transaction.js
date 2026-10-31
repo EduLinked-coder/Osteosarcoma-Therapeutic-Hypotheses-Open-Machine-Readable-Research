@@ -3,6 +3,8 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const { spawnSync } = require('child_process');
 const { validateEvidenceBindingIdentity } = require('./lib/evidence-binding-integrity');
 const {
   CONTRACT_ID,
@@ -339,4 +341,54 @@ expectBlocked(
 assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'failed staging must remove the new hypothesis directory');
 assert.equal(fs.existsSync(rollbackEvidencePath), false, 'failed staging must remove newly created evidence files');
 
-console.log('Publication transaction tests passed (14 public-source URL fixtures): v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, complete new-candidate contract metadata, public-safety, explicit evidence-context, canonical evidence-identity/reference, full projection/validation coverage, transactional rollback and overwrite gates fail closed.');
+
+/**
+ * Exercise the actual committed-state validator command, not only the shared
+ * URL helper or the pre-staging handoff path. The copied test worktree contains
+ * public repository files only; no canonical objects are mutated by this test.
+ */
+function testCommittedBindingSourceUrlCli() {
+  const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-committed-url-'));
+  try {
+    for (const rel of [
+      'hypotheses', 'evidence-bindings', 'indexes', 'schemas', 'scripts', 'docs',
+      'index.html', 'sitemap.xml', 'manifest.json', 'repository-manifest.json',
+      'AGENTS.md', 'robots.txt'
+    ]) {
+      fs.cpSync(path.join(root, rel), path.join(fixtureRoot, rel), { recursive: true });
+    }
+    const validate = () => spawnSync(process.execPath, ['scripts/validate-public-research.js'], {
+      cwd: fixtureRoot, encoding: 'utf8', timeout: 20000
+    });
+    const baseline = validate();
+    assert.ifError(baseline.error);
+    assert.equal(baseline.status, 0, 'unchanged public fixture must pass the committed-state CLI');
+
+    const id = evidenceBindings[0].evidence_id;
+    const rel = 'evidence-bindings/' + id + '.json';
+    const bindingPath = path.join(fixtureRoot, rel);
+    const original = JSON.parse(fs.readFileSync(bindingPath, 'utf8'));
+    for (const unsafeUrl of [
+      'https://pubmed.ncbi.nlm.nih.gov/?access_token=synthetic-only',
+      'http://127.0.0.1/synthetic-evidence',
+      'https://source.internal/synthetic-evidence'
+    ]) {
+      const candidate = { ...original, canonical_source_url: unsafeUrl };
+      fs.writeFileSync(bindingPath, JSON.stringify(candidate, null, 2) + '\n', 'utf8');
+      const run = validate();
+      assert.ifError(run.error);
+      assert.notEqual(run.status, 0, 'committed-state validator must reject unsafe source URL');
+      const diagnostic = (run.stdout || '') + (run.stderr || '');
+      assert.ok(
+        diagnostic.includes(rel + ' canonical source must use a public http(s) URL'),
+        'expected evidence-path-specific shared URL policy failure'
+      );
+      assert.ok(!diagnostic.includes(unsafeUrl), 'validator must not echo rejected source URL');
+    }
+  } finally {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  }
+}
+testCommittedBindingSourceUrlCli();
+
+console.log('Publication transaction tests passed (14 handoff URL fixtures and 3 committed-state CLI negatives): v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, complete new-candidate contract metadata, public-safety, explicit evidence-context, canonical evidence-identity/reference, full projection/validation coverage, transactional rollback and overwrite gates fail closed.');
