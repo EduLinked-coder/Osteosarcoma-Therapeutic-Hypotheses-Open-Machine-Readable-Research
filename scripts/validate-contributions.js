@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const net = require('net');
+const { isPublicSourceUrl } = require('./lib/public-source-url');
 const { validateJsonSchema } = require('./lib/schema-lite');
 const { discoverContributionFiles, validateContributionObjectIdentity } = require('./lib/contribution-object-integrity');
 
@@ -14,13 +14,6 @@ const prohibitedKeys = new Set([
   'patient_name', 'patient_id', 'medical_record', 'medical_records', 'treatment_history',
   'clinical_notes', 'date_of_birth', 'dob', 'credential', 'credentials', 'token',
   'secret', 'secrets', 'private_key', 'api_key'
-]);
-const nonPublicHostSuffix = /(?:^|\.)(?:localhost|local|internal|lan|test|invalid|example|home|corp|intranet|onion|private)$/;
-const credentialQueryKeys = new Set([
-  'token', 'accesstoken', 'refreshtoken', 'idtoken', 'apikey', 'key', 'secret',
-  'clientsecret', 'password', 'passwd', 'auth', 'authorization', 'bearer',
-  'signature', 'xamzsignature', 'xapikey', 'session', 'sessionid',
-  'credential', 'privatekey'
 ]);
 let failed = false;
 const liveIds = new Set();
@@ -52,27 +45,6 @@ function scan(value, pointer) {
   }
 }
 
-function publicHttp(value) {
-  if (typeof value !== 'string') return false;
-  try {
-    const parsed = new URL(value);
-    if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) return false;
-    const authority = value.match(/^https?:\/\/([^/?#]*)/i)?.[1] || '';
-    if (parsed.username || parsed.password || authority.includes('@')) return false;
-    const hostname = parsed.hostname.replace(/^\[|\]$/g, '').replace(/\.+$/, '').toLowerCase();
-    // Literal IPs and internal/reserved DNS names are not approved public source links.
-    if (net.isIP(hostname) || !hostname.includes('.') ||
-        nonPublicHostSuffix.test(hostname) || hostname.endsWith('.home.arpa')) return false;
-    for (const key of parsed.searchParams.keys()) {
-      if (credentialQueryKeys.has(key.toLowerCase().replace(/[-_]/g, ''))) return false;
-    }
-    if (/^#(?:access[_-]?token|id[_-]?token|token|api[_-]?key|password|secret|signature)=/i.test(parsed.hash)) return false;
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function validateFile(relativePath) {
   let object;
   try {
@@ -101,7 +73,7 @@ function validateFile(relativePath) {
     fail(relativePath + ' proposal.source_refs must be an array of public http(s) URLs.');
   } else {
     for (const [index, sourceRef] of (sourceRefs || []).entries()) {
-      if (!publicHttp(sourceRef)) {
+      if (!isPublicSourceUrl(sourceRef)) {
         fail(relativePath + ' proposal.source_refs[' + index + '] must use a public http(s) URL without embedded credentials or non-public hosts.');
       }
     }

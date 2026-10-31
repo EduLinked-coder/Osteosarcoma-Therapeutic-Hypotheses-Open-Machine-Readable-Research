@@ -136,6 +136,39 @@ const valid = fixture();
 const result = validateHandoff(valid);
 assert.equal(result.hypothesis.hypothesis_id, 'OS-TH-0001');
 assert.equal(result.bindings.length, evidenceBindings.length);
+ 
+// The publication handoff and public contribution intake must share the same
+// public-source URL boundary. Only synthetic candidate objects are used here.
+const publicSourceUrlCases = [
+  ['https://pubmed.ncbi.nlm.nih.gov/25112408/', true],
+  ['https://doi.org/10.1186/1746-1596-9-140', true],
+  ['http://www.example.org/findings?pmid=25112408', true],
+  ['https://alice:sample@pubmed.ncbi.nlm.nih.gov/25112408', false],
+  ['https://@example.org/evidence', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/?access_token=sample', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#api_key=sample', false],
+  ['http://127.0.0.1/evidence', false],
+  ['http://127.1/evidence', false],
+  ['http://[::1]/evidence', false],
+  ['https://localhost/evidence', false],
+  ['https://source.internal/evidence', false],
+  ['https://host.home.arpa/evidence', false],
+  ['ftp://pubmed.ncbi.nlm.nih.gov/evidence', false]
+];
+for (const [canonicalSourceUrl, allowed] of publicSourceUrlCases) {
+  const candidate = rollbackFixture();
+  candidate.public_projection.evidence_bindings[0].canonical_source_url = canonicalSourceUrl;
+  candidate.handoff_digest = computeHandoffDigest(candidate);
+  if (allowed) {
+    assert.equal(validateHandoff(candidate).hypothesis.hypothesis_id, 'OS-TH-9999');
+  } else {
+    expectBlocked(
+      () => validateHandoff(candidate),
+      /canonical source must use a public http\(s\) URL without embedded credentials or non-public hosts/
+    );
+  }
+}
+
 
 assert.deepEqual(
   PROJECTION_RENDER_PIPELINE.map(({ script }) => script),
@@ -306,4 +339,4 @@ expectBlocked(
 assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'failed staging must remove the new hypothesis directory');
 assert.equal(fs.existsSync(rollbackEvidencePath), false, 'failed staging must remove newly created evidence files');
 
-console.log('Publication transaction tests passed: v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, complete new-candidate contract metadata, public-safety, explicit evidence-context, canonical evidence-identity/reference, full projection/validation coverage, transactional rollback and overwrite gates fail closed.');
+console.log('Publication transaction tests passed (14 public-source URL fixtures): v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, complete new-candidate contract metadata, public-safety, explicit evidence-context, canonical evidence-identity/reference, full projection/validation coverage, transactional rollback and overwrite gates fail closed.');
