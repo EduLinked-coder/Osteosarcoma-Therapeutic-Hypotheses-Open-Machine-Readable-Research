@@ -144,11 +144,15 @@ assert.equal(result.bindings.length, evidenceBindings.length);
 const publicSourceUrlCases = [
   ['https://pubmed.ncbi.nlm.nih.gov/25112408/', true],
   ['https://doi.org/10.1186/1746-1596-9-140', true],
+  ['https://pubmed.ncbi.nlm.nih.gov/25112408/#findings', true],
   ['http://www.example.org/findings?pmid=25112408', true],
   ['https://alice:sample@pubmed.ncbi.nlm.nih.gov/25112408', false],
   ['https://@example.org/evidence', false],
   ['https://pubmed.ncbi.nlm.nih.gov/?access_token=sample', false],
   ['https://pubmed.ncbi.nlm.nih.gov/#api_key=sample', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#section&access_token=sample', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#/view?api_key=sample', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#token%3Dsample', false],
   ['http://127.0.0.1/evidence', false],
   ['http://127.1/evidence', false],
   ['http://[::1]/evidence', false],
@@ -370,6 +374,7 @@ function testCommittedBindingSourceUrlCli() {
     const original = JSON.parse(fs.readFileSync(bindingPath, 'utf8'));
     for (const unsafeUrl of [
       'https://pubmed.ncbi.nlm.nih.gov/?access_token=synthetic-only',
+      'https://pubmed.ncbi.nlm.nih.gov/#section&access_token=synthetic-only',
       'http://127.0.0.1/synthetic-evidence',
       'https://source.internal/synthetic-evidence'
     ]) {
@@ -391,4 +396,4 @@ function testCommittedBindingSourceUrlCli() {
 }
 testCommittedBindingSourceUrlCli();
 
-console.log('Publication transaction tests passed (14 handoff URL fixtures and 3 committed-state CLI negatives): v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, complete new-candidate contract metadata, public-safety, explicit evidence-context, canonical evidence-identity/reference, full projection/validation coverage, transactional rollback and overwrite gates fail closed.');
+console.log('Publication transaction tests passed (18 handoff URL fixtures and 4 committed-state CLI negatives): v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, complete new-candidate contract metadata, public-safety, explicit evidence-context, canonical evidence-identity/reference, full projection/validation coverage, transactional rollback and overwrite gates fail closed.');

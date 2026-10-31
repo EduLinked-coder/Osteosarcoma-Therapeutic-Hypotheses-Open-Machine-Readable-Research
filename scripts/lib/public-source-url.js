@@ -26,7 +26,15 @@ function isPublicSourceUrl(value) {
     for (const key of parsed.searchParams.keys()) {
       if (credentialQueryKeys.has(key.toLowerCase().replace(/[-_]/g, ''))) return false;
     }
-    if (/^#(?:access[_-]?token|id[_-]?token|token|api[_-]?key|password|secret|signature)=/i.test(parsed.hash)) return false;
+    // Fragments may embed credentials after an anchor, route or encoded delimiter.
+    // Fail closed on invalid encoding without logging untrusted source URL values.
+    const fragment = decodeURIComponent(parsed.hash.slice(1));
+    for (const parameter of fragment.split(/[?&;]/)) {
+      const separator = parameter.indexOf('=');
+      if (separator < 0) continue;
+      const key = parameter.slice(0, separator).toLowerCase().replace(/[-_]/g, '');
+      if (credentialQueryKeys.has(key)) return false;
+    }
     return true;
   } catch {
     return false;
