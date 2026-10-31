@@ -103,9 +103,72 @@ const resolveLocalTarget = (htmlPath, href) => {
   return candidate;
 };
 
+
+// CSS dependencies are validated from the *staged* Pages artifact, including
+// imports and assets inside stylesheets, style elements and style attributes.
+// This is a bounded static dependency check, not a complete CSS sanitizer.
+const decodeCssReference = (value) => value.replace(
+  /\\([0-9a-f]{1,6})(?:\r\n|[\t\n\r\f ])?|\\([\s\S])/gi,
+  (_match, hex, escaped) => {
+    if (escaped !== undefined) return escaped;
+    const codePoint = Number.parseInt(hex, 16);
+    return codePoint > 0 && codePoint <= 0x10ffff &&
+      !(codePoint >= 0xd800 && codePoint <= 0xdfff)
+      ? String.fromCodePoint(codePoint)
+      : '\ufffd';
+  }
+);
+
+const validateCssText = (css, sourcePath) => {
+  const rel = path.relative(root, sourcePath).replace(/\\/g, '/');
+  const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const checkReference = (rawReference) => {
+    const url = decodeCssReference(rawReference.trim());
+    if (!url || url.startsWith('#')) return;
+    if (isUnsafeAnchorUrl(url)) {
+      fail(rel + ' contains an unsafe CSS asset or import URL.');
+      return;
+    }
+    if (isExternal(url)) return;
+    const target = resolveLocalTarget(sourcePath, url);
+    if (target && !fs.existsSync(target)) {
+      fail(rel + ' references a missing local CSS asset or import.');
+    }
+  };
+  for (const match of withoutComments.matchAll(
+    /\burl\(\s*(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'|([^)]*))\s*\)/gi
+  )) {
+    checkReference(match[1] ?? match[2] ?? match[3]);
+  }
+  // A quoted @import is not wrapped in url(), so check it separately.
+  for (const match of withoutComments.matchAll(
+    /@import\s+(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)')/gi
+  )) {
+    checkReference(match[1] ?? match[2]);
+  }
+};
+
+const walkCss = (entry) => {
+  if (!fs.existsSync(entry)) return [];
+  const stat = fs.lstatSync(entry);
+  if (stat.isSymbolicLink()) {
+    fail('A public CSS scan entry is a symbolic link.');
+    return [];
+  }
+  if (stat.isFile()) return entry.endsWith('.css') ? [entry] : [];
+  if (!stat.isDirectory()) return [];
+  return fs.readdirSync(entry).flatMap((name) => walkCss(path.join(entry, name)));
+};
+
 for (const htmlPath of htmlFiles) {
   const rel = path.relative(root, htmlPath).replace(/\\/g, '/');
   const html = fs.readFileSync(htmlPath, 'utf8');
+  for (const match of html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)) {
+    validateCssText(match[1], htmlPath);
+  }
+  for (const match of html.matchAll(/\sstyle\s*=\s*(["'])([\s\S]*?)\1/gi)) {
+    validateCssText(match[2], htmlPath);
+  }
 
   if (!/^\s*<!doctype html>/i.test(html)) fail(rel + ' is missing an HTML5 doctype.');
   if (!/<html\b[^>]*\blang=["'][^"']+["'][^>]*>/i.test(html)) fail(rel + ' is missing a non-empty html[lang] attribute.');
@@ -232,6 +295,13 @@ for (const htmlPath of htmlFiles) {
     const href = match[0].match(/\shref\s*=\s*["']([^"']+)["']/i)?.[1];
     if (href) validateResourceUrl(href, 'stylesheet');
   }
+}
+
+// The --root _pages_site validation checks every staged stylesheet, including
+// ones reached only via @import or future public stylesheets.
+const cssFiles = [...new Set((isFixtureRoot ? [root] : publicEntries).flatMap(walkCss))];
+for (const cssPath of cssFiles) {
+  validateCssText(fs.readFileSync(cssPath, 'utf8'), cssPath);
 }
 
 if (validateDiscovery) {

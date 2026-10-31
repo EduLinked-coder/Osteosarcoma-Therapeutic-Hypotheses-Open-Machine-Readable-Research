@@ -78,6 +78,38 @@ runFixture('missing local media source', validHtml({ extra: '<audio><source src=
 runFixture('external resources remain valid', validHtml({ extra:
   '<link rel="stylesheet" href="https://example.org/site.css"><script src="https://example.org/site.js"></script>' }), true);
 
+
+runFixture('CSS stylesheet missing referenced asset', validHtml({ extra:
+  '<link rel="stylesheet" href="site.css">' }), false,
+  { 'data.json': '{}', 'site.css': 'body{background:url(missing.svg)}' });
+runFixture('CSS stylesheet existing referenced asset', validHtml({ extra:
+  '<link rel="stylesheet" href="site.css">' }), true,
+  { 'data.json': '{}', 'site.css': 'body{background:url(assets/cover.svg)}',
+    'assets/cover.svg': '<svg></svg>' });
+runFixture('CSS quoted import missing stylesheet', validHtml({ extra:
+  '<link rel="stylesheet" href="site.css">' }), false,
+  { 'data.json': '{}', 'site.css': '@import "styles/missing.css";' });
+runFixture('CSS quoted import resolves relative to imported file', validHtml({ extra:
+  '<link rel="stylesheet" href="site.css">' }), true,
+  { 'data.json': '{}', 'site.css': '@import "styles/inner.css";',
+    'styles/inner.css': 'body{background:url(../image.svg)}',
+    'image.svg': '<svg></svg>' });
+runFixture('CSS url import missing stylesheet', validHtml({ extra:
+  '<link rel="stylesheet" href="site.css">' }), false,
+  { 'data.json': '{}', 'site.css': '@import url("missing.css");' });
+runFixture('inline style element missing resource', validHtml({ extra:
+  '<style>.figure{background:url(missing.svg)}</style>' }), false);
+runFixture('inline style attribute missing resource', validHtml({ extra:
+  '<div style="background-image:url(missing.svg)">Fixture</div>' }), false);
+runFixture('CSS inline-data URL blocked', validHtml({ extra:
+  '<style>.figure{background:url(data:image/svg+xml;base64,AAAA)}</style>' }), false);
+runFixture('CSS escaped executable URL blocked', validHtml({ extra:
+  '<style>.figure{background:url("java\\73 cript:alert(1)")}</style>' }), false);
+runFixture('CSS comments do not invent dependencies', validHtml({ extra:
+  '<style>/* url(missing.svg) */ .figure{color:navy}</style>' }), true);
+runFixture('external HTTPS CSS asset remains valid', validHtml({ extra:
+  '<style>.figure{background:url(https://example.org/figure.svg)}</style>' }), true);
+
 runFixture('valid responsive image candidates', validHtml({ img:
   '<img srcset="small.svg 1x, large.svg 2x" alt="Synthetic responsive image">' }), true,
   { 'data.json': '{}', 'small.svg': '<svg></svg>', 'large.svg': '<svg></svg>' });

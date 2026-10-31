@@ -102,6 +102,13 @@ obfuscation). Unsafe or broken local links fail without reproducing their
 untrusted URLs in CI diagnostics. This bounded check supplements, but does not
 replace, review of rendered HTML, privacy and publication authority.
 
+The same staged-artifact check now examines static CSS dependencies: `url(...)`
+assets, quoted `@import` references, inline `<style>` elements and `style`
+attributes. Relative paths are resolved against their owning CSS file or
+HTML page; missing files and executable/inline-data schemes fail closed
+without echoing untrusted URL contents. The bounded check cannot validate
+runtime-generated CSS or replace human review of rendered output.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:
