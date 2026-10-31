@@ -53,6 +53,31 @@ const isUnsafeAnchorUrl = (href) => {
   return /^(?:javascript|vbscript|data):/i.test(decoded.replace(/[\x00-\x20\x7f]/g, ''));
 };
 
+// Parse srcset URLs without splitting commas embedded in URL tokens (for example data URIs).
+// Responsive width/density descriptors are not URL paths.
+const parseSrcsetUrls = (value) => {
+  const urls = [];
+  let index = 0;
+  while (index < value.length) {
+    while (index < value.length && /[\t\n\f\r ,]/.test(value[index])) index += 1;
+    if (index >= value.length) break;
+    const start = index;
+    while (index < value.length && !/[\t\n\f\r ]/.test(value[index])) index += 1;
+    const rawUrl = value.slice(start, index);
+    const url = rawUrl.replace(/,+$/, '');
+    if (url) urls.push(url);
+    if (rawUrl.endsWith(',')) continue;
+    let depth = 0;
+    while (index < value.length) {
+      const char = value[index++];
+      if (char === '(') depth += 1;
+      else if (char === ')' && depth) depth -= 1;
+      else if (char === ',' && depth === 0) break;
+    }
+  }
+  return urls;
+};
+
 const resolveLocalTarget = (htmlPath, href) => {
   let cleaned = stripQueryAndFragment(href.trim());
   if (!cleaned || cleaned === '.') return null;
@@ -166,24 +191,46 @@ for (const htmlPath of htmlFiles) {
     }
   }
 
-  // Test the dependencies of the HTML actually shipped in the Pages artifact.
-  // Local images, scripts, media and stylesheets can break when excluded from staging.
-  for (const match of html.matchAll(/<(img|script|source)\b[^>]*>/gi)) {
-    const src = match[0].match(/\bsrc\s*=\s*["']([^"']+)["']/i)?.[1]?.trim();
-    if (!src || src.startsWith('#') || isExternal(src)) continue;
-    const target = resolveLocalTarget(htmlPath, src);
-    if (target && !fs.existsSync(target)) {
-      fail(rel + ' references a missing local ' + match[1].toLowerCase() + ' resource.');
+  // Check resources in the actual Pages artifact, including responsive and media variants.
+  // Diagnostics intentionally exclude untrusted URL values.
+  const validateResourceUrl = (rawUrl, kind) => {
+    const url = rawUrl.trim();
+    if (!url || url.startsWith('#')) return;
+    if (isUnsafeAnchorUrl(url)) {
+      fail(rel + ' contains an unsafe ' + kind + ' URL.');
+      return;
     }
+    if (isExternal(url)) return;
+    const target = resolveLocalTarget(htmlPath, url);
+    if (target && !fs.existsSync(target)) {
+      fail(rel + ' references a missing local ' + kind + '.');
+    }
+  };
+
+  for (const match of html.matchAll(/<(img|script|source|video|audio|track)\b[^>]*>/gi)) {
+    const src = match[0].match(/\ssrc\s*=\s*["']([^"']*)["']/i)?.[1];
+    if (src) validateResourceUrl(src, match[1].toLowerCase() + ' resource');
+  }
+
+  for (const match of html.matchAll(/<(img|source)\b[^>]*>/gi)) {
+    const srcset = match[0].match(/\ssrcset\s*=\s*["']([^"']*)["']/i)?.[1];
+    if (srcset !== undefined) {
+      for (const url of parseSrcsetUrls(srcset)) {
+        validateResourceUrl(url, 'responsive image resource');
+      }
+    }
+  }
+
+  for (const match of html.matchAll(/<video\b[^>]*>/gi)) {
+    const poster = match[0].match(/\sposter\s*=\s*["']([^"']*)["']/i)?.[1];
+    if (poster) validateResourceUrl(poster, 'video poster resource');
   }
 
   for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
     const relValue = match[0].match(/\brel\s*=\s*["']([^"']+)["']/i)?.[1] || '';
     if (!relValue.toLowerCase().split(/\s+/).includes('stylesheet')) continue;
-    const href = match[0].match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]?.trim();
-    if (!href || href.startsWith('#') || isExternal(href)) continue;
-    const target = resolveLocalTarget(htmlPath, href);
-    if (target && !fs.existsSync(target)) fail(rel + ' references a missing local stylesheet.');
+    const href = match[0].match(/\shref\s*=\s*["']([^"']+)["']/i)?.[1];
+    if (href) validateResourceUrl(href, 'stylesheet');
   }
 }
 
