@@ -87,6 +87,37 @@ try {
     'utf8'
   );
   assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
+
+  // Public roots must not silently omit symlinks, including dangling links.
+  // An external target is not scanned or copied into the public projection.
+  const outside = path.join(textFixtureRoot, 'outside-public-roots.md');
+  fs.writeFileSync(outside, 'Synthetic outside-public-roots content.', 'utf8');
+  const linkedFile = path.join(docsDir, 'linked.md');
+  fs.symlinkSync(outside, linkedFile);
+  assert.ok(
+    validateRepositoryPublicSafety(textFixtureRoot).errors.some((message) =>
+      message.includes('docs/linked.md') && message.includes('symbolic link')),
+    'a public file symlink must be a controlled validation failure'
+  );
+  fs.unlinkSync(linkedFile);
+
+  const danglingLink = path.join(docsDir, 'dangling.md');
+  fs.symlinkSync(path.join(textFixtureRoot, 'nonexistent'), danglingLink);
+  assert.ok(
+    validateRepositoryPublicSafety(textFixtureRoot).errors.some((message) => message.includes('docs/dangling.md')),
+    'a dangling public file symlink must fail closed'
+  );
+  fs.unlinkSync(danglingLink);
+
+  fs.rmSync(reviewDir, { recursive: true });
+  fs.symlinkSync(docsDir, reviewDir, 'dir');
+  assert.ok(
+    validateRepositoryPublicSafety(textFixtureRoot).errors.some((message) =>
+      message.includes('review is a symbolic link')),
+    'a symlinked public root must not bypass public payload scanning'
+  );
+  fs.unlinkSync(reviewDir);
+  assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
 } finally {
   fs.rmSync(textFixtureRoot, { recursive: true, force: true });
 }

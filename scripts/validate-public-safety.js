@@ -155,39 +155,71 @@ function scanSecretMaterial(text, relativePath) {
   return errors;
 }
 
-function collectFiles(root, relativeRoot, extensions = null) {
+function collectFiles(root, relativeRoot, extensions = null, errors = []) {
   const absolute = path.join(root, relativeRoot);
-  if (!fs.existsSync(absolute)) return [];
-  const stat = fs.statSync(absolute);
+  let stat;
+  try {
+    stat = fs.lstatSync(absolute, { throwIfNoEntry: false });
+  } catch {
+    errors.push(relativeRoot + ' cannot be inspected in the public safety scan.');
+    return [];
+  }
+  if (!stat) return [];
+  if (stat.isSymbolicLink()) {
+    errors.push(relativeRoot + ' is a symbolic link in the public safety scan; links are prohibited.');
+    return [];
+  }
   if (stat.isFile()) {
     const ext = path.extname(relativeRoot).toLowerCase();
     if (!extensions || extensions.has(ext) || path.basename(relativeRoot) === 'robots.txt') return [relativeRoot];
     return [];
   }
+  if (!stat.isDirectory()) {
+    errors.push(relativeRoot + ' is not a regular file or directory in the public safety scan.');
+    return [];
+  }
 
+  let entries;
+  try {
+    entries = fs.readdirSync(absolute, { withFileTypes: true });
+  } catch {
+    errors.push(relativeRoot + ' cannot be read during the public safety scan.');
+    return [];
+  }
   const files = [];
-  for (const entry of fs.readdirSync(absolute, { withFileTypes: true })) {
+  for (const entry of entries) {
     const child = path.join(relativeRoot, entry.name).replace(/\\/g, '/');
-    if (entry.isDirectory()) files.push(...collectFiles(root, child, extensions));
-    else if (entry.isFile()) {
+    if (entry.isSymbolicLink()) {
+      errors.push(child + ' is a symbolic link in the public safety scan; links are prohibited.');
+    } else if (entry.isDirectory()) {
+      files.push(...collectFiles(root, child, extensions, errors));
+    } else if (entry.isFile()) {
       const ext = path.extname(entry.name).toLowerCase();
       if (!extensions || extensions.has(ext) || entry.name === 'robots.txt') files.push(child);
+    } else {
+      errors.push(child + ' is not a regular file or directory in the public safety scan.');
     }
   }
   return files;
 }
 
-function collectUnique(root, roots, extensions = null) {
-  return [...new Set(roots.flatMap((relativeRoot) => collectFiles(root, relativeRoot, extensions)))].sort();
+function collectUnique(root, roots, extensions = null, errors = []) {
+  return [...new Set(roots.flatMap((relativeRoot) => collectFiles(root, relativeRoot, extensions, errors)))].sort();
 }
 
 function validateRepositoryPublicSafety(root = DEFAULT_ROOT) {
   const errors = [];
-  const textFiles = collectUnique(root, PUBLIC_TEXT_ROOTS, TEXT_EXTENSIONS);
-  const structuredFiles = new Set(collectUnique(root, STRUCTURED_DATA_ROOTS, new Set(['.json', '.jsonld'])));
+  const textFiles = collectUnique(root, PUBLIC_TEXT_ROOTS, TEXT_EXTENSIONS, errors);
+  const structuredFiles = new Set(collectUnique(root, STRUCTURED_DATA_ROOTS, new Set(['.json', '.jsonld']), errors));
 
   for (const relativePath of textFiles) {
-    const text = fs.readFileSync(path.join(root, relativePath), 'utf8');
+    let text;
+    try {
+      text = fs.readFileSync(path.join(root, relativePath), 'utf8');
+    } catch {
+      errors.push(relativePath + ' could not be read during the public safety scan.');
+      continue;
+    }
     errors.push(...scanSecretMaterial(text, relativePath));
 
     if (structuredFiles.has(relativePath)) {
@@ -208,7 +240,7 @@ function validateRepositoryPublicSafety(root = DEFAULT_ROOT) {
     }
   }
 
-  return { errors, scannedFiles: textFiles };
+  return { errors: [...new Set(errors)], scannedFiles: textFiles };
 }
 
 function run(root = DEFAULT_ROOT) {
