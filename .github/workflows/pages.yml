@@ -60,6 +60,8 @@ jobs:
         run: node scripts/validate-public-safety.js
       - name: Verify public-only Pages artifact staging
         run: node scripts/validate-public-safety.js --stage-pages-site
+      - name: Validate staged public HTML links and discovery
+        run: node scripts/validate-public-interface.js --root _pages_site --discovery
       - name: Test evidence context validator fail-closed cases
         run: node scripts/test-evidence-context.js
       - name: Validate evidence context completeness
@@ -121,6 +123,8 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Stage scanned public-only Pages artifact
         run: node scripts/validate-public-safety.js --stage-pages-site
+      - name: Revalidate deployment artifact links and discovery
+        run: node scripts/validate-public-interface.js --root _pages_site --discovery
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
