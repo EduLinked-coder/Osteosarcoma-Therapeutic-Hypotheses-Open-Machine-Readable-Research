@@ -116,7 +116,48 @@ try {
     );
     assert.ok(!/\n\s+at /.test(result.stderr), 'invalid source_refs type must not produce a Node exception stack');
   }
-  console.log('Contribution identity and path-integrity fail-closed fixtures passed (26 checks).');
+
+  // Source URLs are untrusted proposal inputs. Reject credential-bearing,
+  // internal and literal-IP addresses without reflecting rejected URLs in logs.
+  const sourceUrlCases = [
+    ['https://pubmed.ncbi.nlm.nih.gov/25112408/', true],
+    ['https://doi.org/10.1186/1746-1596-9-140', true],
+    ['http://www.example.org/evidence?pmid=25112408', true],
+    ['https://research.example.org/a#findings', true],
+    ['https://alice:sample@pubmed.ncbi.nlm.nih.gov/25112408', false],
+    ['https://@example.org/evidence', false],
+    ['https://pubmed.ncbi.nlm.nih.gov/?access_token=sample', false],
+    ['https://pubmed.ncbi.nlm.nih.gov/?x-amz-signature=sample', false],
+    ['https://pubmed.ncbi.nlm.nih.gov/#access_token=sample', false],
+    ['http://127.0.0.1/evidence', false],
+    ['http://127.1/evidence', false],
+    ['http://10.1.2.3/evidence', false],
+    ['http://[::1]/evidence', false],
+    ['https://localhost/evidence', false],
+    ['https://source.internal/evidence', false],
+    ['https://report.local./evidence', false],
+    ['https://intranet/evidence', false],
+    ['https://example.invalid/evidence', false],
+    ['https://host.home.arpa/evidence', false],
+    ['ftp://pubmed.ncbi.nlm.nih.gov/evidence', false]
+  ];
+  for (const [sourceUrl, allowed] of sourceUrlCases) {
+    malformedRefsContribution.proposal.source_refs = [sourceUrl];
+    fs.writeFileSync(path.join(liveDir, 'OS-CONTRIB-0001.json'), JSON.stringify(malformedRefsContribution));
+    const result = spawnSync(process.execPath, [path.join(__dirname, 'validate-contributions.js')], {
+      cwd: root, encoding: 'utf8'
+    });
+    assert.strictEqual(result.status, allowed ? 0 : 1, 'unexpected public-source URL policy result for ' + sourceUrl);
+    if (!allowed) {
+      assert.ok(
+        result.stderr.includes('CONTRIBUTION VALIDATION FAILED: contributions/OS-CONTRIB-0001.json proposal.source_refs[0] must use a public http(s) URL without embedded credentials or non-public hosts.'),
+        'rejected URL must produce a bounded, indexed diagnostic'
+      );
+      assert.ok(!result.stderr.includes(sourceUrl), 'rejected URL must not be reflected in validation logs');
+      assert.ok(!/\n\s+at /.test(result.stderr), 'rejected URL must not cause an uncaught exception');
+    }
+  }
+  console.log('Contribution identity and path-integrity fail-closed fixtures passed (26 checks plus ' + sourceUrlCases.length + ' source URL cases).');
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }
