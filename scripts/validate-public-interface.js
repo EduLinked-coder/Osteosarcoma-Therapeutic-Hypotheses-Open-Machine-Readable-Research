@@ -147,6 +147,26 @@ for (const htmlPath of htmlFiles) {
       fail(rel + ' contains broken local href "' + href + '" -> ' + path.relative(root, target).replace(/\\/g, '/'));
     }
   }
+
+  // Test the dependencies of the HTML actually shipped in the Pages artifact.
+  // Local images, scripts, media and stylesheets can break when excluded from staging.
+  for (const match of html.matchAll(/<(img|script|source)\b[^>]*>/gi)) {
+    const src = match[0].match(/\bsrc\s*=\s*["']([^"']+)["']/i)?.[1]?.trim();
+    if (!src || src.startsWith('#') || isExternal(src)) continue;
+    const target = resolveLocalTarget(htmlPath, src);
+    if (target && !fs.existsSync(target)) {
+      fail(rel + ' references a missing local ' + match[1].toLowerCase() + ' resource.');
+    }
+  }
+
+  for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
+    const relValue = match[0].match(/\brel\s*=\s*["']([^"']+)["']/i)?.[1] || '';
+    if (!relValue.toLowerCase().split(/\s+/).includes('stylesheet')) continue;
+    const href = match[0].match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]?.trim();
+    if (!href || href.startsWith('#') || isExternal(href)) continue;
+    const target = resolveLocalTarget(htmlPath, href);
+    if (target && !fs.existsSync(target)) fail(rel + ' references a missing local stylesheet.');
+  }
 }
 
 if (validateDiscovery) {
