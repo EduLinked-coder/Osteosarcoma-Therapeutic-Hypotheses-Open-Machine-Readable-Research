@@ -82,7 +82,10 @@ indexes, activity, search, review, accessible projections, schemas and public
 discovery files. Repository scripts, tests, GitHub workflows and issue-template
 configuration are not Pages assets. An unsupported file type, symlink, detected
 private material, unreadable asset or missing required entry point blocks staging;
-a failed re-stage clears the previous output. This is a deterministic publishing
+a failed re-stage clears the previous output. Staged bytes are rescanned, and
+the **complete recursive artifact inventory** (including files outside expected
+public roots) must exactly match the reviewed file selection; unexpected files
+block staging and clear the output. This is a deterministic publishing
 surface restriction, **not** human disclosure approval or proof of de-identification.
 
 ## What agents may publish

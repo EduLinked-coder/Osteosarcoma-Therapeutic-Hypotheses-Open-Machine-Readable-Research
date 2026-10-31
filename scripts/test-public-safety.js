@@ -330,6 +330,29 @@ try {
     fs.copyFileSync = originalCopyFileSync;
   }
 
+  // Pages uploads the entire staged directory. An unexpected root asset must
+  // fail even though it is outside the public-root scanner's normal traversal.
+  const copyBeforeUnexpectedAsset = fs.copyFileSync;
+  try {
+    fs.copyFileSync = (...args) => {
+      copyBeforeUnexpectedAsset(...args);
+      if (args[1] === path.join(pagesFixtureRoot, '_pages_site', 'docs', 'public.md')) {
+        fs.writeFileSync(
+          path.join(pagesFixtureRoot, '_pages_site', 'unapproved-artifact.bin'),
+          'Synthetic unapproved asset; no private data.\n'
+        );
+      }
+    };
+    const unexpectedAsset = stagePagesSite(pagesFixtureRoot);
+    assert.ok(unexpectedAsset.errors.some((message) =>
+      message.includes('unapproved file')),
+      'a root-level unscanned asset must block the Pages upload');
+    assert.ok(!fs.existsSync(unexpectedAsset.outputDir),
+      'unexpected Pages files must cause the entire staged artifact to be cleared');
+  } finally {
+    fs.copyFileSync = copyBeforeUnexpectedAsset;
+  }
+
   fs.writeFileSync(path.join(pagesFixtureRoot, 'docs', 'unsafe.md'),
     'The patient should start methotrexate.\n');
   const blocked = stagePagesSite(pagesFixtureRoot);

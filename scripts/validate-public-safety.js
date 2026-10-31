@@ -389,6 +389,16 @@ function stagePagesSite(root = DEFAULT_ROOT) {
         selectedFiles.some((relativePath, index) => relativePath !== stagedScan.scannedFiles[index])) {
       result.errors.push('Staged Pages artifact inventory differs from the validated public selection.');
     }
+
+    // The public-root scanner sees approved paths, but Pages uploads the whole
+    // staging directory. Reject even unexpected root files outside those paths.
+    const completeInventoryErrors = [];
+    const completeStagedInventory = collectFiles(outputDir, '.', null, completeInventoryErrors).sort();
+    result.errors.push(...completeInventoryErrors.map((error) => 'Staged Pages artifact: ' + error));
+    if (completeStagedInventory.length !== selectedFiles.length ||
+        selectedFiles.some((relativePath, index) => relativePath !== completeStagedInventory[index])) {
+      result.errors.push('Staged Pages artifact contains an unapproved file or is missing a validated file.');
+    }
   }
 
   if (result.errors.length) {
