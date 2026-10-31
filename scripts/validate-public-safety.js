@@ -27,8 +27,15 @@ const PUBLIC_TEXT_ROOTS = [
   'examples',
   'governance',
   'structured-data',
-  'evidence-events'
+  'evidence-events',
+  'schemas'
 ];
+
+// GitHub Pages only receives these already scanned, deliberately public roots.
+// Repository tooling and GitHub workflow files must not enter the Pages artifact.
+const PUBLIC_SITE_ROOTS = PUBLIC_TEXT_ROOTS.filter((root) =>
+  root !== '.github/ISSUE_TEMPLATE' && root !== '.github/pull_request_template.md'
+);
 
 // Explicitly scan common public text assets; reject other file types instead of silently skipping them.
 const TEXT_EXTENSIONS = new Set(['.json', '.jsonld', '.html', '.md', '.txt', '.xml', '.yml', '.yaml', '.csv', '.tsv', '.css', '.js', '.svg']);
@@ -256,6 +263,81 @@ function validateRepositoryPublicSafety(root = DEFAULT_ROOT) {
   return { errors: [...new Set(errors)], scannedFiles: textFiles };
 }
 
+// Package only the files that passed the existing public-payload scan.
+// Never upload the whole repository checkout to GitHub Pages.
+function stagePagesSite(root = DEFAULT_ROOT) {
+  const sourceRoot = path.resolve(root);
+  const outputDir = path.join(sourceRoot, '_pages_site');
+  const scan = validateRepositoryPublicSafety(sourceRoot);
+  const result = { errors: [...scan.errors], scannedFiles: scan.scannedFiles, stagedFiles: [], outputDir };
+
+  // A failed re-stage must not leave an earlier, apparently valid artifact.
+  try {
+    fs.rmSync(outputDir, { recursive: true, force: true });
+  } catch {
+    result.errors.push('Existing Pages staging directory could not be cleared safely.');
+    return result;
+  }
+  if (result.errors.length) return result;
+
+  const selectedFiles = scan.scannedFiles.filter((relativePath) =>
+    PUBLIC_SITE_ROOTS.some((siteRoot) =>
+      relativePath === siteRoot || relativePath.startsWith(siteRoot + '/'))
+  );
+  const requiredFiles = [
+    'index.html',
+    'manifest.json',
+    'robots.txt',
+    'sitemap.xml',
+    'schemas/therapeutic-hypothesis.schema.json'
+  ];
+  for (const required of requiredFiles) {
+    if (!selectedFiles.includes(required)) {
+      result.errors.push(required + ' is required in the Pages artifact but was not safely scanned.');
+    }
+  }
+  if (result.errors.length) return result;
+
+  for (const relativePath of selectedFiles) {
+    try {
+      const source = path.join(sourceRoot, relativePath);
+      const target = path.join(outputDir, relativePath);
+      // Check the concrete file again immediately before copy.
+      if (!fs.lstatSync(source).isFile()) {
+        result.errors.push(relativePath + ' is not a regular file for Pages staging.');
+        break;
+      }
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.copyFileSync(source, target);
+      result.stagedFiles.push(relativePath);
+    } catch {
+      result.errors.push(relativePath + ' could not be copied into the public Pages artifact.');
+      break;
+    }
+  }
+
+  if (result.errors.length) {
+    try {
+      fs.rmSync(outputDir, { recursive: true, force: true });
+    } catch {
+      result.errors.push('Incomplete Pages staging directory could not be cleared safely.');
+    }
+    result.stagedFiles = [];
+  }
+  return result;
+}
+
+function runStagePagesSite(root = DEFAULT_ROOT) {
+  const result = stagePagesSite(root);
+  if (result.errors.length) {
+    for (const error of result.errors) console.error('PUBLIC PAGES STAGING FAILED: ' + error);
+    process.exitCode = 1;
+    return result;
+  }
+  console.log('Staged ' + result.stagedFiles.length + ' scanned public files for GitHub Pages.');
+  return result;
+}
+
 function run(root = DEFAULT_ROOT) {
   const result = validateRepositoryPublicSafety(root);
   if (result.errors.length) {
@@ -267,7 +349,11 @@ function run(root = DEFAULT_ROOT) {
   return result;
 }
 
-if (require.main === module) run();
+if (require.main === module) {
+  if (process.argv.length === 2) run();
+  else if (process.argv.length === 3 && process.argv[2] === '--stage-pages-site') runStagePagesSite();
+  else { console.error('Unsupported public-safety command.'); process.exitCode = 1; }
+}
 
 module.exports = {
   PROHIBITED_KEYS,
@@ -278,5 +364,8 @@ module.exports = {
   scanStructuredValue,
   scanSecretMaterial,
   validateRepositoryPublicSafety,
+  PUBLIC_SITE_ROOTS,
+  stagePagesSite,
+  runStagePagesSite,
   run
 };

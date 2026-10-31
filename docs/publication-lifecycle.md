@@ -69,6 +69,22 @@ The corresponding negative-fixture test is `scripts/test-public-safety.js`. CI r
 
 The scanner is deliberately conservative: passing it means only that these bounded machine-detectable hazards were not found. It does **not** prove de-identification, consent, privacy compliance or public-release authority. If public safety is uncertain, fail closed and create a safety/privacy review item.
 
+## Public-only GitHub Pages artifact boundary
+
+The Pages deployment must **not** upload the whole repository checkout. The existing
+`scripts/validate-public-safety.js --stage-pages-site` mode reuses the public-safety
+scanner and copies only its validated public text/assets and machine-readable schemas
+into `_pages_site/`. The Pages workflow verifies this bounded artifact on pull requests,
+recreates it after the deployment checkout, and uploads `_pages_site/` rather than `./`.
+
+The staged set includes canonical hypothesis pages and objects, evidence bindings,
+indexes, activity, search, review, accessible projections, schemas and public
+discovery files. Repository scripts, tests, GitHub workflows and issue-template
+configuration are not Pages assets. An unsupported file type, symlink, detected
+private material, unreadable asset or missing required entry point blocks staging;
+a failed re-stage clears the previous output. This is a deterministic publishing
+surface restriction, **not** human disclosure approval or proof of de-identification.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:

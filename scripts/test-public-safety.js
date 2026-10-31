@@ -8,7 +8,8 @@ const {
   scanStructuredValue,
   scanClinicalBoundaryLanguage,
   scanSecretMaterial,
-  validateRepositoryPublicSafety
+  validateRepositoryPublicSafety,
+  stagePagesSite
 } = require('./validate-public-safety');
 
 function expectStructuredBlocked(payload, pattern) {
@@ -240,6 +241,44 @@ try {
   assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
 } finally {
   fs.rmSync(textFixtureRoot, { recursive: true, force: true });
+}
+
+// The Pages upload must be a strict, safety-scanned public-only projection.
+const pagesFixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-pages-fixture-'));
+try {
+  fs.mkdirSync(path.join(pagesFixtureRoot, 'schemas'), { recursive: true });
+  fs.mkdirSync(path.join(pagesFixtureRoot, 'docs'), { recursive: true });
+  fs.mkdirSync(path.join(pagesFixtureRoot, 'scripts'), { recursive: true });
+  fs.mkdirSync(path.join(pagesFixtureRoot, '.github', 'workflows'), { recursive: true });
+  fs.writeFileSync(path.join(pagesFixtureRoot, 'index.html'), '<main><h1>Research hypotheses</h1></main>\n');
+  fs.writeFileSync(path.join(pagesFixtureRoot, 'manifest.json'), '{"purpose":"public research"}\n');
+  fs.writeFileSync(path.join(pagesFixtureRoot, 'robots.txt'), 'User-agent: *\nAllow: /\n');
+  fs.writeFileSync(path.join(pagesFixtureRoot, 'sitemap.xml'), '<urlset></urlset>\n');
+  fs.writeFileSync(path.join(pagesFixtureRoot, 'schemas', 'therapeutic-hypothesis.schema.json'), '{"type":"object"}\n');
+  fs.writeFileSync(path.join(pagesFixtureRoot, 'docs', 'public.md'), 'Public hypothesis only.\n');
+  fs.writeFileSync(path.join(pagesFixtureRoot, 'scripts', 'internal-tool.js'), 'internal source, not a Pages asset\n');
+  fs.writeFileSync(path.join(pagesFixtureRoot, '.github', 'workflows', 'private-automation.yml'), 'not a Pages asset\n');
+
+  const staged = stagePagesSite(pagesFixtureRoot);
+  assert.deepStrictEqual(staged.errors, [], 'valid public assets should stage without errors');
+  assert.ok(staged.stagedFiles.includes('schemas/therapeutic-hypothesis.schema.json'),
+    'machine-readable research schemas must remain available through Pages');
+  assert.ok(fs.existsSync(path.join(staged.outputDir, 'docs', 'public.md')),
+    'public documentation must be copied');
+  assert.ok(!fs.existsSync(path.join(staged.outputDir, 'scripts')),
+    'executable repository tooling must not be uploaded to Pages');
+  assert.ok(!fs.existsSync(path.join(staged.outputDir, '.github')),
+    'GitHub workflow and issue configuration must not be uploaded to Pages');
+
+  fs.writeFileSync(path.join(pagesFixtureRoot, 'docs', 'unsafe.md'),
+    'The patient should start methotrexate.\n');
+  const blocked = stagePagesSite(pagesFixtureRoot);
+  assert.ok(blocked.errors.some((message) => message.includes('patient-directed treatment instruction')),
+    'unsafe public material must block staging');
+  assert.ok(!fs.existsSync(blocked.outputDir),
+    'failed staging must clear any previously produced public artifact');
+} finally {
+  fs.rmSync(pagesFixtureRoot, { recursive: true, force: true });
 }
 
 console.log('Public safety payload tests passed: prohibited fields, high-confidence credential material and patient-directed clinical language fail closed across structured and human-readable public surfaces, including the protected review projection.');
