@@ -270,6 +270,26 @@ try {
   assert.ok(!fs.existsSync(path.join(staged.outputDir, '.github')),
     'GitHub workflow and issue configuration must not be uploaded to Pages');
 
+  // Simulate content changing after the source scan, during the copy operation.
+  // A source-only scan would miss the unsafe bytes in the Pages artifact.
+  const originalCopyFileSync = fs.copyFileSync;
+  try {
+    fs.copyFileSync = (...args) => {
+      originalCopyFileSync(...args);
+      if (args[1] === path.join(pagesFixtureRoot, '_pages_site', 'docs', 'public.md')) {
+        fs.writeFileSync(args[1], 'The patient should start methotrexate.\n');
+      }
+    };
+    const tampered = stagePagesSite(pagesFixtureRoot);
+    assert.ok(tampered.errors.some((message) =>
+      message.includes('Staged Pages artifact:') && message.includes('patient-directed treatment instruction')),
+    'post-copy public-safety scan must reject content altered after the source scan');
+    assert.ok(!fs.existsSync(tampered.outputDir),
+      'post-copy safety failure must remove the incomplete Pages artifact');
+  } finally {
+    fs.copyFileSync = originalCopyFileSync;
+  }
+
   fs.writeFileSync(path.join(pagesFixtureRoot, 'docs', 'unsafe.md'),
     'The patient should start methotrexate.\n');
   const blocked = stagePagesSite(pagesFixtureRoot);

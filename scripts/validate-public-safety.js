@@ -316,6 +316,17 @@ function stagePagesSite(root = DEFAULT_ROOT) {
     }
   }
 
+  // Scan the actual staged bytes, not only the source read before copying.
+  // Content changed during staging must never reach the Pages artifact.
+  if (!result.errors.length) {
+    const stagedScan = validateRepositoryPublicSafety(outputDir);
+    result.errors.push(...stagedScan.errors.map((error) => 'Staged Pages artifact: ' + error));
+    if (stagedScan.scannedFiles.length !== selectedFiles.length ||
+        selectedFiles.some((relativePath, index) => relativePath !== stagedScan.scannedFiles[index])) {
+      result.errors.push('Staged Pages artifact inventory differs from the validated public selection.');
+    }
+  }
+
   if (result.errors.length) {
     try {
       fs.rmSync(outputDir, { recursive: true, force: true });
