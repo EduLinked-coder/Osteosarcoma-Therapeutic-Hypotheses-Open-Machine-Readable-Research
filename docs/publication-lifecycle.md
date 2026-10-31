@@ -69,6 +69,39 @@ The corresponding negative-fixture test is `scripts/test-public-safety.js`. CI r
 
 The scanner is deliberately conservative: passing it means only that these bounded machine-detectable hazards were not found. It does **not** prove de-identification, consent, privacy compliance or public-release authority. If public safety is uncertain, fail closed and create a safety/privacy review item.
 
+## Public-only GitHub Pages artifact boundary
+
+The Pages deployment must **not** upload the whole repository checkout. The existing
+`scripts/validate-public-safety.js --stage-pages-site` mode reuses the public-safety
+scanner and copies only its validated public text/assets and machine-readable schemas
+into `_pages_site/`. The Pages workflow verifies this bounded artifact on pull requests,
+recreates it after the deployment checkout, and uploads `_pages_site/` rather than `./`.
+
+The staged set includes canonical hypothesis pages and objects, evidence bindings,
+indexes, activity, search, review, accessible projections, schemas and public
+discovery files. Repository scripts, tests, GitHub workflows and issue-template
+configuration are not Pages assets. An unsupported file type, symlink, detected
+private material, unreadable asset or missing required entry point blocks staging;
+a failed re-stage clears the previous output. Staged bytes are rescanned, and
+the **complete recursive artifact inventory** (including files outside expected
+public roots) must exactly match the reviewed file selection; unexpected files
+block staging and clear the output. This is a deterministic publishing
+surface restriction, **not** human disclosure approval or proof of de-identification.
+
+After each successful staging operation, the existing public-interface validator is
+run against `_pages_site/` itself, including before deployment. This checks that
+staged human-readable pages, local navigation links, image/script/media resources,
+stylesheets, robots.txt and sitemap targets resolve inside the exact artifact being
+uploaded. Repository-local validation alone cannot prove that excluded files are
+still reachable after staging. This remains an engineering check, not publication
+or scientific-review authority.
+
+The public-interface check additionally rejects executable or inline-data link
+schemes in anchors (including common numeric-character-reference and whitespace
+obfuscation). Unsafe or broken local links fail without reproducing their
+untrusted URLs in CI diagnostics. This bounded check supplements, but does not
+replace, review of rendered HTML, privacy and publication authority.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:
