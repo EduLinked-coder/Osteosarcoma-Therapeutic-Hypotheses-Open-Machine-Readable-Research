@@ -35,6 +35,7 @@ try {
   expectFailure('template lacks example marker', 'examples/contributions/submitted.example.json', live, 'template example must explicitly set example:true');
   expectFailure('template falsely reviewed', 'examples/contributions/submitted.example.json', { ...example, state: 'ACCEPTED' }, 'template example must remain SUBMITTED');
   expectFailure('malformed contribution ID', 'contributions/OS-CONTRIB-0001.json', { ...live, contribution_id: '../../secret' }, 'invalid contribution_id');
+  expectFailure('non-object contribution', 'contributions/OS-CONTRIB-0001.json', null, 'must be a JSON object');
 
   const exampleDir = path.join(root, 'examples/contributions');
   const liveDir = path.join(root, 'contributions');
@@ -51,13 +52,25 @@ try {
   fs.rmdirSync(path.join(liveDir, 'nested'));
   fs.symlinkSync(target, path.join(liveDir, 'alias.json'));
   assert.ok(discoverContributionFiles(root).errors.some((error) => error.includes('contributions/alias.json')), 'symbolic-link contribution must fail');
+  fs.unlinkSync(path.join(liveDir, 'alias.json'));
+  fs.writeFileSync(path.join(liveDir, 'unreviewed.txt'), 'unguarded contribution');
+  assert.ok(discoverContributionFiles(root).errors.some((error) => error.includes('unvalidated non-JSON file')), 'unvalidated direct non-JSON contribution must fail');
+  fs.unlinkSync(path.join(liveDir, 'unreviewed.txt'));
+  fs.rmSync(liveDir, { recursive: true });
+  fs.symlinkSync(exampleDir, liveDir, 'dir');
+  assert.ok(discoverContributionFiles(root).errors.some((error) => error.includes('contributions must be a real directory')), 'symlinked live contribution root must fail');
+  fs.unlinkSync(liveDir);
+  fs.mkdirSync(liveDir);
 
   fs.writeFileSync(target, JSON.stringify({ hypothesis_id: 'OS-TH-0002' }));
   expectFailure('mismatched canonical target ID', 'contributions/OS-CONTRIB-0001.json', live, 'does not match canonical hypothesis_id');
   fs.writeFileSync(target, '{bad-json');
   expectFailure('unreadable canonical target', 'contributions/OS-CONTRIB-0001.json', live, 'not readable JSON');
+  fs.unlinkSync(target);
+  fs.symlinkSync(path.join(exampleDir, 'submitted.example.json'), target);
+  expectFailure('symlinked canonical target', 'contributions/OS-CONTRIB-0001.json', live, 'must be a regular non-symlink file');
 
-  console.log('Contribution object identity, direct-path and target-reference fail-closed fixtures passed (16 checks).');
+  console.log('Contribution identity and path-integrity fail-closed fixtures passed (20 checks).');
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }
