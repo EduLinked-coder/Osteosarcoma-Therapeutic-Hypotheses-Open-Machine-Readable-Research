@@ -54,7 +54,17 @@ function publicHttp(value) {
 }
 
 function validateFile(relativePath) {
-  const object = JSON.parse(fs.readFileSync(path.join(root, relativePath), 'utf8'));
+  let object;
+  try {
+    object = JSON.parse(fs.readFileSync(path.join(root, relativePath), 'utf8'));
+  } catch (error) {
+    fail(relativePath + (error instanceof SyntaxError ? ' has invalid JSON syntax.' : ' is not readable as JSON.'));
+    return;
+  }
+  if (!object || typeof object !== 'object' || Array.isArray(object)) {
+    fail(relativePath + ' contribution must be a JSON object.');
+    return;
+  }
   const errors = validateJsonSchema(schema, schema, object, relativePath);
   errors.forEach(fail);
   scan(object, relativePath);

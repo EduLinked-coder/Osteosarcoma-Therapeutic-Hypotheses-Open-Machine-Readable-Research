@@ -4,6 +4,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const { discoverContributionFiles, validateContributionObjectIdentity } = require('./lib/contribution-object-integrity');
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-contribution-object-'));
@@ -70,7 +71,31 @@ try {
   fs.symlinkSync(path.join(exampleDir, 'submitted.example.json'), target);
   expectFailure('symlinked canonical target', 'contributions/OS-CONTRIB-0001.json', live, 'must be a regular non-symlink file');
 
-  console.log('Contribution identity and path-integrity fail-closed fixtures passed (20 checks).');
+  // Test the actual CLI. A malformed or non-object public contribution must
+  // fail with a path-specific diagnostic, not an uncaught Node exception.
+  const schemaDir = path.join(root, 'schemas');
+  fs.mkdirSync(schemaDir, { recursive: true });
+  fs.copyFileSync(
+    path.join(__dirname, '../schemas/research-contribution.schema.json'),
+    path.join(schemaDir, 'research-contribution.schema.json')
+  );
+  for (const [payload, expected] of [
+    ['{broken', 'has invalid JSON syntax.'],
+    ['null', 'contribution must be a JSON object.'],
+    ['[]', 'contribution must be a JSON object.']
+  ]) {
+    fs.writeFileSync(path.join(liveDir, 'OS-CONTRIB-0001.json'), payload);
+    const result = spawnSync(process.execPath, [path.join(__dirname, 'validate-contributions.js')], {
+      cwd: root, encoding: 'utf8'
+    });
+    assert.strictEqual(result.status, 1, 'invalid contribution content must fail closed');
+    assert.ok(
+      result.stderr.includes('CONTRIBUTION VALIDATION FAILED: contributions/OS-CONTRIB-0001.json ' + expected),
+      'invalid contribution must produce a bounded path-specific diagnostic: ' + result.stderr
+    );
+    assert.ok(!/\n\s+at /.test(result.stderr), 'invalid contribution must not cause an uncaught stack trace');
+  }
+  console.log('Contribution identity and path-integrity fail-closed fixtures passed (23 checks).');
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }
