@@ -76,8 +76,13 @@ function validateFile(relativePath) {
   }
   if (object.clinical_use !== false) fail(relativePath + ' must explicitly set clinical_use:false.');
   if (object.review?.scientific_review_required !== true) fail(relativePath + ' must preserve scientific review.');
-  for (const sourceRef of object.proposal?.source_refs || []) {
-    if (!publicHttp(sourceRef)) fail(relativePath + ' source_refs must use public http(s) URLs.');
+  const sourceRefs = object.proposal?.source_refs;
+  if (sourceRefs !== undefined && !Array.isArray(sourceRefs)) {
+    fail(relativePath + ' proposal.source_refs must be an array of public http(s) URLs.');
+  } else {
+    for (const sourceRef of sourceRefs || []) {
+      if (!publicHttp(sourceRef)) fail(relativePath + ' source_refs must use public http(s) URLs.');
+    }
   }
   if (finalStates.has(object.state)) {
     if (!object.review?.decision_reference || !object.review?.reviewed_at) {

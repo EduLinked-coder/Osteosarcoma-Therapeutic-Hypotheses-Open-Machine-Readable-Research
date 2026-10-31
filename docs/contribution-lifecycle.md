@@ -81,7 +81,7 @@ Every public contribution object must:
 - avoid patient information, private clinical context, credentials, secrets and restricted research;
 - require an attributable `decision_reference` and `reviewed_at` timestamp for `ACCEPTED` or `REJECTED` state.
 
-The contribution validator fails closed if the canonical schema stops requiring the governed `acceptance_meaning`, if its fixed meaning changes, if an object omits or changes that meaning, or if common prohibited public fields or duplicate contribution identifiers appear within the live or example namespace. Live contributions additionally fail on filename/ID mismatch, unresolved non-null target hypotheses or example-marker leakage; example IDs do not reserve live IDs. The focused acceptance-boundary fixture is also available for direct regression testing.
+The contribution validator fails closed if the canonical schema stops requiring the governed `acceptance_meaning`, if its fixed meaning changes, if an object omits or changes that meaning, or if common prohibited public fields or duplicate contribution identifiers appear within the live or example namespace. Live contributions additionally fail on filename/ID mismatch, unresolved non-null target hypotheses or example-marker leakage; example IDs do not reserve live IDs. Malformed or non-array `proposal.source_refs` fields produce bounded, path-specific errors rather than uncaught runtime exceptions. The focused acceptance-boundary fixture is also available for direct regression testing.
 
 ## Contribution type is not acceptance
 

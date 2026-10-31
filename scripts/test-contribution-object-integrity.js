@@ -95,7 +95,28 @@ try {
     );
     assert.ok(!/\n\s+at /.test(result.stderr), 'invalid contribution must not cause an uncaught stack trace');
   }
-  console.log('Contribution identity and path-integrity fail-closed fixtures passed (23 checks).');
+  // Schema-invalid source_refs used to raise an uncaught TypeError for
+  // numbers and objects, despite the schema error already being recorded.
+  // The CLI must instead provide a controlled path-specific diagnostic.
+  const malformedRefsContribution = JSON.parse(fs.readFileSync(
+    path.join(__dirname, '../examples/contributions/submitted.example.json'), 'utf8'
+  ));
+  delete malformedRefsContribution.example;
+  malformedRefsContribution.target_hypothesis_id = null;
+  for (const malformedRefs of [42, { url: 'https://example.org' }, 'https://example.org']) {
+    malformedRefsContribution.proposal.source_refs = malformedRefs;
+    fs.writeFileSync(path.join(liveDir, 'OS-CONTRIB-0001.json'), JSON.stringify(malformedRefsContribution));
+    const result = spawnSync(process.execPath, [path.join(__dirname, 'validate-contributions.js')], {
+      cwd: root, encoding: 'utf8'
+    });
+    assert.strictEqual(result.status, 1, 'invalid source_refs type must fail closed');
+    assert.ok(
+      result.stderr.includes('CONTRIBUTION VALIDATION FAILED: contributions/OS-CONTRIB-0001.json proposal.source_refs must be an array of public http(s) URLs.'),
+      'invalid source_refs type must produce a bounded path-specific diagnostic: ' + result.stderr
+    );
+    assert.ok(!/\n\s+at /.test(result.stderr), 'invalid source_refs type must not produce a Node exception stack');
+  }
+  console.log('Contribution identity and path-integrity fail-closed fixtures passed (26 checks).');
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }
