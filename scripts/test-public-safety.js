@@ -6,6 +6,7 @@ const os = require('os');
 const path = require('path');
 const {
   scanStructuredValue,
+  scanClinicalBoundaryLanguage,
   scanSecretMaterial,
   validateRepositoryPublicSafety
 } = require('./validate-public-safety');
@@ -30,16 +31,38 @@ const safeResearchPayload = {
 };
 assert.deepStrictEqual(scanStructuredValue(safeResearchPayload, '$fixture'), []);
 
-expectStructuredBlocked({ patient_name: 'Synthetic Example' }, /patient_name/);
-expectStructuredBlocked({ nested: { medical_record_number: 'synthetic-only' } }, /medical_record_number/);
-expectStructuredBlocked({ nested: { api_key: 'synthetic-only' } }, /api_key/);
-expectStructuredBlocked({ nested: { client_id: 'synthetic-only' } }, /client_id/);
-expectStructuredBlocked({ nested: { EDULINKED_APP_ID: 'synthetic-only' } }, /EDULINKED_APP_ID/);
-expectStructuredBlocked({ nested: { ENTERPRISE_APP_PRIVATE_KEY: 'synthetic-only' } }, /ENTERPRISE_APP_PRIVATE_KEY/);
+expectStructuredBlocked({ patient_name: 'Synthetic Example' }, /patientname/);
+expectStructuredBlocked({ nested: { medical_record_number: 'synthetic-only' } }, /medicalrecordnumber/);
+expectStructuredBlocked({ nested: { api_key: 'synthetic-only' } }, /apikey/);
+expectStructuredBlocked({ nested: { client_id: 'synthetic-only' } }, /clientid/);
+expectStructuredBlocked({ nested: { EDULINKED_APP_ID: 'synthetic-only' } }, /edulinkedappid/);
+expectStructuredBlocked({ nested: { ENTERPRISE_APP_PRIVATE_KEY: 'synthetic-only' } }, /enterpriseappprivatekey/);
 expectStructuredBlocked({ recommendation: 'The patient should start methotrexate.' }, /patient-directed treatment instruction/);
 expectStructuredBlocked({ recommendation: 'For this patient, recommend switching to regimen X.' }, /patient-specific treatment recommendation/);
 expectStructuredBlocked({ dosing: 'You should take 10 mg daily.' }, /patient-directed dosing instruction/);
 expectStructuredBlocked({ claim: 'This treatment will benefit the patient.' }, /claim of individual patient benefit/);
+
+// An arbitrary JSON property name may itself contain private identifiers.
+// Validation diagnostics must report an opaque position, not that input.
+const syntheticPrivateFieldName = 'SYNTHETIC_PRIVATE_FIELD_NAME_DO_NOT_ECHO';
+const unsafeKeyPayload = {
+  [syntheticPrivateFieldName]: {
+    patient_name: 'Synthetic Example',
+    recommendation: 'The patient should start methotrexate.'
+  }
+};
+const unsafeKeyErrors = scanStructuredValue(unsafeKeyPayload, '$fixture');
+assert.ok(unsafeKeyErrors.some((message) => message.includes('prohibited public field name')));
+assert.ok(unsafeKeyErrors.some((message) => message.includes('patient-directed treatment instruction')));
+assert.ok(unsafeKeyErrors.every((message) => !message.includes(syntheticPrivateFieldName)),
+  'structured public-safety diagnostics must not echo untrusted property names');
+
+const directClinicalErrors = scanClinicalBoundaryLanguage({
+  [syntheticPrivateFieldName]: 'The patient should start methotrexate.'
+}, '$fixture');
+assert.ok(directClinicalErrors.some((message) => message.includes('patient-directed treatment instruction')));
+assert.ok(directClinicalErrors.every((message) => !message.includes(syntheticPrivateFieldName)),
+  'standalone clinical-language diagnostics must not echo untrusted property names');
 
 expectSecretBlocked('prefix ' + '-----BEGIN ' + 'PRIVATE KEY-----' + ' suffix', /PEM private key/);
 expectSecretBlocked('prefix ' + 'ghp_' + 'A'.repeat(30) + ' suffix', /GitHub access token/);

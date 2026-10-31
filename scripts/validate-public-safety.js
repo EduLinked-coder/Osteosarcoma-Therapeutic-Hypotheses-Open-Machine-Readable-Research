@@ -92,6 +92,13 @@ function normaliseKey(key) {
   return String(key).toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+// JSON keys are untrusted input. Never reproduce them in CI diagnostics:
+// use a position, or a fixed allowlisted prohibited-key classification.
+function safeFieldPointer(pointer, key, fieldIndex) {
+  const normalised = normaliseKey(key);
+  return pointer + '[' + (PROHIBITED_KEYS.has(normalised) ? normalised : 'field:' + fieldIndex) + ']';
+}
+
 function scanClinicalBoundaryLanguage(value, pointer = '$', errors = []) {
   if (Array.isArray(value)) {
     value.forEach((item, index) => scanClinicalBoundaryLanguage(item, pointer + '[' + index + ']', errors));
@@ -105,8 +112,9 @@ function scanClinicalBoundaryLanguage(value, pointer = '$', errors = []) {
   }
   if (!value || typeof value !== 'object') return errors;
 
+  let fieldIndex = 0;
   for (const [key, child] of Object.entries(value)) {
-    scanClinicalBoundaryLanguage(child, pointer + '.' + key, errors);
+    scanClinicalBoundaryLanguage(child, safeFieldPointer(pointer, key, fieldIndex++), errors);
   }
   return errors;
 }
@@ -121,12 +129,14 @@ function scanStructuredValue(value, pointer = '$', errors = []) {
   }
   if (!value || typeof value !== 'object') return errors;
 
+  let fieldIndex = 0;
   for (const [key, child] of Object.entries(value)) {
     const normalised = normaliseKey(key);
+    const childPointer = safeFieldPointer(pointer, key, fieldIndex++);
     if (PROHIBITED_KEYS.has(normalised)) {
-      errors.push(pointer + '.' + key + ' uses a prohibited public field name.');
+      errors.push(childPointer + ' uses a prohibited public field name.');
     }
-    scanStructuredValue(child, pointer + '.' + key, errors);
+    scanStructuredValue(child, childPointer, errors);
   }
   return errors;
 }
