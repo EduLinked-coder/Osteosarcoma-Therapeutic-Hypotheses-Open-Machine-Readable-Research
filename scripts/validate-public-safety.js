@@ -229,6 +229,12 @@ function validateRepositoryPublicSafety(root = DEFAULT_ROOT) {
     errors.push(...scanSecretMaterial(text, relativePath));
 
     if (structuredFiles.has(relativePath)) {
+      // JSON.parse discards overwritten duplicate-key values, but those bytes
+      // remain in the public file. Scan raw JSON for clinical directives too.
+      // The parsed scan below still catches escaped JSON string content.
+      for (const message of scanClinicalBoundaryLanguage(text, '$raw-json')) {
+        errors.push(relativePath + ' ' + message);
+      }
       let value;
       try {
         value = JSON.parse(text);

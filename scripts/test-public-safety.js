@@ -140,6 +140,27 @@ try {
   fs.unlinkSync(docsMetadataPath);
   assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
 
+  // JSON.parse discards an earlier value when a key is repeated, but the
+  // original value remains in the publicly served JSON file.
+  const overwrittenPath = path.join(docsDir, 'overwritten-description.json');
+  const overwrittenJson = '{"description":"The patient should start methotrexate.",' +
+    '"description":"Research hypothesis only."}';
+  assert.deepStrictEqual(scanStructuredValue(JSON.parse(overwrittenJson)), []);
+  fs.writeFileSync(overwrittenPath, overwrittenJson, 'utf8');
+  const overwrittenResult = validateRepositoryPublicSafety(textFixtureRoot);
+  assert.ok(
+    overwrittenResult.errors.some((message) =>
+      message.includes('docs/overwritten-description.json') &&
+      message.includes('patient-directed treatment instruction')),
+    'raw JSON must be screened even when duplicate keys hide unsafe values from JSON.parse'
+  );
+  assert.ok(
+    overwrittenResult.errors.every((message) => !message.includes('The patient should start methotrexate.')),
+    'raw JSON safety diagnostics must not reproduce untrusted values'
+  );
+  fs.unlinkSync(overwrittenPath);
+  assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
+
   // Public text directories are shipped with the site. Text extensions beyond
   // Markdown/JSON must be scanned, and unknown file types must fail closed.
   const csvPath = path.join(docsDir, 'candidate-data.csv');
