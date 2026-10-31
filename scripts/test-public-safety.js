@@ -8,6 +8,7 @@ const {
   scanStructuredValue,
   scanClinicalBoundaryLanguage,
   scanSecretMaterial,
+  scanDuplicateJsonMembers,
   validateRepositoryPublicSafety,
   stagePagesSite
 } = require('./validate-public-safety');
@@ -160,6 +161,45 @@ try {
     'raw JSON safety diagnostics must not reproduce untrusted values'
   );
   fs.unlinkSync(overwrittenPath);
+  assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
+
+  // JSON.parse can overwrite an earlier nested object holding restricted data.
+  const overwrittenStructuredPath = path.join(docsDir, 'overwritten-structured.json');
+  const overwrittenStructuredJson =
+    '{"metadata":{"patient_name":"SYNTHETIC_PRIVATE_MARKER_DO_NOT_ECHO"},"metadata":{}}';
+  assert.deepStrictEqual(scanStructuredValue(JSON.parse(overwrittenStructuredJson)), []);
+  fs.writeFileSync(overwrittenStructuredPath, overwrittenStructuredJson, 'utf8');
+  const overwrittenStructuredResult = validateRepositoryPublicSafety(textFixtureRoot);
+  assert.ok(overwrittenStructuredResult.errors.some((message) =>
+    message.includes('docs/overwritten-structured.json') && message.includes('duplicate JSON member key')),
+    'raw JSON must fail closed on overwritten restricted nested structures');
+  assert.ok(overwrittenStructuredResult.errors.every((message) =>
+    !message.includes('SYNTHETIC_PRIVATE_MARKER_DO_NOT_ECHO')),
+    'duplicate member diagnostics must not echo hidden values');
+  fs.unlinkSync(overwrittenStructuredPath);
+
+  const escapedDuplicateJson = '{"status":"candidate","\\u0073tatus":"approved"}';
+  assert.ok(scanDuplicateJsonMembers(escapedDuplicateJson).some((message) =>
+    message.includes('duplicate JSON member key')),
+    'escaped equivalent property names must be treated as duplicate JSON keys');
+  assert.deepStrictEqual(scanDuplicateJsonMembers(
+    '{"left":{"status":"one"},"right":{"status":"two"}}'), [],
+    'reusing a key in distinct objects is valid');
+
+  const encodedCredentialPath = path.join(docsDir, 'encoded-credential.json');
+  const syntheticCredential = 'ghp_' + 'A'.repeat(30);
+  const encodedCredentialJson = JSON.stringify({ note: syntheticCredential })
+    .replace('ghp_', '\\u0067hp_');
+  assert.ok(!encodedCredentialJson.includes(syntheticCredential),
+    'fixture must conceal credential-like material from raw-text scanning');
+  fs.writeFileSync(encodedCredentialPath, encodedCredentialJson, 'utf8');
+  const encodedCredentialResult = validateRepositoryPublicSafety(textFixtureRoot);
+  assert.ok(encodedCredentialResult.errors.some((message) =>
+    message.includes('docs/encoded-credential.json') && message.includes('GitHub access token material')),
+    'parsed JSON must be rechecked for escaped credential-like material');
+  assert.ok(encodedCredentialResult.errors.every((message) => !message.includes(syntheticCredential)),
+    'credential detection must not reproduce credential-like material');
+  fs.unlinkSync(encodedCredentialPath);
   assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
 
   // Public text directories are shipped with the site. Text extensions beyond
