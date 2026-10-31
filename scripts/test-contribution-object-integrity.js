@@ -119,6 +119,12 @@ try {
 
   // Source URLs are untrusted proposal inputs. Reject credential-bearing,
   // internal and literal-IP addresses without reflecting rejected URLs in logs.
+  // Previous discovery checks deliberately left an invalid example fixture.
+  // Restore the real template before testing URLs that should pass the CLI.
+  fs.copyFileSync(
+    path.join(__dirname, '../examples/contributions/submitted.example.json'),
+    path.join(exampleDir, 'submitted.example.json')
+  );
   const sourceUrlCases = [
     ['https://pubmed.ncbi.nlm.nih.gov/25112408/', true],
     ['https://doi.org/10.1186/1746-1596-9-140', true],
