@@ -226,8 +226,9 @@ function validateRepositoryPublicSafety(root = DEFAULT_ROOT) {
       let value;
       try {
         value = JSON.parse(text);
-      } catch (error) {
-        errors.push(relativePath + ' is not valid JSON: ' + error.message);
+      } catch {
+        // JSON parser errors can include excerpts of malformed, potentially private input.
+        errors.push(relativePath + ' is not valid JSON; contents omitted from diagnostics.');
         continue;
       }
       for (const message of scanStructuredValue(value)) {

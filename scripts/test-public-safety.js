@@ -117,6 +117,21 @@ try {
     'a symlinked public root must not bypass public payload scanning'
   );
   fs.unlinkSync(reviewDir);
+
+  // Malformed public JSON must fail closed without disclosing its raw contents.
+  const malformedPath = path.join(textFixtureRoot, 'manifest.json');
+  const syntheticPrivateMarker = 'SYNTHETIC_PRIVATE_TEXT_DO_NOT_ECHO';
+  fs.writeFileSync(malformedPath, '{"source":' + syntheticPrivateMarker + '}', 'utf8');
+  const malformedResult = validateRepositoryPublicSafety(textFixtureRoot);
+  assert.ok(
+    malformedResult.errors.some((message) => message.includes('manifest.json') && message.includes('not valid JSON')),
+    'malformed public JSON must be rejected with a path-specific diagnostic'
+  );
+  assert.ok(
+    malformedResult.errors.every((message) => !message.includes(syntheticPrivateMarker)),
+    'invalid JSON contents must never appear in scanner diagnostics'
+  );
+  fs.unlinkSync(malformedPath);
   assert.deepStrictEqual(validateRepositoryPublicSafety(textFixtureRoot).errors, []);
 } finally {
   fs.rmSync(textFixtureRoot, { recursive: true, force: true });
