@@ -432,6 +432,58 @@ try {
   fs.openSync = originalOpen;
   fs.rmSync(rollbackEvidencePath, { force: true });
 }
+// A staged evidence pathname can be replaced while rendering. Preserve the
+// replacement rather than deleting a file that this transaction does not own.
+const parkedEvidencePath = rollbackEvidencePath + '.owned-original-fixture';
+const replacedEvidenceMarker = 'synthetic replacement evidence - not owned by transaction';
+try {
+  expectBlocked(() => stageHandoff(rollback, {
+    executePipeline: () => {
+      fs.renameSync(rollbackEvidencePath, parkedEvidencePath);
+      fs.writeFileSync(rollbackEvidencePath, replacedEvidenceMarker, 'utf8');
+      throw new Error('synthetic evidence replacement after staging');
+    },
+    restoreProjections: () => {}
+  }), /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic evidence replacement/);
+  assert.equal(fs.readFileSync(rollbackEvidencePath, 'utf8'), replacedEvidenceMarker,
+    'a replacement evidence file must survive rollback');
+  assert.equal(fs.existsSync(parkedEvidencePath), true, 'the originally owned inode remains available for inspection');
+  assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'safe candidate directory can still be cleaned');
+} finally {
+  fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic test cleanup only
+  fs.rmSync(rollbackEvidencePath, { force: true });
+  fs.rmSync(parkedEvidencePath, { force: true });
+}
+
+// A candidate-directory symlink replacement must not redirect cleanup into
+// an external directory or permit projection restoration from that directory.
+const replacedCandidateDir = rollbackHypothesisDir + '-owned-original-fixture';
+const externalCandidateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-candidate-dir-swap-'));
+const externalCandidatePage = path.join(externalCandidateDir, 'index.html');
+fs.writeFileSync(externalCandidatePage, 'synthetic external page - keep', 'utf8');
+let unsafeRestorationCalls = 0;
+try {
+  expectBlocked(() => stageHandoff(rollback, {
+    executePipeline: () => {
+      fs.renameSync(rollbackHypothesisDir, replacedCandidateDir);
+      fs.symlinkSync(externalCandidateDir, rollbackHypothesisDir, 'dir');
+      throw new Error('synthetic candidate directory replacement');
+    },
+    restoreProjections: () => { unsafeRestorationCalls += 1; }
+  }), /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic candidate directory replacement/);
+  assert.equal(fs.readFileSync(externalCandidatePage, 'utf8'), 'synthetic external page - keep',
+    'rollback must not follow a replaced candidate-directory symlink');
+  assert.equal(fs.lstatSync(rollbackHypothesisDir).isSymbolicLink(), true,
+    'replacement symlink must remain for inspection');
+  assert.equal(unsafeRestorationCalls, 0, 'unsafe candidate paths must block projection restoration');
+  assert.equal(fs.existsSync(rollbackEvidencePath), false, 'owned evidence may still be removed under an unchanged parent');
+} finally {
+  fs.rmSync(rollbackHypothesisDir, { force: true }); // remove only the synthetic symlink
+  fs.rmSync(replacedCandidateDir, { recursive: true, force: true }); // synthetic test cleanup only
+  fs.rmSync(rollbackEvidencePath, { force: true });
+  fs.rmSync(externalCandidateDir, { recursive: true, force: true });
+}
+
 // Renderer rollback may remove only known generated HTML, not unrelated files
 // added under the new candidate directory while projection work was running.
 function assertBoundedProjectionRollback(injectUnexpectedFile) {
