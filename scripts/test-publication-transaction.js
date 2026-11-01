@@ -523,6 +523,36 @@ function assertBoundedProjectionRollback(injectUnexpectedFile) {
 assertBoundedProjectionRollback(false);
 assertBoundedProjectionRollback(true);
 
+// If a renderer output path contains an unexpected symlink, rollback must
+// preserve the link as unowned material, without following or deleting its target.
+function assertGeneratedPageSymlinkPreserved(whichPage) {
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-unowned-html-'));
+  const outsideFile = path.join(outside, 'external.html');
+  const pagePath = whichPage === 'easy-read'
+    ? path.join(rollbackHypothesisDir, 'easy-read', 'index.html')
+    : path.join(rollbackHypothesisDir, 'index.html');
+  fs.writeFileSync(outsideFile, 'synthetic external file - preserve', 'utf8');
+  try {
+    expectBlocked(() => stageHandoff(rollback, {
+      executePipeline: () => {
+        if (whichPage === 'easy-read') fs.mkdirSync(path.dirname(pagePath));
+        fs.symlinkSync(outsideFile, pagePath);
+        throw new Error('synthetic generated-page symlink failure');
+      },
+      restoreProjections: () => {}
+    }), /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic generated-page symlink failure/);
+    assert.equal(fs.lstatSync(pagePath).isSymbolicLink(), true, 'unowned generated-page symlink must survive for inspection');
+    assert.equal(fs.readFileSync(outsideFile, 'utf8'), 'synthetic external file - preserve', 'outside file must not be touched');
+    assert.equal(fs.existsSync(rollbackEvidencePath), false, 'owned evidence must still be removed');
+  } finally {
+    fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic test cleanup only
+    fs.rmSync(rollbackEvidencePath, { force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+}
+assertGeneratedPageSymlinkPreserved('hypothesis');
+assertGeneratedPageSymlinkPreserved('easy-read');
+
 // An unexpected Easy Read symlink must never make rollback delete outside files.
 const outsideRenderDir = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-rollback-outside-'));
 const outsideRenderPage = path.join(outsideRenderDir, 'index.html');

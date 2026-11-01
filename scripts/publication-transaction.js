@@ -77,6 +77,18 @@ function writeTrackedExclusiveFile(targetPath, content, createdFiles) {
   }
 }
 
+// A renderer output cannot be treated as owned when its path is a symlink or
+// an unexpected filesystem entry. Preserve it for inspection on rollback.
+function removeKnownGeneratedHtml(targetPath, cleanupErrors) {
+  const entry = lstatIfPresent(targetPath);
+  if (!entry) return;
+  if (!entry.isFile() || entry.isSymbolicLink()) {
+    cleanupErrors.push('unexpected generated-page entry; preserving ' + path.relative(root, targetPath));
+    return;
+  }
+  fs.rmSync(targetPath, { force: true });
+}
+
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === 'object') {
@@ -299,7 +311,7 @@ function stageHandoff(envelope, options = {}) {
         cleanupErrors.push('candidate directory identity changed; generated output cleanup skipped');
       } else {
         try {
-          fs.rmSync(path.join(hypothesisDir, 'index.html'), { force: true });
+          removeKnownGeneratedHtml(path.join(hypothesisDir, 'index.html'), cleanupErrors);
         } catch (cleanupError) {
           cleanupErrors.push(cleanupError.message);
         }
@@ -310,7 +322,7 @@ function stageHandoff(envelope, options = {}) {
             if (!easyReadEntry.isDirectory() || easyReadEntry.isSymbolicLink()) {
               cleanupErrors.push('unexpected non-directory at candidate Easy Read path; preserving it');
             } else {
-              fs.rmSync(path.join(easyReadDir, 'index.html'), { force: true });
+              removeKnownGeneratedHtml(path.join(easyReadDir, 'index.html'), cleanupErrors);
               fs.rmdirSync(easyReadDir);
             }
           }
