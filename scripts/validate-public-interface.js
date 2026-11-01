@@ -289,6 +289,24 @@ for (const htmlPath of htmlFiles) {
     if (poster) validateResourceUrl(poster, 'video poster resource');
   }
 
+  // Embedded browsing contexts and documents must resolve from the exact staged
+  // artifact too. Inline iframe documents bypass that independent-file boundary.
+  for (const match of html.matchAll(/<(iframe|object|embed)\b[^>]*>/gi)) {
+    const tag = match[1].toLowerCase();
+    const markup = match[0];
+    if (tag === 'iframe' && /\ssrcdoc\s*=/i.test(markup)) {
+      fail(rel + ' contains an inline iframe document without a separately reviewed artifact.');
+    }
+    const resource = tag === 'object'
+      ? markup.match(/\sdata\s*=\s*["']([^"']*)["']/i)?.[1]
+      : markup.match(/\ssrc\s*=\s*["']([^"']*)["']/i)?.[1];
+    if (resource === undefined || !resource.trim() || resource.trim().startsWith('#')) {
+      fail(rel + ' contains an embedded document without a usable resource URL.');
+      continue;
+    }
+    validateResourceUrl(resource, tag + ' embedded document');
+  }
+
   // Link resource hints and icons are part of the staged Pages dependency graph.
   // Canonical, preconnect and DNS-prefetch links are not local asset declarations.
   const assetLinkRels = new Set([

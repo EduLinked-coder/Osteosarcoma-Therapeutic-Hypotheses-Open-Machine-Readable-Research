@@ -169,6 +169,41 @@ runFixture('missing asset-link href is rejected', validHtml({ extra:
 runFixture('fragment-only asset-link href is rejected', validHtml({ extra:
   '<link rel="icon" href="#fragment">' }), false);
 
+runFixture('valid local iframe document', validHtml({ extra:
+  '<iframe title="Synthetic paper" src="docs/paper.html"></iframe>' }), true,
+  { 'data.json': '{}', 'docs/paper.html': '<!doctype html><title>Synthetic paper</title>' });
+runFixture('missing local iframe document', validHtml({ extra:
+  '<iframe title="Synthetic paper" src="docs/missing.html"></iframe>' }), false);
+runFixture('external HTTPS iframe remains valid', validHtml({ extra:
+  '<iframe title="External research" src="https://example.org/research"></iframe>' }), true);
+runFixture('encoded executable iframe URL blocked', validHtml({ extra:
+  '<iframe title="Synthetic" src="java&#x73;cript:alert(1)"></iframe>' }), false);
+runFixture('inline-data iframe URL blocked', validHtml({ extra:
+  '<iframe title="Synthetic" src="data:text/html,unsafe"></iframe>' }), false);
+runFixture('iframe srcdoc cannot bypass staged-file inspection', validHtml({ extra:
+  '<iframe title="Synthetic" srcdoc="&lt;script&gt;alert(1)&lt;/script&gt;"></iframe>' }), false);
+runFixture('iframe srcdoc blocked even with valid src', validHtml({ extra:
+  '<iframe title="Synthetic" src="docs/paper.html" srcdoc="Synthetic inline document"></iframe>' }), false,
+  { 'data.json': '{}', 'docs/paper.html': '<!doctype html><title>Synthetic paper</title>' });
+runFixture('valid local object document', validHtml({ extra:
+  '<object data="assets/diagram.svg" type="image/svg+xml"></object>' }), true,
+  { 'data.json': '{}', 'assets/diagram.svg': '<svg></svg>' });
+runFixture('missing local object document', validHtml({ extra:
+  '<object data="missing.svg" type="image/svg+xml"></object>' }), false);
+runFixture('object without data URL blocked', validHtml({ extra:
+  '<object type="image/svg+xml"></object>' }), false);
+runFixture('fragment-only object document blocked', validHtml({ extra:
+  '<object data="#figure"></object>' }), false);
+runFixture('valid local embed document', validHtml({ extra:
+  '<embed src="assets/chart.svg" type="image/svg+xml">' }), true,
+  { 'data.json': '{}', 'assets/chart.svg': '<svg></svg>' });
+runFixture('missing local embed document', validHtml({ extra:
+  '<embed src="assets/missing.svg" type="image/svg+xml">' }), false);
+runFixture('encoded executable embed URL blocked', validHtml({ extra:
+  '<embed src="java&#x73;cript:alert(1)">' }), false);
+runFixture('embed without src blocked', validHtml({ extra:
+  '<embed type="image/svg+xml">' }), false);
+
 runFixture('positive tabindex', validHtml({ extra: '<button tabindex="2">Unsafe order</button>' }), false);
 runFixture('labelled form control', validHtml({ extra: '<label for="query">Search</label><input id="query" type="search">' }), true);
 runFixture('aria-labelled form control', validHtml({ extra: '<span id="query-label">Search</span><input type="search" aria-labelledby="query-label">' }), true);
