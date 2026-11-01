@@ -343,6 +343,37 @@ const rollbackHypothesisDir = path.join(root, 'hypotheses', rollback.public_proj
 const rollbackEvidencePath = path.join(root, 'evidence-bindings', rollback.public_projection.evidence_bindings[0].evidence_id + '.json');
 assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'synthetic rollback hypothesis must not exist before the test');
 assert.equal(fs.existsSync(rollbackEvidencePath), false, 'synthetic rollback evidence must not exist before the test');
+
+// Pre-existing material under an unused ID must never be deleted by rollback.
+fs.mkdirSync(rollbackHypothesisDir);
+const occupiedMarker = path.join(rollbackHypothesisDir, 'preexisting-note.txt');
+fs.writeFileSync(occupiedMarker, 'synthetic pre-existing content', 'utf8');
+try {
+  expectBlocked(() => stageHandoff(rollback, {
+    executePipeline: () => { throw new Error('occupied directory entered pipeline'); },
+    restoreProjections: () => {}
+  }), /directory already exists; refusing to modify or remove/);
+  assert.equal(fs.readFileSync(occupiedMarker, 'utf8'), 'synthetic pre-existing content');
+  assert.equal(fs.existsSync(rollbackEvidencePath), false);
+} finally {
+  fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true });
+}
+
+// A dangling evidence-file symlink must not redirect a new binding write outside the checkout.
+const outsideFixtureDir = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-symlink-evidence-'));
+const outsideEvidencePath = path.join(outsideFixtureDir, 'outside-evidence.json');
+fs.symlinkSync(outsideEvidencePath, rollbackEvidencePath);
+try {
+  expectBlocked(() => stageHandoff(rollback, {
+    executePipeline: () => { throw new Error('symlink evidence entered pipeline'); },
+    restoreProjections: () => {}
+  }), /not a regular file; symbolic links are blocked/);
+  assert.equal(fs.existsSync(outsideEvidencePath), false, 'out-of-repository evidence destination must not be written');
+  assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'symlink must block before hypothesis creation');
+} finally {
+  fs.rmSync(rollbackEvidencePath, { force: true });
+  fs.rmSync(outsideFixtureDir, { recursive: true, force: true });
+}
 expectBlocked(
   () => stageHandoff(rollback, {
     executePipeline: () => { throw new Error('synthetic post-stage failure'); },

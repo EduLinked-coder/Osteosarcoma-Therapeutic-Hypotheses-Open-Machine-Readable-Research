@@ -47,6 +47,15 @@ class PublicationTransactionBlocked extends Error {}
 
 const readJson = (relativeOrAbsolute) => JSON.parse(fs.readFileSync(path.isAbsolute(relativeOrAbsolute) ? relativeOrAbsolute : path.join(root, relativeOrAbsolute), 'utf8'));
 
+// lstat detects dangling symlinks that existsSync would incorrectly treat as absent.
+function lstatIfPresent(targetPath) {
+  try { return fs.lstatSync(targetPath); }
+  catch (error) {
+    if (error.code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === 'object') {
@@ -188,13 +197,20 @@ function runPostStagePipeline() {
 function stageHandoff(envelope, options = {}) {
   const { hypothesis, bindings } = validateHandoff(envelope);
   const hypothesisPath = path.join(root, 'hypotheses', hypothesis.hypothesis_id, 'hypothesis.json');
-  requireGate(!fs.existsSync(hypothesisPath), hypothesis.hypothesis_id + ' already exists; autonomous overwrite/revision is blocked');
+  const hypothesisDir = path.dirname(hypothesisPath);
+  for (const name of ['hypotheses', 'evidence-bindings']) {
+    const entry = lstatIfPresent(path.join(root, name));
+    requireGate(entry && entry.isDirectory() && !entry.isSymbolicLink(), name + ' must be a real repository directory');
+  }
+  requireGate(!lstatIfPresent(hypothesisDir), hypothesis.hypothesis_id + ' directory already exists; refusing to modify or remove pre-existing research files');
 
   const newEvidence = [];
   for (const binding of bindings) {
     const relative = path.join('evidence-bindings', binding.evidence_id + '.json');
     const targetPath = path.join(root, relative);
-    if (fs.existsSync(targetPath)) {
+    const existingEntry = lstatIfPresent(targetPath);
+    if (existingEntry) {
+      requireGate(existingEntry.isFile() && !existingEntry.isSymbolicLink(), relative + ' is not a regular file; symbolic links are blocked');
       const existing = readJson(relative);
       requireGate(canonicalJson(existing) === canonicalJson(binding), binding.evidence_id + ' conflicts with existing public evidence binding');
     } else {
@@ -202,9 +218,9 @@ function stageHandoff(envelope, options = {}) {
     }
   }
 
-  fs.mkdirSync(path.dirname(hypothesisPath), { recursive: true });
-  fs.writeFileSync(hypothesisPath, JSON.stringify(hypothesis, null, 2) + '\n', 'utf8');
-  for (const { targetPath, binding } of newEvidence) fs.writeFileSync(targetPath, JSON.stringify(binding, null, 2) + '\n', 'utf8');
+  fs.mkdirSync(hypothesisDir);
+  fs.writeFileSync(hypothesisPath, JSON.stringify(hypothesis, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
+  for (const { targetPath, binding } of newEvidence) fs.writeFileSync(targetPath, JSON.stringify(binding, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
 
   const executePipeline = options.executePipeline || runPostStagePipeline;
   const restoreProjections = options.restoreProjections || restoreCanonicalProjections;
