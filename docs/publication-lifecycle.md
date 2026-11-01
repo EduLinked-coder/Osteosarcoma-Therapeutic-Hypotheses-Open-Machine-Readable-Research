@@ -169,6 +169,22 @@ resolves elsewhere; checking only for file existence is insufficient. These
 static filesystem checks do not establish runtime privacy certification or
 permission to deploy.
 
+## Deployment receipt dispatch preflight
+
+The Pages job must verify its governed GitHub App identity and successfully mint a
+scoped Core-dispatch token **before uploading or deploying the public artifact**.
+A missing or invalid identity/key must fail closed before a new Pages release,
+rather than producing an externally visible deployment followed by a failed
+provenance handoff. This check uses existing Actions variables/secrets and does
+not print, reconfigure or persist credential values.
+
+After deployment, the job still writes, uploads and persists its source-owned
+receipt and sends the bounded observation to Core. A minted token is **not**
+confirmation of Core receipt acceptance. A successful technical deployment is
+**not** approval of scientific claims, private-data disclosure, release authority
+or clinical use. Human review of the push-to-main release trigger and the
+existing merge/release approval evidence remains required.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:
