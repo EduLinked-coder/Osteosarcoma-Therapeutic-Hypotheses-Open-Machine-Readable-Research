@@ -260,6 +260,23 @@ runFixture('attribute-like text inside a quoted style remains accepted', validHt
 runFixture('attribute-like text and angle bracket inside a quoted title remain accepted', validHtml({ extra:
   '<p title="greater > symbol and src=missing.svg">Synthetic text</p>' }), true);
 
+// A base element changes browser URL/target resolution without changing the
+// local artifact paths used by static checks. Public pages must not use it.
+runFixture('external base href is rejected', validHtml().replace('</head>',
+  '<base href="https://example.org/research/"></head>'), false);
+runFixture('relative base href is rejected', validHtml().replace('</head>',
+  '<base href="other/"></head>'), false);
+runFixture('base target is rejected to preserve safe-window checks', validHtml().replace('</head>',
+  '<base target="_blank"></head>'), false);
+runFixture('empty base element is rejected', validHtml().replace('</head>',
+  '<base></head>'), false);
+runFixture('uppercase self-closing base is rejected', validHtml().replace('</head>',
+  '<BASE HREF="/other/" /></head>'), false);
+runFixture('similar custom tag does not invent a base element', validHtml({ extra:
+  '<base-note>Fixture text</base-note>' }), true);
+runFixture('base-like text inside a quoted attribute is not a base element', validHtml({ extra:
+  '<p title="Sample <base href=\'other/\'> text">Fixture text</p>' }), true);
+
 runFixture('positive tabindex', validHtml({ extra: '<button tabindex="2">Unsafe order</button>' }), false);
 runFixture('labelled form control', validHtml({ extra: '<label for="query">Search</label><input id="query" type="search">' }), true);
 runFixture('aria-labelled form control', validHtml({ extra: '<span id="query-label">Search</span><input type="search" aria-labelledby="query-label">' }), true);

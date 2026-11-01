@@ -174,6 +174,11 @@ for (const htmlPath of htmlFiles) {
   // Unquoted governing attributes would otherwise be skipped by those checks.
   // Ignore complete quoted values, including attribute-like text inside them.
   for (const tag of html.matchAll(/<[a-z][\w:-]*(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi)) {
+    // A base element changes the browser's resolution of every relative URL,
+    // invalidating path and new-window checks against this staged artifact.
+    if (/^<base(?:\s|\/|>)/i.test(tag[0])) {
+      fail(rel + ' contains a base element that changes browser URL resolution.');
+    }
     const withoutQuotedValues = tag[0].replace(/=\s*(?:"[^"]*"|'[^']*')/g, '=""');
     if (/\s(?:href|src|srcset|poster|data|style|rel|target)\s*=\s*(?:(?!["'])\S|(?=>))/i.test(withoutQuotedValues)) {
       fail(rel + ' contains an unquoted resource, style or link-policy attribute.');
