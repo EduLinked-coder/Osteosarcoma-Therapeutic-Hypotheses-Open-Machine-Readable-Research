@@ -204,6 +204,27 @@ runFixture('encoded executable embed URL blocked', validHtml({ extra:
 runFixture('embed without src blocked', validHtml({ extra:
   '<embed type="image/svg+xml">' }), false);
 
+
+runFixture('empty declared image source fails closed', validHtml({ img:
+  '<img src="" alt="Synthetic figure">' }), false);
+runFixture('fragment-only declared image source fails closed', validHtml({ img:
+  '<img src="#figure" alt="Synthetic figure">' }), false);
+runFixture('whitespace-only script source fails closed', validHtml({ extra:
+  '<script src="   "></script>' }), false);
+runFixture('empty media track source fails closed', validHtml({ extra:
+  '<video><track kind="captions" src=""></video>' }), false);
+runFixture('empty video poster fails closed', validHtml({ extra:
+  '<video poster=""></video>' }), false);
+runFixture('empty responsive image candidate list fails closed', validHtml({ img:
+  '<img srcset="" alt="Synthetic figure">' }), false);
+runFixture('separator-only responsive image list fails closed', validHtml({ img:
+  '<img srcset=" , ,, " alt="Synthetic figure">' }), false);
+runFixture('fragment-only responsive image candidate fails closed', validHtml({ img:
+  '<img srcset="#figure 1x" alt="Synthetic figure">' }), false);
+runFixture('ordinary referenced media still passes', validHtml({ extra:
+  '<audio src="clip.ogg"></audio>' }), true,
+  { 'data.json': '{}', 'clip.ogg': 'synthetic' });
+
 runFixture('positive tabindex', validHtml({ extra: '<button tabindex="2">Unsafe order</button>' }), false);
 runFixture('labelled form control', validHtml({ extra: '<label for="query">Search</label><input id="query" type="search">' }), true);
 runFixture('aria-labelled form control', validHtml({ extra: '<span id="query-label">Search</span><input type="search" aria-labelledby="query-label">' }), true);

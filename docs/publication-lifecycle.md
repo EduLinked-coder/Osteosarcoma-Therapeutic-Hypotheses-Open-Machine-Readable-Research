@@ -124,6 +124,12 @@ inline document bytes bypass the separately staged-file review boundary.
 External HTTPS embeddings are syntactically permitted but are **not** content- or
 privacy-certified by this check; any such dependency still requires review.
 
+Explicitly declared image/script/media `src`, video `poster`, and responsive
+`srcset` attributes must provide usable resource references. Empty or
+fragment-only asset references, and `srcset` lists without any candidates,
+fail the existing staged-artifact validator. This is an asset-integrity check,
+not a complete browser parser, accessibility certification or release approval.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:

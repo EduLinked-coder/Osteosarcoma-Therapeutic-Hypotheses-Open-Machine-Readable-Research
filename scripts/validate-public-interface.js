@@ -258,9 +258,12 @@ for (const htmlPath of htmlFiles) {
   // Diagnostics intentionally exclude untrusted URL values.
   const validateResourceUrl = (rawUrl, kind) => {
     const url = rawUrl.trim();
-    if (!url || url.startsWith('#')) return;
+    if (!url || url.startsWith('#')) {
+      fail(rel + ' contains an unusable ' + kind + ' URL.');
+      return;
+    }
     if (isUnsafeAnchorUrl(url)) {
-      fail(rel + ' contains an unsafe ' + kind + ' URL.');
+      fail(rel + ' contains an unsafe ' + kind + ' URL.
       return;
     }
     if (isExternal(url)) return;
@@ -272,21 +275,21 @@ for (const htmlPath of htmlFiles) {
 
   for (const match of html.matchAll(/<(img|script|source|video|audio|track)\b[^>]*>/gi)) {
     const src = match[0].match(/\ssrc\s*=\s*["']([^"']*)["']/i)?.[1];
-    if (src) validateResourceUrl(src, match[1].toLowerCase() + ' resource');
+    if (src !== undefined) validateResourceUrl(src, match[1].toLowerCase() + ' resource');
   }
 
   for (const match of html.matchAll(/<(img|source)\b[^>]*>/gi)) {
     const srcset = match[0].match(/\ssrcset\s*=\s*["']([^"']*)["']/i)?.[1];
     if (srcset !== undefined) {
-      for (const url of parseSrcsetUrls(srcset)) {
-        validateResourceUrl(url, 'responsive image resource');
-      }
+      const candidates = parseSrcsetUrls(srcset);
+      if (!candidates.length) fail(rel + ' contains an unusable responsive image candidate list.');
+      for (const url of candidates) validateResourceUrl(url, 'responsive image resource');
     }
   }
 
   for (const match of html.matchAll(/<video\b[^>]*>/gi)) {
     const poster = match[0].match(/\sposter\s*=\s*["']([^"']*)["']/i)?.[1];
-    if (poster) validateResourceUrl(poster, 'video poster resource');
+    if (poster !== undefined) validateResourceUrl(poster, 'video poster resource');
   }
 
   // Embedded browsing contexts and documents must resolve from the exact staged
