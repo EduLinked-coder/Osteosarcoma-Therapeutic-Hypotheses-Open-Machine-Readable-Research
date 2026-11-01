@@ -258,8 +258,17 @@ for (const htmlPath of htmlFiles) {
   }
 
   if (!/^\s*<!doctype html>/i.test(html)) fail(rel + ' is missing an HTML5 doctype.');
-  if (!/<html\b[^>]*\slang=["'][^"']+["'][^>]*>/i.test(html)) fail(rel + ' is missing a non-empty html[lang] attribute.');
-  if (!/<meta\b[^>]*name=["']viewport["'][^>]*content=["'][^"']+["'][^>]*>/i.test(html)) fail(rel + ' is missing a viewport meta element.');
+  // Document language and viewport meta must be genuine opening-tag attributes.
+  // Quoted data text cannot impersonate either accessibility declaration.
+  const htmlOpeningTag = html.match(/<html\b(?:[^"'<>]|"[^"]*"|'[^']*')*>/i)?.[0];
+  if (!htmlOpeningTag || !quotedAttribute(htmlOpeningTag, 'lang')?.trim()) {
+    fail(rel + ' is missing a non-empty html[lang] attribute.');
+  }
+  const hasViewportMeta = [...html.matchAll(/<meta\b(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi)].some(
+    ([tag]) => quotedAttribute(tag, 'name')?.toLowerCase() === 'viewport' &&
+      Boolean(quotedAttribute(tag, 'content')?.trim())
+  );
+  if (!hasViewportMeta) fail(rel + ' is missing a viewport meta element.');
   if (!/<title>[^<\n][\s\S]*?<\/title>/i.test(html)) fail(rel + ' is missing a non-empty title.');
   if (!/<main\b/i.test(html)) fail(rel + ' is missing a main landmark.');
 

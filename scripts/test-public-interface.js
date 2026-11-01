@@ -100,6 +100,18 @@ runFixture('safe external HTTPS anchor', validHtml({ href: 'https://example.org/
 runFixture('safe fragment anchor', validHtml({ href: '#summary' }), true, {});
 runFixture('missing language', validHtml().replace(' lang="en-AU"', ''), false);
 runFixture('data-lang cannot substitute the document language', validHtml().replace(' lang="en-AU"', ' data-lang="en-AU"'), false);
+
+runFixture('quoted attribute text cannot spoof document language', validHtml().replace(
+  ' lang="en-AU"', ' data-note=\' lang="en-AU" \''), false);
+runFixture('real language remains recognised beside quoted attribute text', validHtml().replace(
+  ' lang="en-AU"', ' lang="en-AU" data-note=\' lang="fr" \''), true);
+const fixtureViewportMeta = '<meta name="viewport" content="width=device-width,initial-scale=1">';
+runFixture('quoted attribute text cannot spoof viewport meta', validHtml().replace(
+  fixtureViewportMeta, '<meta data-note=\' name="viewport" content="width=device-width,initial-scale=1" \'>'), false);
+runFixture('quoted attribute text cannot spoof viewport content', validHtml().replace(
+  fixtureViewportMeta, '<meta name="viewport" data-note=\' content="width=device-width,initial-scale=1" \'>'), false);
+runFixture('real viewport meta remains recognised beside quoted attribute text', validHtml().replace(
+  fixtureViewportMeta, '<meta name="viewport" content="width=device-width,initial-scale=1" data-note=\' name="other" \'>'), true);
 runFixture('data-alt cannot substitute accessible image alt', validHtml({ img:
   '<img src="https://example.org/figure.svg" data-alt="Synthetic description">' }), false);
 runFixture('data-aria-label cannot name a form control', validHtml({ extra:

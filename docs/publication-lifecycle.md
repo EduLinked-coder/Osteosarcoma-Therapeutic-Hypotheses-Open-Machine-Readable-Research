@@ -158,7 +158,7 @@ The public-interface accessibility checks require genuine HTML `lang`, image
 `alt`, form-label `for`, element `id`, and ARIA naming attributes; similarly
 named `data-*` attributes do not satisfy them. Repeated HTML identifiers are
 rejected because they make label and ARIA reference targets ambiguous. These
-bounded static checks do not replace browser or assistive-technology testing.
+document-language and viewport declarations must also be genuine quoted attributes, not attribute-like text nested in another quoted value. These bounded static checks do not replace browser or assistive-technology testing.
 
 The staged-site validator also rejects symbolic-link HTML entries and local
 resource targets reached through symbolic-link files or parent directories.
