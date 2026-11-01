@@ -171,7 +171,7 @@ runFixture('fragment-only asset-link href is rejected', validHtml({ extra:
 
 runFixture('valid local iframe document', validHtml({ extra:
   '<iframe title="Synthetic paper" src="docs/paper.html"></iframe>' }), true,
-  { 'data.json': '{}', 'docs/paper.html': '<!doctype html><title>Synthetic paper</title>' });
+  { 'data.json': '{}', 'docs/paper.html': validHtml({ href: 'https://example.org/data' }) });
 runFixture('missing local iframe document', validHtml({ extra:
   '<iframe title="Synthetic paper" src="docs/missing.html"></iframe>' }), false);
 runFixture('external HTTPS iframe remains valid', validHtml({ extra:
@@ -184,7 +184,7 @@ runFixture('iframe srcdoc cannot bypass staged-file inspection', validHtml({ ext
   '<iframe title="Synthetic" srcdoc="&lt;script&gt;alert(1)&lt;/script&gt;"></iframe>' }), false);
 runFixture('iframe srcdoc blocked even with valid src', validHtml({ extra:
   '<iframe title="Synthetic" src="docs/paper.html" srcdoc="Synthetic inline document"></iframe>' }), false,
-  { 'data.json': '{}', 'docs/paper.html': '<!doctype html><title>Synthetic paper</title>' });
+  { 'data.json': '{}', 'docs/paper.html': validHtml({ href: 'https://example.org/data' }) });
 runFixture('valid local object document', validHtml({ extra:
   '<object data="assets/diagram.svg" type="image/svg+xml"></object>' }), true,
   { 'data.json': '{}', 'assets/diagram.svg': '<svg></svg>' });
