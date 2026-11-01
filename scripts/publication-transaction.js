@@ -77,13 +77,13 @@ function writeTrackedExclusiveFile(targetPath, content, createdFiles) {
   }
 }
 
-// A renderer output cannot be treated as owned when its path is a symlink or
-// an unexpected filesystem entry. Preserve it for inspection on rollback.
-function removeKnownGeneratedHtml(targetPath, cleanupErrors) {
+// Only delete a renderer output whose physical identity was observed after a
+// completed render and before validation. Unknown or replaced files are unowned.
+function removeKnownGeneratedHtml(targetPath, expectedIdentity, cleanupErrors) {
   const entry = lstatIfPresent(targetPath);
   if (!entry) return;
-  if (!entry.isFile() || entry.isSymbolicLink()) {
-    cleanupErrors.push('unexpected generated-page entry; preserving ' + path.relative(root, targetPath));
+  if (!expectedIdentity || !samePhysicalEntry(targetPath, expectedIdentity, 'file')) {
+    cleanupErrors.push('generated-page ownership unknown or changed; preserving ' + path.relative(root, targetPath));
     return;
   }
   fs.rmSync(targetPath, { force: true });
@@ -222,8 +222,9 @@ function restoreCanonicalProjections() {
   runNodePipeline(PROJECTION_RENDER_PIPELINE);
 }
 
-function runPostStagePipeline() {
+function runPostStagePipeline(recordRenderedHtml) {
   runNodePipeline(PROJECTION_RENDER_PIPELINE);
+  if (recordRenderedHtml) recordRenderedHtml();
   runNodePipeline(POST_STAGE_VALIDATION_PIPELINE);
 }
 
@@ -259,6 +260,25 @@ function stageHandoff(envelope, options = {}) {
   let directoryCreated = false;
   let candidateDirectoryIdentity = null;
   let pipelineStarted = false;
+  const generatedPages = new Map();
+  let easyReadDirectoryIdentity = null;
+  const generatedHypothesisPage = path.join(hypothesisDir, 'index.html');
+  const generatedEasyReadDir = path.join(hypothesisDir, 'easy-read');
+  const generatedEasyReadPage = path.join(generatedEasyReadDir, 'index.html');
+  const recordRenderedHtml = () => {
+    requireGate(samePhysicalEntry(hypothesisDir, candidateDirectoryIdentity, 'directory'),
+      'candidate directory changed before generated-page ownership could be recorded');
+    const easyReadEntry = lstatIfPresent(generatedEasyReadDir);
+    requireGate(easyReadEntry && easyReadEntry.isDirectory() && !easyReadEntry.isSymbolicLink(),
+      'generated Easy Read directory is missing or unsafe');
+    for (const pagePath of [generatedHypothesisPage, generatedEasyReadPage]) {
+      const entry = lstatIfPresent(pagePath);
+      requireGate(entry && entry.isFile() && !entry.isSymbolicLink(),
+        'generated page is missing or unsafe: ' + path.relative(root, pagePath));
+      generatedPages.set(pagePath, entry);
+    }
+    easyReadDirectoryIdentity = easyReadEntry;
+  };
   try {
     fs.mkdirSync(hypothesisDir);
     directoryCreated = true;
@@ -270,7 +290,7 @@ function stageHandoff(envelope, options = {}) {
       writeTrackedExclusiveFile(targetPath, JSON.stringify(binding, null, 2) + '\n', createdFiles);
     }
     pipelineStarted = true;
-    executePipeline();
+    executePipeline(recordRenderedHtml);
   } catch (error) {
     // A raced directory must never be deleted when mkdir itself failed.
     if (!directoryCreated) {
@@ -311,18 +331,18 @@ function stageHandoff(envelope, options = {}) {
         cleanupErrors.push('candidate directory identity changed; generated output cleanup skipped');
       } else {
         try {
-          removeKnownGeneratedHtml(path.join(hypothesisDir, 'index.html'), cleanupErrors);
+          removeKnownGeneratedHtml(generatedHypothesisPage, generatedPages.get(generatedHypothesisPage), cleanupErrors);
         } catch (cleanupError) {
           cleanupErrors.push(cleanupError.message);
         }
-        const easyReadDir = path.join(hypothesisDir, 'easy-read');
+        const easyReadDir = generatedEasyReadDir;
         try {
           const easyReadEntry = lstatIfPresent(easyReadDir);
           if (easyReadEntry) {
-            if (!easyReadEntry.isDirectory() || easyReadEntry.isSymbolicLink()) {
-              cleanupErrors.push('unexpected non-directory at candidate Easy Read path; preserving it');
+            if (!easyReadDirectoryIdentity || !samePhysicalEntry(easyReadDir, easyReadDirectoryIdentity, 'directory')) {
+              cleanupErrors.push('generated Easy Read directory ownership unknown or changed; preserving it');
             } else {
-              removeKnownGeneratedHtml(path.join(easyReadDir, 'index.html'), cleanupErrors);
+              removeKnownGeneratedHtml(generatedEasyReadPage, generatedPages.get(generatedEasyReadPage), cleanupErrors);
               fs.rmdirSync(easyReadDir);
             }
           }

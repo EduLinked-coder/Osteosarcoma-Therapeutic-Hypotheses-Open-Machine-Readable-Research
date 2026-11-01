@@ -497,10 +497,11 @@ function assertBoundedProjectionRollback(injectUnexpectedFile) {
   let restorationCalls = 0;
   try {
     expectBlocked(() => stageHandoff(rollback, {
-      executePipeline: () => {
+      executePipeline: (recordRenderedHtml) => {
         fs.writeFileSync(canonicalPage, 'synthetic generated public HTML', 'utf8');
         fs.mkdirSync(easyReadDir);
         fs.writeFileSync(easyReadPage, 'synthetic generated Easy Read HTML', 'utf8');
+        recordRenderedHtml();
         if (injectUnexpectedFile) fs.writeFileSync(unexpected, 'synthetic unowned material', 'utf8');
         throw new Error('synthetic post-render validation failure');
       },
@@ -558,6 +559,63 @@ function assertGeneratedPageSymlinkPreserved(whichPage) {
 }
 assertGeneratedPageSymlinkPreserved('hypothesis');
 assertGeneratedPageSymlinkPreserved('easy-read');
+
+
+// A regular generated-page replacement is not owned by the transaction. The
+// original renderer inode and a different new inode must not be confused.
+function assertGeneratedRegularPageReplacementPreserved(whichPage) {
+  const canonicalPage = path.join(rollbackHypothesisDir, 'index.html');
+  const easyReadDir = path.join(rollbackHypothesisDir, 'easy-read');
+  const easyReadPage = path.join(easyReadDir, 'index.html');
+  const replacedPath = whichPage === 'easy-read' ? easyReadPage : canonicalPage;
+  const parkedPath = replacedPath + '.original-fixture';
+  const replacement = 'synthetic unowned regular page - preserve';
+  let restorationCalls = 0;
+  try {
+    expectBlocked(() => stageHandoff(rollback, {
+      executePipeline: (recordRenderedHtml) => {
+        fs.writeFileSync(canonicalPage, 'synthetic generated hypothesis page', 'utf8');
+        fs.mkdirSync(easyReadDir);
+        fs.writeFileSync(easyReadPage, 'synthetic generated Easy Read page', 'utf8');
+        recordRenderedHtml();
+        fs.renameSync(replacedPath, parkedPath);
+        fs.writeFileSync(replacedPath, replacement, 'utf8');
+        throw new Error('synthetic generated regular page replacement');
+      },
+      restoreProjections: () => { restorationCalls += 1; }
+    }), /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic generated regular page replacement/);
+    assert.equal(fs.readFileSync(replacedPath, 'utf8'), replacement,
+      'regular replacement at a generated-page path must survive');
+    assert.equal(fs.existsSync(parkedPath), true,
+      'original generated inode must remain distinguishable for inspection');
+    assert.equal(restorationCalls, 0, 'incomplete cleanup must block projection restoration');
+  } finally {
+    fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic test cleanup only
+    fs.rmSync(rollbackEvidencePath, { force: true });
+  }
+}
+assertGeneratedRegularPageReplacementPreserved('hypothesis');
+assertGeneratedRegularPageReplacementPreserved('easy-read');
+
+// If rendering fails before the ownership checkpoint, even an ordinary HTML
+// file at the expected path must be retained for inspection, not deleted.
+const unverifiedRendererPage = path.join(rollbackHypothesisDir, 'index.html');
+let unverifiedRestorationCalls = 0;
+try {
+  expectBlocked(() => stageHandoff(rollback, {
+    executePipeline: () => {
+      fs.writeFileSync(unverifiedRendererPage, 'synthetic incomplete renderer output', 'utf8');
+      throw new Error('synthetic rendering failed before ownership checkpoint');
+    },
+    restoreProjections: () => { unverifiedRestorationCalls += 1; }
+  }), /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic rendering failed before ownership checkpoint/);
+  assert.equal(fs.readFileSync(unverifiedRendererPage, 'utf8'), 'synthetic incomplete renderer output',
+    'page without verified render ownership must survive');
+  assert.equal(unverifiedRestorationCalls, 0, 'unverified render output must prevent restoration');
+} finally {
+  fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic test cleanup only
+  fs.rmSync(rollbackEvidencePath, { force: true });
+}
 
 // An unexpected Easy Read symlink must never make rollback delete outside files.
 const outsideRenderDir = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-rollback-outside-'));
