@@ -258,7 +258,7 @@ runFixture('quoted resource attributes with spaces still work', validHtml({ extr
 runFixture('attribute-like text inside a quoted style remains accepted', validHtml({ extra:
   "<div style=\"content: 'src=missing.svg'\">Synthetic text</div>" }), true);
 runFixture('attribute-like text and angle bracket inside a quoted title remain accepted', validHtml({ extra:
-  '<p title="<img src=missing.svg>">Synthetic text</p>' }), true);
+  '<p title="greater > symbol and src=missing.svg">Synthetic text</p>' }), true);
 
 runFixture('positive tabindex', validHtml({ extra: '<button tabindex="2">Unsafe order</button>' }), false);
 runFixture('labelled form control', validHtml({ extra: '<label for="query">Search</label><input id="query" type="search">' }), true);
