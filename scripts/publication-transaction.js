@@ -257,11 +257,33 @@ function stageHandoff(envelope, options = {}) {
         cleanupErrors.push(cleanupError.message);
       }
     }
+    // Never recursively remove a candidate directory: another writer may have
+    // placed unrelated material there while the renderer or validator ran.
+    if (pipelineStarted) {
+      try {
+        fs.rmSync(path.join(hypothesisDir, 'index.html'), { force: true });
+      } catch (cleanupError) {
+        cleanupErrors.push(cleanupError.message);
+      }
+      const easyReadDir = path.join(hypothesisDir, 'easy-read');
+      try {
+        const easyReadEntry = lstatIfPresent(easyReadDir);
+        if (easyReadEntry) {
+          if (!easyReadEntry.isDirectory() || easyReadEntry.isSymbolicLink()) {
+            cleanupErrors.push('unexpected non-directory at candidate Easy Read path; preserving it');
+          } else {
+            fs.rmSync(path.join(easyReadDir, 'index.html'), { force: true });
+            // rmdir refuses to delete unexpected files under easy-read.
+            fs.rmdirSync(easyReadDir);
+          }
+        }
+      } catch (cleanupError) {
+        cleanupErrors.push(cleanupError.message);
+      }
+    }
     try {
-      // Rendering can create additional derived files; an initial write cannot.
-      // For initial write failure, rmdir refuses to remove unexpected contents.
-      if (pipelineStarted) fs.rmSync(hypothesisDir, { recursive: true, force: true });
-      else fs.rmdirSync(hypothesisDir);
+      // An empty-directory removal fails closed if unowned files remain.
+      fs.rmdirSync(hypothesisDir);
     } catch (cleanupError) {
       cleanupErrors.push(cleanupError.message);
     }

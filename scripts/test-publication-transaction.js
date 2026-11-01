@@ -432,6 +432,67 @@ try {
   fs.openSync = originalOpen;
   fs.rmSync(rollbackEvidencePath, { force: true });
 }
+// Renderer rollback may remove only known generated HTML, not unrelated files
+// added under the new candidate directory while projection work was running.
+function assertBoundedProjectionRollback(injectUnexpectedFile) {
+  const canonicalPage = path.join(rollbackHypothesisDir, 'index.html');
+  const easyReadDir = path.join(rollbackHypothesisDir, 'easy-read');
+  const easyReadPage = path.join(easyReadDir, 'index.html');
+  const unexpected = path.join(rollbackHypothesisDir, 'unowned-note.txt');
+  let restorationCalls = 0;
+  try {
+    expectBlocked(() => stageHandoff(rollback, {
+      executePipeline: () => {
+        fs.writeFileSync(canonicalPage, 'synthetic generated public HTML', 'utf8');
+        fs.mkdirSync(easyReadDir);
+        fs.writeFileSync(easyReadPage, 'synthetic generated Easy Read HTML', 'utf8');
+        if (injectUnexpectedFile) fs.writeFileSync(unexpected, 'synthetic unowned material', 'utf8');
+        throw new Error('synthetic post-render validation failure');
+      },
+      restoreProjections: () => { restorationCalls += 1; }
+    }), injectUnexpectedFile
+      ? /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic post-render validation failure/
+      : /post-stage rendering or validation failed; candidate staging was rolled back: synthetic post-render validation failure/);
+    assert.equal(restorationCalls, 1, 'canonical projections must still be restored');
+    assert.equal(fs.existsSync(canonicalPage), false, 'generated hypothesis page must be removed');
+    assert.equal(fs.existsSync(easyReadDir), false, 'generated Easy Read directory must be removed');
+    assert.equal(fs.existsSync(rollbackEvidencePath), false, 'owned evidence binding must be removed');
+    if (injectUnexpectedFile) {
+      assert.equal(fs.readFileSync(unexpected, 'utf8'), 'synthetic unowned material', 'unowned content must survive');
+      assert.equal(fs.existsSync(rollbackHypothesisDir), true, 'nonempty candidate directory must survive for inspection');
+    } else {
+      assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'fully owned candidate directory must be removed');
+    }
+  } finally {
+    fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic test cleanup only
+    fs.rmSync(rollbackEvidencePath, { force: true });
+  }
+}
+assertBoundedProjectionRollback(false);
+assertBoundedProjectionRollback(true);
+
+// An unexpected Easy Read symlink must never make rollback delete outside files.
+const outsideRenderDir = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-rollback-outside-'));
+const outsideRenderPage = path.join(outsideRenderDir, 'index.html');
+const candidateEasyReadDir = path.join(rollbackHypothesisDir, 'easy-read');
+fs.writeFileSync(outsideRenderPage, 'synthetic external file', 'utf8');
+try {
+  expectBlocked(() => stageHandoff(rollback, {
+    executePipeline: () => {
+      fs.symlinkSync(outsideRenderDir, candidateEasyReadDir);
+      throw new Error('synthetic symlink rendering failure');
+    },
+    restoreProjections: () => {}
+  }), /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic symlink rendering failure/);
+  assert.equal(fs.readFileSync(outsideRenderPage, 'utf8'), 'synthetic external file', 'rollback must not follow Easy Read symlink');
+  assert.equal(fs.lstatSync(candidateEasyReadDir).isSymbolicLink(), true, 'unexpected symlink must remain for inspection');
+  assert.equal(fs.existsSync(rollbackEvidencePath), false, 'owned evidence must still be removed');
+} finally {
+  fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic test cleanup only
+  fs.rmSync(rollbackEvidencePath, { force: true });
+  fs.rmSync(outsideRenderDir, { recursive: true, force: true });
+}
+
 expectBlocked(
   () => stageHandoff(rollback, {
     executePipeline: () => { throw new Error('synthetic post-stage failure'); },
