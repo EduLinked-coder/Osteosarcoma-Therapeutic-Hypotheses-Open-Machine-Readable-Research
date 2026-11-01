@@ -42,6 +42,23 @@ jobs:
           assert receipt['commit_sha']==os.environ['GITHUB_SHA']
           assert receipt['workflow']['workflow_file']=='.github/workflows/pages.yml'
           assert receipt['environment']=='github-pages'
+          # Cross-system identity/token preflight must complete before any Pages upload.
+          from pathlib import Path
+          deploy_job = Path('.github/workflows/pages.yml').read_text(encoding='utf-8').split('\n  deploy:\n', 1)[1]
+          steps = [
+              'Verify governed GitHub App configuration for Core receipt dispatch',
+              'Create Core dispatch token with client ID',
+              'Create Core dispatch token with app ID fallback',
+              'Verify Core dispatch token creation',
+              'Upload site',
+              'Deploy',
+              'Write governed Pages deployment receipt',
+              'Persist source-owned deployment receipt immutably',
+              'Dispatch bounded Pages deployment observation to Core',
+          ]
+          offsets = [deploy_job.index(f'      - name: {name}\n') for name in steps]
+          assert offsets == sorted(offsets), 'Core token preflight must precede Pages upload/deployment'
+          assert deploy_job.splitlines()[0] == "    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'", 'Only main-branch pushes and manual dispatches may enter Pages deployment'
           assert 'does not grant scientific review' in receipt['authority_boundary']
           PY
       - name: Test fail-closed publication transaction
@@ -108,7 +125,7 @@ jobs:
         run: node scripts/validate-public-research.js
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: validate
     permissions:
       contents: write
@@ -123,6 +140,63 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+      - name: Verify governed GitHub App configuration for Core receipt dispatch
+        id: core-app-config
+        env:
+          CLIENT_ID: ${{ vars.CLIENT_ID }}
+          EDULINKED_APP_ID: ${{ vars.EDULINKED_APP_ID }}
+          ENTERPRISE_APP_PRIVATE_KEY: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$CLIENT_ID" ]; then
+            echo 'client_id_available=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'client_id_available=false' >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$EDULINKED_APP_ID" ]; then
+            echo 'app_id_available=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'app_id_available=false' >> "$GITHUB_OUTPUT"
+          fi
+          if [ -z "$CLIENT_ID" ] && [ -z "$EDULINKED_APP_ID" ]; then
+            echo '::error::Missing governed GitHub App identity: CLIENT_ID or EDULINKED_APP_ID'
+            exit 1
+          fi
+          test -n "$ENTERPRISE_APP_PRIVATE_KEY" || { echo '::error::Missing governed GitHub App private-key configuration'; exit 1; }
+
+      - name: Create Core dispatch token with client ID
+        if: steps.core-app-config.outputs.client_id_available == 'true'
+        id: core-dispatch-token-client-id
+        continue-on-error: true
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.CLIENT_ID }}
+          private-key: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
+          owner: EduLinked-Pty-Ltd
+          repositories: core-machine-objects
+          permission-contents: write
+
+      - name: Create Core dispatch token with app ID fallback
+        if: always() && steps.core-app-config.outputs.app_id_available == 'true' && steps.core-dispatch-token-client-id.outcome != 'success'
+        id: core-dispatch-token-app-id
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.EDULINKED_APP_ID }}
+          private-key: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
+          owner: EduLinked-Pty-Ltd
+          repositories: core-machine-objects
+          permission-contents: write
+
+      - name: Verify Core dispatch token creation
+        if: always() && steps.core-app-config.outcome == 'success'
+        env:
+          CORE_DISPATCH_TOKEN: ${{ steps.core-dispatch-token-client-id.outputs.token || steps.core-dispatch-token-app-id.outputs.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CORE_DISPATCH_TOKEN" || { echo '::error::Unable to mint governed Core dispatch token with CLIENT_ID or EDULINKED_APP_ID'; exit 1; }
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Stage scanned public-only Pages artifact
@@ -181,63 +255,6 @@ jobs:
           fi
           echo "commit_sha=$(jq -er '.commit.sha' /tmp/pages-persist.json)" >> "$GITHUB_OUTPUT"
           echo "blob_sha=$(jq -er '.content.sha' /tmp/pages-persist.json)" >> "$GITHUB_OUTPUT"
-
-      - name: Verify governed GitHub App configuration for Core receipt dispatch
-        id: core-app-config
-        env:
-          CLIENT_ID: ${{ vars.CLIENT_ID }}
-          EDULINKED_APP_ID: ${{ vars.EDULINKED_APP_ID }}
-          ENTERPRISE_APP_PRIVATE_KEY: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -n "$CLIENT_ID" ]; then
-            echo 'client_id_available=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'client_id_available=false' >> "$GITHUB_OUTPUT"
-          fi
-          if [ -n "$EDULINKED_APP_ID" ]; then
-            echo 'app_id_available=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'app_id_available=false' >> "$GITHUB_OUTPUT"
-          fi
-          if [ -z "$CLIENT_ID" ] && [ -z "$EDULINKED_APP_ID" ]; then
-            echo '::error::Missing governed GitHub App identity: CLIENT_ID or EDULINKED_APP_ID'
-            exit 1
-          fi
-          test -n "$ENTERPRISE_APP_PRIVATE_KEY" || { echo '::error::Missing governed GitHub App private-key configuration'; exit 1; }
-
-      - name: Create Core dispatch token with client ID
-        if: steps.core-app-config.outputs.client_id_available == 'true'
-        id: core-dispatch-token-client-id
-        continue-on-error: true
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ vars.CLIENT_ID }}
-          private-key: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
-          owner: EduLinked-Pty-Ltd
-          repositories: core-machine-objects
-          permission-contents: write
-
-      - name: Create Core dispatch token with app ID fallback
-        if: always() && steps.core-app-config.outputs.app_id_available == 'true' && steps.core-dispatch-token-client-id.outcome != 'success'
-        id: core-dispatch-token-app-id
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ vars.EDULINKED_APP_ID }}
-          private-key: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
-          owner: EduLinked-Pty-Ltd
-          repositories: core-machine-objects
-          permission-contents: write
-
-      - name: Verify Core dispatch token creation
-        if: always() && steps.core-app-config.outcome == 'success'
-        env:
-          CORE_DISPATCH_TOKEN: ${{ steps.core-dispatch-token-client-id.outputs.token || steps.core-dispatch-token-app-id.outputs.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$CORE_DISPATCH_TOKEN" || { echo '::error::Unable to mint governed Core dispatch token with CLIENT_ID or EDULINKED_APP_ID'; exit 1; }
 
       - name: Dispatch bounded Pages deployment observation to Core
         env:
