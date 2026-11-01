@@ -139,6 +139,13 @@ values. This conservative guard is not a complete HTML parser or a review
 of runtime-generated markup; browser behaviour and release authority still
 require separate human assessment.
 
+The staged public-interface check also rejects HTML `<base>` elements. A
+base URL or default target changes how browsers resolve relative links,
+resources and new-window navigation even though artifact-local checks see
+unchanged files and attributes. The public projections do not rely on a base
+element; rejecting it preserves the validator's stated URL-resolution boundary.
+This static guard does not replace browser testing or human publication review.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:
