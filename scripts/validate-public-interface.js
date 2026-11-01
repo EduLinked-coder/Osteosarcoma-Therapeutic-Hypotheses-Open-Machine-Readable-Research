@@ -88,9 +88,14 @@ const resolveLocalTarget = (htmlPath, href) => {
     return null;
   }
 
-  const candidate = cleaned.startsWith('/')
-    ? path.resolve(root, '.' + cleaned)
-    : path.resolve(path.dirname(htmlPath), cleaned);
+  // Pages hosts this project under a repository subpath, not at the origin root.
+  // A browser resolves /asset.json outside the project even if the staged root
+  // contains asset.json, so reject origin-root references rather than false-pass.
+  if (cleaned.startsWith('/')) {
+    fail(path.relative(root, htmlPath) + ' contains an origin-root reference outside the Pages project path.');
+    return null;
+  }
+  const candidate = path.resolve(path.dirname(htmlPath), cleaned);
 
   const relative = path.relative(root, candidate);
   if (relative.startsWith('..') || path.isAbsolute(relative)) {

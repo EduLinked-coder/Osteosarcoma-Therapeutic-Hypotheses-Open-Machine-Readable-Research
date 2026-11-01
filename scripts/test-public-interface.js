@@ -60,6 +60,20 @@ runFixture('valid accessible page', validHtml(), true);
 runFixture('valid heading hierarchy', validHtml({ extra: '<section><h2>Section</h2><h3>Detail</h3></section>' }), true);
 runFixture('skipped heading level', validHtml({ extra: '<h3>Skipped level</h3>' }), false);
 runFixture('broken local link', validHtml({ href: 'missing.json' }), false, {});
+// GitHub Pages serves this repository below /<repo>/, not at the origin root.
+// The former staged-file check accepted /data.json despite the live URL being wrong.
+runFixture('origin-root navigation URL fails with a staged same-named file', validHtml({ href: '/data.json' }), false);
+runFixture('percent-encoded origin-root navigation URL fails', validHtml({ href: '%2Fdata.json' }), false);
+runFixture('origin-root image URL fails with a staged same-named file', validHtml({ img:
+  '<img src="/figure.svg" alt="Synthetic figure">' }), false,
+  { 'data.json': '{}', 'figure.svg': '<svg></svg>' });
+runFixture('origin-root stylesheet URL fails with a staged same-named file', validHtml({ extra:
+  '<link rel="stylesheet" href="/site.css">' }), false,
+  { 'data.json': '{}', 'site.css': 'body{color:inherit}' });
+runFixture('origin-root CSS dependency fails with a staged same-named file', validHtml({ extra:
+  '<style>.figure{background:url(/figure.svg)}</style>' }), false,
+  { 'data.json': '{}', 'figure.svg': '<svg></svg>' });
+runFixture('project-relative navigation remains valid', validHtml({ href: './data.json' }), true);
 runFixture('literal JavaScript anchor is blocked', validHtml({ href: 'javascript:alert(1)' }), false, {});
 runFixture('encoded JavaScript anchor is blocked', validHtml({ href: 'java&#x73;cript:alert(1)' }), false, {});
 runFixture('tab-obfuscated JavaScript anchor is blocked', validHtml({ href: 'java&#x09;script:alert(1)' }), false, {});

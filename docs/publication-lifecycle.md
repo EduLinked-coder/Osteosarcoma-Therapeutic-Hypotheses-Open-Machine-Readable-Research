@@ -146,6 +146,14 @@ unchanged files and attributes. The public projections do not rely on a base
 element; rejecting it preserves the validator's stated URL-resolution boundary.
 This static guard does not replace browser testing or human publication review.
 
+This GitHub Pages **project** is served below the repository URL path rather than
+at the `github.io` origin root. An origin-root local reference such as
+`/data.json` would escape that project path in a browser even when `data.json`
+exists in the staged artifact. The existing local-link and resource validator
+therefore rejects origin-root paths (including percent-encoded variants) and
+requires project-relative links for HTML and CSS dependencies. This check does
+not verify the availability of independently hosted external resources.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:
