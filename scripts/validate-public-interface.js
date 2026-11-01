@@ -170,6 +170,16 @@ for (const htmlPath of htmlFiles) {
     validateCssText(match[2], htmlPath);
   }
 
+  // The resource, CSS and anchor checks below intentionally read quoted attributes.
+  // Unquoted governing attributes would otherwise be skipped by those checks.
+  // Ignore complete quoted values, including attribute-like text inside them.
+  for (const tag of html.matchAll(/<[a-z][\w:-]*(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi)) {
+    const withoutQuotedValues = tag[0].replace(/=\s*(?:"[^"]*"|'[^']*')/g, '=""');
+    if (/\s(?:href|src|srcset|poster|data|style|rel|target)\s*=\s*(?:(?!["'])\S|(?=>))/i.test(withoutQuotedValues)) {
+      fail(rel + ' contains an unquoted resource, style or link-policy attribute.');
+    }
+  }
+
   if (!/^\s*<!doctype html>/i.test(html)) fail(rel + ' is missing an HTML5 doctype.');
   if (!/<html\b[^>]*\blang=["'][^"']+["'][^>]*>/i.test(html)) fail(rel + ' is missing a non-empty html[lang] attribute.');
   if (!/<meta\b[^>]*name=["']viewport["'][^>]*content=["'][^"']+["'][^>]*>/i.test(html)) fail(rel + ' is missing a viewport meta element.');
@@ -258,7 +268,10 @@ for (const htmlPath of htmlFiles) {
   // Diagnostics intentionally exclude untrusted URL values.
   const validateResourceUrl = (rawUrl, kind) => {
     const url = rawUrl.trim();
-    if (!url || url.startsWith('#')) return;
+    if (!url || url.startsWith('#')) {
+      fail(rel + ' contains an unusable ' + kind + ' URL.');
+      return;
+    }
     if (isUnsafeAnchorUrl(url)) {
       fail(rel + ' contains an unsafe ' + kind + ' URL.');
       return;
@@ -272,28 +285,58 @@ for (const htmlPath of htmlFiles) {
 
   for (const match of html.matchAll(/<(img|script|source|video|audio|track)\b[^>]*>/gi)) {
     const src = match[0].match(/\ssrc\s*=\s*["']([^"']*)["']/i)?.[1];
-    if (src) validateResourceUrl(src, match[1].toLowerCase() + ' resource');
+    if (src !== undefined) validateResourceUrl(src, match[1].toLowerCase() + ' resource');
   }
 
   for (const match of html.matchAll(/<(img|source)\b[^>]*>/gi)) {
     const srcset = match[0].match(/\ssrcset\s*=\s*["']([^"']*)["']/i)?.[1];
     if (srcset !== undefined) {
-      for (const url of parseSrcsetUrls(srcset)) {
-        validateResourceUrl(url, 'responsive image resource');
-      }
+      const candidates = parseSrcsetUrls(srcset);
+      if (!candidates.length) fail(rel + ' contains an unusable responsive image candidate list.');
+      for (const url of candidates) validateResourceUrl(url, 'responsive image resource');
     }
   }
 
   for (const match of html.matchAll(/<video\b[^>]*>/gi)) {
     const poster = match[0].match(/\sposter\s*=\s*["']([^"']*)["']/i)?.[1];
-    if (poster) validateResourceUrl(poster, 'video poster resource');
+    if (poster !== undefined) validateResourceUrl(poster, 'video poster resource');
   }
 
+  // Embedded browsing contexts and documents must resolve from the exact staged
+  // artifact too. Inline iframe documents bypass that independent-file boundary.
+  for (const match of html.matchAll(/<(iframe|object|embed)\b[^>]*>/gi)) {
+    const tag = match[1].toLowerCase();
+    const markup = match[0];
+    if (tag === 'iframe' && /\ssrcdoc\s*=/i.test(markup)) {
+      fail(rel + ' contains an inline iframe document without a separately reviewed artifact.');
+    }
+    const resource = tag === 'object'
+      ? markup.match(/\sdata\s*=\s*["']([^"']*)["']/i)?.[1]
+      : markup.match(/\ssrc\s*=\s*["']([^"']*)["']/i)?.[1];
+    if (resource === undefined || !resource.trim() || resource.trim().startsWith('#')) {
+      fail(rel + ' contains an embedded document without a usable resource URL.');
+      continue;
+    }
+    validateResourceUrl(resource, tag + ' embedded document');
+  }
+
+  // Link resource hints and icons are part of the staged Pages dependency graph.
+  // Canonical, preconnect and DNS-prefetch links are not local asset declarations.
+  const assetLinkRels = new Set([
+    'stylesheet', 'preload', 'modulepreload', 'prefetch', 'icon',
+    'apple-touch-icon', 'mask-icon', 'manifest'
+  ]);
   for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
     const relValue = match[0].match(/\brel\s*=\s*["']([^"']+)["']/i)?.[1] || '';
-    if (!relValue.toLowerCase().split(/\s+/).includes('stylesheet')) continue;
-    const href = match[0].match(/\shref\s*=\s*["']([^"']+)["']/i)?.[1];
-    if (href) validateResourceUrl(href, 'stylesheet');
+    const assetRels = relValue.toLowerCase().split(/\s+/).filter((token) => assetLinkRels.has(token));
+    if (!assetRels.length) continue;
+    const href = match[0].match(/\shref\s*=\s*["']([^"']*)["']/i)?.[1];
+    if (!href || !href.trim() || href.trim().startsWith('#')) {
+      fail(rel + ' contains a public asset link without a usable href.');
+      continue;
+    }
+    const kind = assetRels.includes('stylesheet') ? 'stylesheet' : 'linked ' + assetRels[0] + ' resource';
+    validateResourceUrl(href, kind);
   }
 }
 

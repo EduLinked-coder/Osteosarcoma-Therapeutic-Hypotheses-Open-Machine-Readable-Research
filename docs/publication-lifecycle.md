@@ -111,6 +111,36 @@ HTML page; missing files and executable/inline-data schemes fail closed
 without echoing untrusted URL contents. The bounded check cannot validate
 runtime-generated CSS or replace human review of rendered output.
 
+The staged-site link check also validates asset-bearing `<link>` relations such
+as preload, modulepreload, prefetch, icon, manifest and stylesheets. It rejects
+missing or fragment-only asset URLs and missing local targets, while leaving
+canonical and connection-hint links outside this asset inventory check. All
+rejected URLs remain absent from CI diagnostics; this check does not establish
+browser-runtime security, scientific acceptance or publication authority.
+
+The staged-site validator also checks embedded browsing/document resources in
+`<iframe src>`, `<object data>` and `<embed src>` against the exact artifact.
+Missing local files, missing/fragment-only URLs and executable/inline-data schemes
+fail closed without echoing URL values. `iframe srcdoc` is rejected because
+inline document bytes bypass the separately staged-file review boundary.
+External HTTPS embeddings are syntactically permitted but are **not** content- or
+privacy-certified by this check; any such dependency still requires review.
+
+Explicitly declared image/script/media `src`, video `poster`, and responsive
+`srcset` attributes must provide usable resource references. Empty or
+fragment-only asset references, and `srcset` lists without any candidates,
+fail the existing staged-artifact validator. This is an asset-integrity check,
+not a complete browser parser, accessibility certification or release approval.
+
+The static validator also requires quoted values for HTML resource and
+link-policy attributes (`href`, `src`, `srcset`, `poster`, `data`,
+`style`, `rel` and `target`). Unquoted values could otherwise bypass
+its quoted-value URL, resource-integrity and safe-new-window checks. It
+rejects those attributes before validating resources, without echoing URL
+values. This conservative guard is not a complete HTML parser or a review
+of runtime-generated markup; browser behaviour and release authority still
+require separate human assessment.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:

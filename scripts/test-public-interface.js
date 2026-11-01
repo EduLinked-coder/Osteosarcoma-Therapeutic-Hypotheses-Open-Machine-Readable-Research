@@ -138,6 +138,128 @@ runFixture('valid media sources and caption track', validHtml({ extra:
   '<video src="clip.mp4" poster="cover.jpg"><track src="captions.vtt" kind="captions"></video>' }), true,
   { 'data.json': '{}', 'clip.mp4': 'test', 'cover.jpg': 'test', 'captions.vtt': 'WEBVTT' });
 
+runFixture('missing local preload resource', validHtml({ extra:
+  '<link rel="preload" as="script" href="assets/missing.js">' }), false);
+runFixture('missing local modulepreload resource', validHtml({ extra:
+  '<link rel="modulepreload" href="missing.mjs">' }), false);
+runFixture('missing local prefetch resource', validHtml({ extra:
+  '<link rel="prefetch" href="missing.json">' }), false);
+runFixture('missing local icon resource', validHtml({ extra:
+  '<link rel="icon" href="missing.svg">' }), false);
+runFixture('missing local PWA manifest', validHtml({ extra:
+  '<link rel="manifest" href="missing.webmanifest">' }), false);
+runFixture('valid local preload, icon and modulepreload resources', validHtml({ extra:
+  '<link rel="preload" as="script" href="assets/app.js">' +
+  '<link rel="icon" href="assets/icon.svg">' +
+  '<link rel="modulepreload" href="assets/module.js">' }), true,
+  { 'data.json': '{}', 'assets/app.js': '// synthetic', 'assets/icon.svg': '<svg></svg>',
+    'assets/module.js': '// synthetic' });
+runFixture('external HTTPS preload remains valid', validHtml({ extra:
+  '<link rel="preload" as="script" href="https://example.org/app.js">' }), true);
+runFixture('canonical and connection-hint relations remain exempt', validHtml({ extra:
+  '<link rel="canonical" href="https://example.org/research">' +
+  '<link rel="preconnect" href="https://example.org">' +
+  '<link rel="dns-prefetch" href="//example.org">' }), true);
+runFixture('unsafe inline-data preload is rejected', validHtml({ extra:
+  '<link rel="preload" href="data:text/html,unsafe">' }), false);
+runFixture('encoded executable icon URL is rejected', validHtml({ extra:
+  '<link rel="icon" href="java&#x73;cript:alert(1)">' }), false);
+runFixture('missing asset-link href is rejected', validHtml({ extra:
+  '<link rel="preload" as="script">' }), false);
+runFixture('fragment-only asset-link href is rejected', validHtml({ extra:
+  '<link rel="icon" href="#fragment">' }), false);
+
+runFixture('valid local iframe document', validHtml({ extra:
+  '<iframe title="Synthetic paper" src="docs/paper.html"></iframe>' }), true,
+  { 'data.json': '{}', 'docs/paper.html': validHtml({ href: 'https://example.org/data' }) });
+runFixture('missing local iframe document', validHtml({ extra:
+  '<iframe title="Synthetic paper" src="docs/missing.html"></iframe>' }), false);
+runFixture('external HTTPS iframe remains valid', validHtml({ extra:
+  '<iframe title="External research" src="https://example.org/research"></iframe>' }), true);
+runFixture('encoded executable iframe URL blocked', validHtml({ extra:
+  '<iframe title="Synthetic" src="java&#x73;cript:alert(1)"></iframe>' }), false);
+runFixture('inline-data iframe URL blocked', validHtml({ extra:
+  '<iframe title="Synthetic" src="data:text/html,unsafe"></iframe>' }), false);
+runFixture('iframe srcdoc cannot bypass staged-file inspection', validHtml({ extra:
+  '<iframe title="Synthetic" srcdoc="&lt;script&gt;alert(1)&lt;/script&gt;"></iframe>' }), false);
+runFixture('iframe srcdoc blocked even with valid src', validHtml({ extra:
+  '<iframe title="Synthetic" src="docs/paper.html" srcdoc="Synthetic inline document"></iframe>' }), false,
+  { 'data.json': '{}', 'docs/paper.html': validHtml({ href: 'https://example.org/data' }) });
+runFixture('valid local object document', validHtml({ extra:
+  '<object data="assets/diagram.svg" type="image/svg+xml"></object>' }), true,
+  { 'data.json': '{}', 'assets/diagram.svg': '<svg></svg>' });
+runFixture('missing local object document', validHtml({ extra:
+  '<object data="missing.svg" type="image/svg+xml"></object>' }), false);
+runFixture('object without data URL blocked', validHtml({ extra:
+  '<object type="image/svg+xml"></object>' }), false);
+runFixture('fragment-only object document blocked', validHtml({ extra:
+  '<object data="#figure"></object>' }), false);
+runFixture('valid local embed document', validHtml({ extra:
+  '<embed src="assets/chart.svg" type="image/svg+xml">' }), true,
+  { 'data.json': '{}', 'assets/chart.svg': '<svg></svg>' });
+runFixture('missing local embed document', validHtml({ extra:
+  '<embed src="assets/missing.svg" type="image/svg+xml">' }), false);
+runFixture('encoded executable embed URL blocked', validHtml({ extra:
+  '<embed src="java&#x73;cript:alert(1)">' }), false);
+runFixture('embed without src blocked', validHtml({ extra:
+  '<embed type="image/svg+xml">' }), false);
+
+
+runFixture('empty declared image source fails closed', validHtml({ img:
+  '<img src="" alt="Synthetic figure">' }), false);
+runFixture('fragment-only declared image source fails closed', validHtml({ img:
+  '<img src="#figure" alt="Synthetic figure">' }), false);
+runFixture('whitespace-only script source fails closed', validHtml({ extra:
+  '<script src="   "></script>' }), false);
+runFixture('empty media track source fails closed', validHtml({ extra:
+  '<video><track kind="captions" src=""></video>' }), false);
+runFixture('empty video poster fails closed', validHtml({ extra:
+  '<video poster=""></video>' }), false);
+runFixture('empty responsive image candidate list fails closed', validHtml({ img:
+  '<img srcset="" alt="Synthetic figure">' }), false);
+runFixture('separator-only responsive image list fails closed', validHtml({ img:
+  '<img srcset=" , ,, " alt="Synthetic figure">' }), false);
+runFixture('fragment-only responsive image candidate fails closed', validHtml({ img:
+  '<img srcset="#figure 1x" alt="Synthetic figure">' }), false);
+runFixture('ordinary referenced media still passes', validHtml({ extra:
+  '<audio src="clip.ogg"></audio>' }), true,
+  { 'data.json': '{}', 'clip.ogg': 'synthetic' });
+
+// Governing URL/style attributes must remain quoted. Otherwise the existing
+// quoted-value resource and navigation checks can silently ignore them.
+runFixture('unquoted executable anchor fails closed', validHtml({ extra:
+  '<a href=javascript:alert(1)>Synthetic unsafe link</a>' }), false);
+runFixture('unquoted local anchor fails closed even when target exists', validHtml({ extra:
+  '<a href=data.json>Synthetic link</a>' }), false);
+runFixture('unquoted image source fails closed even when file exists', validHtml({ img:
+  '<img src=figure.svg alt="Synthetic figure">' }), false,
+  { 'data.json': '{}', 'figure.svg': '<svg></svg>' });
+runFixture('unquoted script source fails closed', validHtml({ extra:
+  '<script src=missing.js></script>' }), false);
+runFixture('unquoted responsive source fails closed', validHtml({ img:
+  '<img srcset=missing.svg alt="Synthetic figure">' }), false);
+runFixture('unquoted video poster fails closed', validHtml({ extra:
+  '<video poster=missing.svg></video>' }), false);
+runFixture('unquoted style attribute fails closed', validHtml({ extra:
+  '<div style=background:url(missing.svg)>Synthetic content</div>' }), false);
+runFixture('unquoted stylesheet relation fails closed', validHtml({ extra:
+  '<link rel=stylesheet href="missing.css">' }), false);
+runFixture('unquoted stylesheet href fails closed', validHtml({ extra:
+  '<link rel="stylesheet" href=missing.css>' }), false);
+runFixture('unquoted blank-window target fails closed', validHtml({ extra:
+  '<a href="https://example.org" target=_blank>External</a>' }), false);
+runFixture('unquoted object data fails closed', validHtml({ extra:
+  '<object data=missing.pdf></object>' }), false);
+runFixture('missing unquoted attribute value fails closed', validHtml({ img:
+  '<img src= alt="Synthetic figure">' }), false);
+runFixture('quoted resource attributes with spaces still work', validHtml({ extra:
+  '<link rel = "stylesheet" href = "site.css">' }), true,
+  { 'data.json': '{}', 'site.css': 'body { color: inherit; }' });
+runFixture('attribute-like text inside a quoted style remains accepted', validHtml({ extra:
+  "<div style=\"content: 'src=missing.svg'\">Synthetic text</div>" }), true);
+runFixture('attribute-like text and angle bracket inside a quoted title remain accepted', validHtml({ extra:
+  '<p title="greater > symbol and src=missing.svg">Synthetic text</p>' }), true);
+
 runFixture('positive tabindex', validHtml({ extra: '<button tabindex="2">Unsafe order</button>' }), false);
 runFixture('labelled form control', validHtml({ extra: '<label for="query">Search</label><input id="query" type="search">' }), true);
 runFixture('aria-labelled form control', validHtml({ extra: '<span id="query-label">Search</span><input type="search" aria-labelledby="query-label">' }), true);
