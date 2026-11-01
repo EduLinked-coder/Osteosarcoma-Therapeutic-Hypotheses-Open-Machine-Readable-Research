@@ -342,10 +342,14 @@ function stageHandoff(envelope, options = {}) {
       cleanupErrors.push('candidate directory identity changed; directory removal skipped');
     }
 
+    // Re-rendering against a partially cleaned working tree could consume or
+    // overwrite unowned data. Resume projections only after complete cleanup.
     let restorationError = null;
     if (pipelineStarted) {
-      if (!hypothesesRootSafe || !evidenceRootSafe || !candidateDirectorySafe) {
-        restorationError = new Error('canonical data directory identity changed; projection restoration skipped for safety');
+      if (!hypothesesRootSafe || !evidenceRootSafe || !candidateDirectorySafe || cleanupErrors.length > 0) {
+        restorationError = new Error(cleanupErrors.length > 0
+          ? 'candidate cleanup incomplete; projection restoration skipped pending inspection'
+          : 'canonical data directory identity changed; projection restoration skipped for safety');
       } else {
         try {
           restoreProjections();

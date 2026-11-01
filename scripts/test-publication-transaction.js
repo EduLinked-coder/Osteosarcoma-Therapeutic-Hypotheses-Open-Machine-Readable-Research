@@ -436,6 +436,7 @@ try {
 // replacement rather than deleting a file that this transaction does not own.
 const parkedEvidencePath = rollbackEvidencePath + '.owned-original-fixture';
 const replacedEvidenceMarker = 'synthetic replacement evidence - not owned by transaction';
+let replacedEvidenceRestorationCalls = 0;
 try {
   expectBlocked(() => stageHandoff(rollback, {
     executePipeline: () => {
@@ -443,12 +444,14 @@ try {
       fs.writeFileSync(rollbackEvidencePath, replacedEvidenceMarker, 'utf8');
       throw new Error('synthetic evidence replacement after staging');
     },
-    restoreProjections: () => {}
+    restoreProjections: () => { replacedEvidenceRestorationCalls += 1; }
   }), /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic evidence replacement/);
   assert.equal(fs.readFileSync(rollbackEvidencePath, 'utf8'), replacedEvidenceMarker,
     'a replacement evidence file must survive rollback');
   assert.equal(fs.existsSync(parkedEvidencePath), true, 'the originally owned inode remains available for inspection');
   assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'safe candidate directory can still be cleaned');
+  assert.equal(replacedEvidenceRestorationCalls, 0,
+    'an unowned evidence replacement must block projection regeneration');
 } finally {
   fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic test cleanup only
   fs.rmSync(rollbackEvidencePath, { force: true });
@@ -505,7 +508,8 @@ function assertBoundedProjectionRollback(injectUnexpectedFile) {
     }), injectUnexpectedFile
       ? /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic post-render validation failure/
       : /post-stage rendering or validation failed; candidate staging was rolled back: synthetic post-render validation failure/);
-    assert.equal(restorationCalls, 1, 'canonical projections must still be restored');
+    assert.equal(restorationCalls, injectUnexpectedFile ? 0 : 1,
+      'only complete cleanup may trigger canonical projection restoration');
     assert.equal(fs.existsSync(canonicalPage), false, 'generated hypothesis page must be removed');
     assert.equal(fs.existsSync(easyReadDir), false, 'generated Easy Read directory must be removed');
     assert.equal(fs.existsSync(rollbackEvidencePath), false, 'owned evidence binding must be removed');
@@ -532,6 +536,7 @@ function assertGeneratedPageSymlinkPreserved(whichPage) {
     ? path.join(rollbackHypothesisDir, 'easy-read', 'index.html')
     : path.join(rollbackHypothesisDir, 'index.html');
   fs.writeFileSync(outsideFile, 'synthetic external file - preserve', 'utf8');
+  let restorationCalls = 0;
   try {
     expectBlocked(() => stageHandoff(rollback, {
       executePipeline: () => {
@@ -539,10 +544,11 @@ function assertGeneratedPageSymlinkPreserved(whichPage) {
         fs.symlinkSync(outsideFile, pagePath);
         throw new Error('synthetic generated-page symlink failure');
       },
-      restoreProjections: () => {}
+      restoreProjections: () => { restorationCalls += 1; }
     }), /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic generated-page symlink failure/);
     assert.equal(fs.lstatSync(pagePath).isSymbolicLink(), true, 'unowned generated-page symlink must survive for inspection');
     assert.equal(fs.readFileSync(outsideFile, 'utf8'), 'synthetic external file - preserve', 'outside file must not be touched');
+    assert.equal(restorationCalls, 0, 'unowned generated-page symlink must prevent re-rendering');
     assert.equal(fs.existsSync(rollbackEvidencePath), false, 'owned evidence must still be removed');
   } finally {
     fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic test cleanup only
