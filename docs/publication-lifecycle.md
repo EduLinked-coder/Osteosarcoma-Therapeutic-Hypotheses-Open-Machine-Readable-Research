@@ -71,6 +71,104 @@ The corresponding negative-fixture test is `scripts/test-public-safety.js`. CI r
 
 The scanner is deliberately conservative: passing it means only that these bounded machine-detectable hazards were not found. It does **not** prove de-identification, consent, privacy compliance or public-release authority. If public safety is uncertain, fail closed and create a safety/privacy review item.
 
+## Public-only GitHub Pages artifact boundary
+
+The Pages deployment must **not** upload the whole repository checkout. The existing
+`scripts/validate-public-safety.js --stage-pages-site` mode reuses the public-safety
+scanner and copies only its validated public text/assets and machine-readable schemas
+into `_pages_site/`. The Pages workflow verifies this bounded artifact on pull requests,
+recreates it after the deployment checkout, and uploads `_pages_site/` rather than `./`.
+
+The staged set includes canonical hypothesis pages and objects, evidence bindings,
+indexes, activity, search, review, accessible projections, schemas and public
+discovery files. Repository scripts, tests, GitHub workflows and issue-template
+configuration are not Pages assets. An unsupported file type, symlink, detected
+private material, unreadable asset or missing required entry point blocks staging;
+a failed re-stage clears the previous output. Staged bytes are rescanned, and
+the **complete recursive artifact inventory** (including files outside expected
+public roots) must exactly match the reviewed file selection; unexpected files
+block staging and clear the output. This is a deterministic publishing
+surface restriction, **not** human disclosure approval or proof of de-identification.
+
+After each successful staging operation, the existing public-interface validator is
+run against `_pages_site/` itself, including before deployment. This checks that
+staged human-readable pages, local navigation links, image/script/media resources,
+stylesheets, robots.txt and sitemap targets resolve inside the exact artifact being
+uploaded. Repository-local validation alone cannot prove that excluded files are
+still reachable after staging. This remains an engineering check, not publication
+or scientific-review authority.
+
+The public-interface check additionally rejects executable or inline-data link
+schemes in anchors (including common numeric-character-reference and whitespace
+obfuscation). Unsafe or broken local links fail without reproducing their
+untrusted URLs in CI diagnostics. This bounded check supplements, but does not
+replace, review of rendered HTML, privacy and publication authority.
+
+The same staged-artifact check now examines static CSS dependencies: `url(...)`
+assets, quoted `@import` references, inline `<style>` elements and `style`
+attributes. Relative paths are resolved against their owning CSS file or
+HTML page; missing files and executable/inline-data schemes fail closed
+without echoing untrusted URL contents. The bounded check cannot validate
+runtime-generated CSS or replace human review of rendered output.
+
+The staged-site link check also validates asset-bearing `<link>` relations such
+as preload, modulepreload, prefetch, icon, manifest and stylesheets. It rejects
+missing or fragment-only asset URLs and missing local targets, while leaving
+canonical and connection-hint links outside this asset inventory check. All
+rejected URLs remain absent from CI diagnostics; this check does not establish
+browser-runtime security, scientific acceptance or publication authority.
+
+The staged-site validator also checks embedded browsing/document resources in
+`<iframe src>`, `<object data>` and `<embed src>` against the exact artifact.
+Missing local files, missing/fragment-only URLs and executable/inline-data schemes
+fail closed without echoing URL values. `iframe srcdoc` is rejected because
+inline document bytes bypass the separately staged-file review boundary.
+External HTTPS embeddings are syntactically permitted but are **not** content- or
+privacy-certified by this check; any such dependency still requires review.
+
+Explicitly declared image/script/media `src`, video `poster`, and responsive
+`srcset` attributes must provide usable resource references. Empty or
+fragment-only asset references, and `srcset` lists without any candidates,
+fail the existing staged-artifact validator. This is an asset-integrity check,
+not a complete browser parser, accessibility certification or release approval.
+
+The static validator also requires quoted values for HTML resource and
+link-policy attributes (`href`, `src`, `srcset`, `poster`, `data`,
+`style`, `rel` and `target`). Unquoted values could otherwise bypass
+its quoted-value URL, resource-integrity and safe-new-window checks. It
+rejects those attributes before validating resources, without echoing URL
+values. This conservative guard is not a complete HTML parser or a review
+of runtime-generated markup; browser behaviour and release authority still
+require separate human assessment.
+
+The staged public-interface check also rejects HTML `<base>` elements. A
+base URL or default target changes how browsers resolve relative links,
+resources and new-window navigation even though artifact-local checks see
+unchanged files and attributes. The public projections do not rely on a base
+element; rejecting it preserves the validator's stated URL-resolution boundary.
+This static guard does not replace browser testing or human publication review.
+
+This GitHub Pages **project** is served below the repository URL path rather than
+at the `github.io` origin root. An origin-root local reference such as
+`/data.json` would escape that project path in a browser even when `data.json`
+exists in the staged artifact. The existing local-link and resource validator
+therefore rejects origin-root paths (including percent-encoded variants) and
+requires project-relative links for HTML and CSS dependencies. This check does
+not verify the availability of independently hosted external resources.
+
+The public-interface accessibility checks require genuine HTML `lang`, image
+`alt`, form-label `for`, element `id`, and ARIA naming attributes; similarly
+named `data-*` attributes do not satisfy them. Repeated HTML identifiers are
+rejected because they make label and ARIA reference targets ambiguous. These
+document-language and viewport declarations must also be genuine quoted attributes, not attribute-like text nested in another quoted value. These bounded static checks do not replace browser or assistive-technology testing.
+
+The staged-site validator also rejects symbolic-link HTML entries and local
+resource targets reached through symbolic-link files or parent directories.
+A path can appear to sit inside the public artifact while a filesystem link
+resolves elsewhere; checking only for file existence is insufficient. These
+static filesystem checks do not establish runtime privacy certification or
+permission to deploy.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:
@@ -138,3 +236,7 @@ A review may:
 - mark a replication attempt failed or mixed
 - propose a successor hypothesis
 - block publication for safety, privacy or authority reasons
+
+## Quote-aware public HTML attributes
+
+The staged public-interface validator inspects actual opening-tag attributes. Attribute-like text inside another quoted value must not impersonate image alt text, form labels, ARIA targets, navigation URLs, resources or new-window protections. Synthetic pass/fail fixtures cover these distinctions. This bounded lexical check is not a full HTML parser, security certification, scientific review or publication authority.
