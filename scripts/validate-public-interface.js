@@ -230,7 +230,7 @@ for (const htmlPath of htmlFiles) {
   }
 
   if (!/^\s*<!doctype html>/i.test(html)) fail(rel + ' is missing an HTML5 doctype.');
-  if (!/<html\b[^>]*\blang=["'][^"']+["'][^>]*>/i.test(html)) fail(rel + ' is missing a non-empty html[lang] attribute.');
+  if (!/<html\b[^>]*\slang=["'][^"']+["'][^>]*>/i.test(html)) fail(rel + ' is missing a non-empty html[lang] attribute.');
   if (!/<meta\b[^>]*name=["']viewport["'][^>]*content=["'][^"']+["'][^>]*>/i.test(html)) fail(rel + ' is missing a viewport meta element.');
   if (!/<title>[^<\n][\s\S]*?<\/title>/i.test(html)) fail(rel + ' is missing a non-empty title.');
   if (!/<main\b/i.test(html)) fail(rel + ' is missing a main landmark.');
@@ -251,11 +251,19 @@ for (const htmlPath of htmlFiles) {
   if (positiveTabindex.length) fail(rel + ' uses positive tabindex, which can break logical keyboard order.');
 
   for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
-    if (!/\balt\s*=\s*["'][^"']*["']/i.test(match[0])) fail(rel + ' contains an img without an explicit alt attribute.');
+    if (!/\salt\s*=\s*["'][^"']*["']/i.test(match[0])) fail(rel + ' contains an img without an explicit alt attribute.');
   }
 
-  const elementIds = new Set([...html.matchAll(/\bid\s*=\s*["']([^"']+)["']/gi)].map((match) => match[1]));
-  const labelForIds = new Set([...html.matchAll(/<label\b[^>]*\bfor\s*=\s*["']([^"']+)["'][^>]*>/gi)].map((match) => match[1]));
+  // Only genuine id attributes on opening tags can name a label/ARIA target.
+  // data-id is not an id; duplicate ids make those references ambiguous.
+  const elementIds = new Set();
+  for (const tag of html.matchAll(/<[a-z][\w:-]*(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi)) {
+    const id = tag[0].match(/\sid\s*=\s*(["'])([^"']+)\1/i)?.[2];
+    if (id === undefined) continue;
+    if (elementIds.has(id)) fail(rel + ' contains duplicate HTML ids.');
+    elementIds.add(id);
+  }
+  const labelForIds = new Set([...html.matchAll(/<label\b[^>]*\sfor\s*=\s*["']([^"']+)["'][^>]*>/gi)].map((match) => match[1]));
 
   for (const match of html.matchAll(/<(input|select|textarea)\b[^>]*>/gi)) {
     const tagName = match[1].toLowerCase();
@@ -264,9 +272,9 @@ for (const htmlPath of htmlFiles) {
     const inputType = typeMatch ? typeMatch[1].toLowerCase() : '';
     if (tagName === 'input' && inputType === 'hidden') continue;
 
-    const idMatch = markup.match(/\bid\s*=\s*["']([^"']+)["']/i);
-    const ariaLabel = markup.match(/\baria-label\s*=\s*["']([^"']+)["']/i);
-    const ariaLabelledby = markup.match(/\baria-labelledby\s*=\s*["']([^"']+)["']/i);
+    const idMatch = markup.match(/\sid\s*=\s*["']([^"']+)["']/i);
+    const ariaLabel = markup.match(/\saria-label\s*=\s*["']([^"']+)["']/i);
+    const ariaLabelledby = markup.match(/\saria-labelledby\s*=\s*["']([^"']+)["']/i);
     const labelledByIds = ariaLabelledby ? ariaLabelledby[1].trim().split(/\s+/).filter(Boolean) : [];
     const labelledByExistingIds = labelledByIds.length > 0 && labelledByIds.every((id) => elementIds.has(id));
     const intrinsicButtonName = tagName === 'input' && ['submit', 'reset', 'button'].includes(inputType) && /\bvalue\s*=\s*["'][^"']+\S[^"']*["']/i.test(markup);
@@ -282,8 +290,8 @@ for (const htmlPath of htmlFiles) {
 
   for (const match of html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)) {
     const openingMarkup = '<button' + match[1] + '>';
-    const ariaLabel = openingMarkup.match(/\baria-label\s*=\s*["']([^"']+)["']/i);
-    const ariaLabelledby = openingMarkup.match(/\baria-labelledby\s*=\s*["']([^"']+)["']/i);
+    const ariaLabel = openingMarkup.match(/\saria-label\s*=\s*["']([^"']+)["']/i);
+    const ariaLabelledby = openingMarkup.match(/\saria-labelledby\s*=\s*["']([^"']+)["']/i);
     const labelledByIds = ariaLabelledby ? ariaLabelledby[1].trim().split(/\s+/).filter(Boolean) : [];
     const labelledByExistingIds = labelledByIds.length > 0 && labelledByIds.every((id) => elementIds.has(id));
     const textName = match[2].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();

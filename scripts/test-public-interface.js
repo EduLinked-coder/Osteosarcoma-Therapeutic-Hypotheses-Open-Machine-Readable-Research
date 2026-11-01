@@ -99,6 +99,22 @@ runFixture('inline HTML data anchor is blocked', validHtml({ href: 'data:text/ht
 runFixture('safe external HTTPS anchor', validHtml({ href: 'https://example.org/research' }), true, {});
 runFixture('safe fragment anchor', validHtml({ href: '#summary' }), true, {});
 runFixture('missing language', validHtml().replace(' lang="en-AU"', ''), false);
+runFixture('data-lang cannot substitute the document language', validHtml().replace(' lang="en-AU"', ' data-lang="en-AU"'), false);
+runFixture('data-alt cannot substitute accessible image alt', validHtml({ img:
+  '<img src="https://example.org/figure.svg" data-alt="Synthetic description">' }), false);
+runFixture('data-aria-label cannot name a form control', validHtml({ extra:
+  '<input type="search" data-aria-label="Search">' }), false);
+runFixture('data-aria-labelledby cannot name a form control', validHtml({ extra:
+  '<span id="query-label">Search</span><input type="search" data-aria-labelledby="query-label">' }), false);
+runFixture('data-id cannot impersonate an aria-labelledby target', validHtml({ extra:
+  '<span data-id="query-label">Search</span><input type="search" aria-labelledby="query-label">' }), false);
+runFixture('data-for cannot associate a label and form control', validHtml({ extra:
+  '<label data-for="query">Search</label><input id="query" type="search">' }), false);
+runFixture('duplicate HTML ids invalidate accessible references', validHtml({ extra:
+  '<div id="duplicate">First</div><span id="duplicate">Second</span>' }), false);
+runFixture('unique HTML ids remain accepted', validHtml({ extra:
+  '<div id="first">First</div><span id="second">Second</span>' }), true);
+
 runFixture('missing image alt', validHtml({ img: '<img src="figure.png">' }), false);
 
 

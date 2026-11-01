@@ -154,6 +154,12 @@ therefore rejects origin-root paths (including percent-encoded variants) and
 requires project-relative links for HTML and CSS dependencies. This check does
 not verify the availability of independently hosted external resources.
 
+The public-interface accessibility checks require genuine HTML `lang`, image
+`alt`, form-label `for`, element `id`, and ARIA naming attributes; similarly
+named `data-*` attributes do not satisfy them. Repeated HTML identifiers are
+rejected because they make label and ARIA reference targets ambiguous. These
+bounded static checks do not replace browser or assistive-technology testing.
+
 The staged-site validator also rejects symbolic-link HTML entries and local
 resource targets reached through symbolic-link files or parent directories.
 A path can appear to sit inside the public artifact while a filesystem link
