@@ -56,6 +56,24 @@ const runFixture = (name, html, shouldPass, extraFiles = { 'data.json': '{}\n' }
   }
 };
 
+
+// Synthetic filesystem links must not be treated as regular staged-site files.
+// The original existsSync/statSync path checks followed both file and directory links.
+const runSymlinkFixture = (name, html, createLink) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-interface-symlink-'));
+  try {
+    fs.writeFileSync(path.join(dir, 'index.html'), html);
+    fs.writeFileSync(path.join(dir, 'data.json'), '{}\n');
+    createLink(dir);
+    const result = spawnSync(process.execPath, [validator, '--root', dir], { encoding: 'utf8' });
+    if (result.status === 0) {
+      fail(name + ' expected failure but the validator accepted a symbolic link.');
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+};
+
 runFixture('valid accessible page', validHtml(), true);
 runFixture('valid heading hierarchy', validHtml({ extra: '<section><h2>Section</h2><h3>Detail</h3></section>' }), true);
 runFixture('skipped heading level', validHtml({ extra: '<h3>Skipped level</h3>' }), false);
@@ -82,6 +100,23 @@ runFixture('safe external HTTPS anchor', validHtml({ href: 'https://example.org/
 runFixture('safe fragment anchor', validHtml({ href: '#summary' }), true, {});
 runFixture('missing language', validHtml().replace(' lang="en-AU"', ''), false);
 runFixture('missing image alt', validHtml({ img: '<img src="figure.png">' }), false);
+
+
+runSymlinkFixture('symlinked image file is rejected', validHtml({ img:
+  '<img src="linked.svg" alt="Synthetic figure">' }), (dir) => {
+  fs.writeFileSync(path.join(dir, 'real.svg'), '<svg></svg>');
+  fs.symlinkSync('real.svg', path.join(dir, 'linked.svg'));
+});
+runSymlinkFixture('symlinked asset directory is rejected', validHtml({ img:
+  '<img src="assets/figure.svg" alt="Synthetic figure">' }), (dir) => {
+  fs.mkdirSync(path.join(dir, 'real-assets'));
+  fs.writeFileSync(path.join(dir, 'real-assets', 'figure.svg'), '<svg></svg>');
+  fs.symlinkSync('real-assets', path.join(dir, 'assets'), 'dir');
+});
+runSymlinkFixture('symlinked HTML entry is rejected', validHtml(), (dir) => {
+  fs.renameSync(path.join(dir, 'index.html'), path.join(dir, 'source.html'));
+  fs.symlinkSync('source.html', path.join(dir, 'index.html'));
+});
 
 runFixture('missing local image resource', validHtml({ img: '<img src="missing.svg" alt="Synthetic figure">' }), false);
 runFixture('existing local image resource', validHtml({ img: '<img src="figure.svg" alt="Synthetic figure">' }), true,

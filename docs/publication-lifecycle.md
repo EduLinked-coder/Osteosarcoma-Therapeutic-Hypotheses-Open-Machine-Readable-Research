@@ -154,6 +154,13 @@ therefore rejects origin-root paths (including percent-encoded variants) and
 requires project-relative links for HTML and CSS dependencies. This check does
 not verify the availability of independently hosted external resources.
 
+The staged-site validator also rejects symbolic-link HTML entries and local
+resource targets reached through symbolic-link files or parent directories.
+A path can appear to sit inside the public artifact while a filesystem link
+resolves elsewhere; checking only for file existence is insufficient. These
+static filesystem checks do not establish runtime privacy certification or
+permission to deploy.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:

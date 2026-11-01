@@ -15,9 +15,19 @@ const fail = (message) => {
 };
 
 const walkHtml = (entry) => {
-  if (!fs.existsSync(entry)) return [];
-  const stat = fs.statSync(entry);
+  let stat;
+  try {
+    stat = fs.lstatSync(entry);
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  }
+  if (stat.isSymbolicLink()) {
+    fail('A public HTML scan entry is a symbolic link.');
+    return [];
+  }
   if (stat.isFile()) return entry.endsWith('.html') ? [entry] : [];
+  if (!stat.isDirectory()) return [];
   return fs.readdirSync(entry).flatMap((name) => walkHtml(path.join(entry, name)));
 };
 
@@ -78,6 +88,29 @@ const parseSrcsetUrls = (value) => {
   return urls;
 };
 
+// A lexically in-root reference can still leave the staged artifact through a
+// symbolic-link file or parent directory. Check each existing path component.
+const containsSymlink = (candidate) => {
+  let current = root;
+  const parts = path.relative(root, candidate).split(path.sep).filter(Boolean);
+  try {
+    if (fs.lstatSync(current).isSymbolicLink()) return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+  for (const part of parts) {
+    current = path.join(current, part);
+    try {
+      if (fs.lstatSync(current).isSymbolicLink()) return true;
+    } catch (error) {
+      if (error.code === 'ENOENT') return false;
+      throw error;
+    }
+  }
+  return false;
+};
+
 const resolveLocalTarget = (htmlPath, href) => {
   let cleaned = stripQueryAndFragment(href.trim());
   if (!cleaned || cleaned === '.') return null;
@@ -103,9 +136,15 @@ const resolveLocalTarget = (htmlPath, href) => {
     return null;
   }
 
-  if (cleaned.endsWith('/')) return path.join(candidate, 'index.html');
-  if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) return path.join(candidate, 'index.html');
-  return candidate;
+  const target = cleaned.endsWith('/') ||
+    (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory())
+    ? path.join(candidate, 'index.html')
+    : candidate;
+  if (containsSymlink(target)) {
+    fail(path.relative(root, htmlPath) + ' references a symbolic link outside the staged-file integrity boundary.');
+    return null;
+  }
+  return target;
 };
 
 
