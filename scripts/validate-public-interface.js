@@ -263,7 +263,7 @@ for (const htmlPath of htmlFiles) {
       return;
     }
     if (isUnsafeAnchorUrl(url)) {
-      fail(rel + ' contains an unsafe ' + kind + ' URL.
+      fail(rel + ' contains an unsafe ' + kind + ' URL.');
       return;
     }
     if (isExternal(url)) return;
