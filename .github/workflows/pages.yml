@@ -58,6 +58,7 @@ jobs:
           ]
           offsets = [deploy_job.index(f'      - name: {name}\n') for name in steps]
           assert offsets == sorted(offsets), 'Core token preflight must precede Pages upload/deployment'
+          assert deploy_job.splitlines()[0] == "    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'", 'Only main-branch pushes and manual dispatches may enter Pages deployment'
           assert 'does not grant scientific review' in receipt['authority_boundary']
           PY
       - name: Test fail-closed publication transaction
@@ -124,7 +125,7 @@ jobs:
         run: node scripts/validate-public-research.js
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: validate
     permissions:
       contents: write

@@ -171,6 +171,16 @@ permission to deploy.
 
 ## Deployment receipt dispatch preflight
 
+The Pages deployment job additionally requires the exact `refs/heads/main` ref
+and a `push` or `workflow_dispatch` event. A manual dispatch targeting another
+branch or a tag must never enter the public deployment job. The existing
+validation job checks this trigger condition as part of its deterministic
+workflow-contract assertions. This is branch-scope containment only: **a manual
+dispatch on `main` remains possible**, and neither a main-branch event nor a
+successful CI run proves attributable human disclosure/release approval. The
+separate human decision about push-to-main and manual-dispatch publication policy,
+including any GitHub environment protections, remains open under issue #70.
+
 The Pages job must verify its governed GitHub App identity and successfully mint a
 scoped Core-dispatch token **before uploading or deploying the public artifact**.
 A missing or invalid identity/key must fail closed before a new Pages release,
