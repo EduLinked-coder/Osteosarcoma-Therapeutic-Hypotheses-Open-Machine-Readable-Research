@@ -374,6 +374,64 @@ try {
   fs.rmSync(rollbackEvidencePath, { force: true });
   fs.rmSync(outsideFixtureDir, { recursive: true, force: true });
 }
+// Partial writes must roll back owned files before any rendering begins.
+function assertPartialWriteRollback(failAt) {
+  const originalWrite = fs.writeFileSync;
+  let writeCount = 0;
+  let pipelineCalls = 0;
+  let restorationCalls = 0;
+  fs.writeFileSync = (file, ...args) => {
+    if (typeof file === 'number') {
+      writeCount += 1;
+      if (writeCount === failAt) {
+        originalWrite(file, 'synthetic partial bytes', 'utf8');
+        throw new Error('synthetic write failure at staged file ' + failAt);
+      }
+    }
+    return originalWrite(file, ...args);
+  };
+  try {
+    expectBlocked(() => stageHandoff(rollback, {
+      executePipeline: () => { pipelineCalls += 1; },
+      restoreProjections: () => { restorationCalls += 1; }
+    }), /initial candidate write failed; candidate staging was rolled back: synthetic write failure/);
+  } finally {
+    fs.writeFileSync = originalWrite;
+  }
+  assert.equal(writeCount, failAt, 'fault injection must hit the requested staged file');
+  assert.equal(pipelineCalls, 0, 'partial writes must not start rendering or validation');
+  assert.equal(restorationCalls, 0, 'no projections exist to restore before rendering');
+  assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'partial write must not retain staged hypothesis');
+  assert.equal(fs.existsSync(rollbackEvidencePath), false, 'partial write must not retain staged evidence');
+}
+assertPartialWriteRollback(1); // hypothesis.json is partially written
+assertPartialWriteRollback(2); // new evidence binding is partially written
+
+// A file created by another writer after preflight must not be deleted by rollback.
+const originalOpen = fs.openSync;
+const racedEvidenceMarker = 'synthetic concurrent evidence - not owned by transaction';
+fs.openSync = (targetPath, flags, ...args) => {
+  if (targetPath === rollbackEvidencePath && flags === 'wx') {
+    const descriptor = originalOpen(targetPath, 'wx');
+    try { fs.writeSync(descriptor, racedEvidenceMarker, undefined, 'utf8'); }
+    finally { fs.closeSync(descriptor); }
+    const error = new Error('synthetic exclusive-create race');
+    error.code = 'EEXIST';
+    throw error;
+  }
+  return originalOpen(targetPath, flags, ...args);
+};
+try {
+  expectBlocked(() => stageHandoff(rollback, {
+    executePipeline: () => { throw new Error('raced file entered pipeline'); },
+    restoreProjections: () => {}
+  }), /initial candidate write failed; candidate staging was rolled back: synthetic exclusive-create race/);
+  assert.equal(fs.readFileSync(rollbackEvidencePath, 'utf8'), racedEvidenceMarker, 'unowned raced file must be preserved');
+  assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'owned candidate directory must be removed');
+} finally {
+  fs.openSync = originalOpen;
+  fs.rmSync(rollbackEvidencePath, { force: true });
+}
 expectBlocked(
   () => stageHandoff(rollback, {
     executePipeline: () => { throw new Error('synthetic post-stage failure'); },

@@ -56,6 +56,17 @@ function lstatIfPresent(targetPath) {
   }
 }
 
+// Track ownership immediately after exclusive creation, before any bytes are written.
+function writeTrackedExclusiveFile(targetPath, content, createdFiles) {
+  const descriptor = fs.openSync(targetPath, 'wx');
+  createdFiles.push(targetPath);
+  try {
+    fs.writeFileSync(descriptor, content, 'utf8');
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === 'object') {
@@ -218,29 +229,60 @@ function stageHandoff(envelope, options = {}) {
     }
   }
 
-  fs.mkdirSync(hypothesisDir);
-  fs.writeFileSync(hypothesisPath, JSON.stringify(hypothesis, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
-  for (const { targetPath, binding } of newEvidence) fs.writeFileSync(targetPath, JSON.stringify(binding, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
-
   const executePipeline = options.executePipeline || runPostStagePipeline;
   const restoreProjections = options.restoreProjections || restoreCanonicalProjections;
+  const createdFiles = [];
+  let directoryCreated = false;
+  let pipelineStarted = false;
   try {
+    fs.mkdirSync(hypothesisDir);
+    directoryCreated = true;
+    writeTrackedExclusiveFile(hypothesisPath, JSON.stringify(hypothesis, null, 2) + '\n', createdFiles);
+    for (const { targetPath, binding } of newEvidence) {
+      writeTrackedExclusiveFile(targetPath, JSON.stringify(binding, null, 2) + '\n', createdFiles);
+    }
+    pipelineStarted = true;
     executePipeline();
   } catch (error) {
-    fs.rmSync(path.dirname(hypothesisPath), { recursive: true, force: true });
-    for (const { targetPath } of newEvidence) fs.rmSync(targetPath, { force: true });
-
-    let restorationError = null;
-    try {
-      restoreProjections();
-    } catch (restoreError) {
-      restorationError = restoreError;
+    // A raced directory must never be deleted when mkdir itself failed.
+    if (!directoryCreated) {
+      throw new PublicationTransactionBlocked('candidate directory creation failed without staging files: ' + error.message);
     }
 
-    const restorationMessage = restorationError
-      ? ' Projection restoration also failed: ' + restorationError.message
-      : ' Candidate files were removed and canonical generated projections were restored.';
-    throw new PublicationTransactionBlocked('post-stage rendering or validation failed; candidate staging was rolled back: ' + error.message + restorationMessage);
+    const cleanupErrors = [];
+    for (const createdPath of [...createdFiles].reverse()) {
+      try {
+        fs.rmSync(createdPath, { force: true });
+      } catch (cleanupError) {
+        cleanupErrors.push(cleanupError.message);
+      }
+    }
+    try {
+      // Rendering can create additional derived files; an initial write cannot.
+      // For initial write failure, rmdir refuses to remove unexpected contents.
+      if (pipelineStarted) fs.rmSync(hypothesisDir, { recursive: true, force: true });
+      else fs.rmdirSync(hypothesisDir);
+    } catch (cleanupError) {
+      cleanupErrors.push(cleanupError.message);
+    }
+
+    let restorationError = null;
+    if (pipelineStarted) {
+      try {
+        restoreProjections();
+      } catch (restoreError) {
+        restorationError = restoreError;
+      }
+    }
+
+    const phase = pipelineStarted ? 'post-stage rendering or validation failed' : 'initial candidate write failed';
+    const complete = cleanupErrors.length === 0 && !restorationError;
+    const message = phase + (complete ? '; candidate staging was rolled back: ' : '; candidate cleanup incomplete: ')
+      + error.message
+      + (pipelineStarted && !restorationError ? ' Canonical generated projections were restored.' : '')
+      + (cleanupErrors.length ? ' Cleanup errors: ' + cleanupErrors.join(' | ') : '')
+      + (restorationError ? ' Projection restoration also failed: ' + restorationError.message : '');
+    throw new PublicationTransactionBlocked(message);
   }
 
   return {
