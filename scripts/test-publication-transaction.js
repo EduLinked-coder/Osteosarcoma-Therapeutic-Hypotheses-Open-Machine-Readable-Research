@@ -3,6 +3,8 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const { spawnSync } = require('child_process');
 const { validateEvidenceBindingIdentity } = require('./lib/evidence-binding-integrity');
 const {
   CONTRACT_ID,
@@ -136,6 +138,51 @@ const valid = fixture();
 const result = validateHandoff(valid);
 assert.equal(result.hypothesis.hypothesis_id, 'OS-TH-0001');
 assert.equal(result.bindings.length, evidenceBindings.length);
+ 
+// The publication handoff and public contribution intake must share the same
+// public-source URL boundary. Only synthetic candidate objects are used here.
+const publicSourceUrlCases = [
+  ['https://pubmed.ncbi.nlm.nih.gov/25112408/', true],
+  ['https://doi.org/10.1186/1746-1596-9-140', true],
+  ['https://pubmed.ncbi.nlm.nih.gov/25112408/#findings', true],
+  ['http://www.example.org/findings?pmid=25112408', true],
+  ['https://pubmed.ncbi.nlm.nih.gov/?pmid=25112408&note=source%20metadata', true],
+  ['https://pubmed.ncbi.nlm.nih.gov/#section%20two', true],
+  ['https://alice:sample@pubmed.ncbi.nlm.nih.gov/25112408', false],
+  ['https://@example.org/evidence', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/?access_token=sample', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#api_key=sample', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#section&access_token=sample', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#/view?api_key=sample', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#token%3Dsample', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/?pmid=25112408;access_token=synthetic', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/?pmid=25112408%26api_key%3Dsynthetic', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/?access%255Ftoken=synthetic', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#section%2526access_token%253Dsynthetic', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#section%252526access_token%25253Dsynthetic', false],
+  ['https://pubmed.ncbi.nlm.nih.gov/#section%ZZ', false],
+  ['http://127.0.0.1/evidence', false],
+  ['http://127.1/evidence', false],
+  ['http://[::1]/evidence', false],
+  ['https://localhost/evidence', false],
+  ['https://source.internal/evidence', false],
+  ['https://host.home.arpa/evidence', false],
+  ['ftp://pubmed.ncbi.nlm.nih.gov/evidence', false]
+];
+for (const [canonicalSourceUrl, allowed] of publicSourceUrlCases) {
+  const candidate = rollbackFixture();
+  candidate.public_projection.evidence_bindings[0].canonical_source_url = canonicalSourceUrl;
+  candidate.handoff_digest = computeHandoffDigest(candidate);
+  if (allowed) {
+    assert.equal(validateHandoff(candidate).hypothesis.hypothesis_id, 'OS-TH-9999');
+  } else {
+    expectBlocked(
+      () => validateHandoff(candidate),
+      /canonical source must use a public http\(s\) URL without embedded credentials or non-public hosts/
+    );
+  }
+}
+
 
 assert.deepEqual(
   PROJECTION_RENDER_PIPELINE.map(({ script }) => script),
@@ -306,4 +353,55 @@ expectBlocked(
 assert.equal(fs.existsSync(rollbackHypothesisDir), false, 'failed staging must remove the new hypothesis directory');
 assert.equal(fs.existsSync(rollbackEvidencePath), false, 'failed staging must remove newly created evidence files');
 
-console.log('Publication transaction tests passed: v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, complete new-candidate contract metadata, public-safety, explicit evidence-context, canonical evidence-identity/reference, full projection/validation coverage, transactional rollback and overwrite gates fail closed.');
+
+/**
+ * Exercise the actual committed-state validator command, not only the shared
+ * URL helper or the pre-staging handoff path. The copied test worktree contains
+ * public repository files only; no canonical objects are mutated by this test.
+ */
+function testCommittedBindingSourceUrlCli() {
+  const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'osteosarcoma-committed-url-'));
+  try {
+    for (const rel of [
+      'hypotheses', 'evidence-bindings', 'indexes', 'schemas', 'scripts', 'docs',
+      'index.html', 'sitemap.xml', 'manifest.json', 'repository-manifest.json',
+      'AGENTS.md', 'robots.txt'
+    ]) {
+      fs.cpSync(path.join(root, rel), path.join(fixtureRoot, rel), { recursive: true });
+    }
+    const validate = () => spawnSync(process.execPath, ['scripts/validate-public-research.js'], {
+      cwd: fixtureRoot, encoding: 'utf8', timeout: 20000
+    });
+    const baseline = validate();
+    assert.ifError(baseline.error);
+    assert.equal(baseline.status, 0, 'unchanged public fixture must pass the committed-state CLI');
+
+    const id = evidenceBindings[0].evidence_id;
+    const rel = 'evidence-bindings/' + id + '.json';
+    const bindingPath = path.join(fixtureRoot, rel);
+    const original = JSON.parse(fs.readFileSync(bindingPath, 'utf8'));
+    for (const unsafeUrl of [
+      'https://pubmed.ncbi.nlm.nih.gov/?access_token=synthetic-only',
+      'https://pubmed.ncbi.nlm.nih.gov/#section&access_token=synthetic-only',
+      'http://127.0.0.1/synthetic-evidence',
+      'https://source.internal/synthetic-evidence'
+    ]) {
+      const candidate = { ...original, canonical_source_url: unsafeUrl };
+      fs.writeFileSync(bindingPath, JSON.stringify(candidate, null, 2) + '\n', 'utf8');
+      const run = validate();
+      assert.ifError(run.error);
+      assert.notEqual(run.status, 0, 'committed-state validator must reject unsafe source URL');
+      const diagnostic = (run.stdout || '') + (run.stderr || '');
+      assert.ok(
+        diagnostic.includes(rel + ' canonical source must use a public http(s) URL'),
+        'expected evidence-path-specific shared URL policy failure'
+      );
+      assert.ok(!diagnostic.includes(unsafeUrl), 'validator must not echo rejected source URL');
+    }
+  } finally {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  }
+}
+testCommittedBindingSourceUrlCli();
+
+console.log('Publication transaction tests passed (18 handoff URL fixtures and 4 committed-state CLI negatives): v1.1/current-target compatibility, bounded v1.0 fallback, integrity, authority, clinical-use, complete new-candidate contract metadata, public-safety, explicit evidence-context, canonical evidence-identity/reference, full projection/validation coverage, transactional rollback and overwrite gates fail closed.');

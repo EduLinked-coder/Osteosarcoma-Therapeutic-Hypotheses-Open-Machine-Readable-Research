@@ -7,6 +7,7 @@ const { execFileSync } = require('child_process');
 const { validateJsonSchema } = require('./lib/schema-lite');
 const { validateEvidenceBindingIdentity, validateEvidenceContextIntegrity } = require('./lib/evidence-binding-integrity');
 const { scanStructuredValue, scanSecretMaterial } = require('./validate-public-safety');
+const { isPublicSourceUrl } = require('./lib/public-source-url');
 
 const root = process.cwd();
 const CONTRACT_ID = 'OSTEOSARCOMA-PUBLIC-PROJECTION-HANDOFF-001';
@@ -66,15 +67,6 @@ function computeHandoffDigest(envelope) {
 
 function requireGate(condition, message) {
   if (!condition) throw new PublicationTransactionBlocked(message);
-}
-
-function isPublicHttpUrl(value) {
-  try {
-    const parsed = new URL(String(value));
-    return ['http:', 'https:'].includes(parsed.protocol) && Boolean(parsed.hostname);
-  } catch {
-    return false;
-  }
 }
 
 function validatePublicProjectionSafety(projection) {
@@ -161,7 +153,7 @@ function validateHandoff(envelope) {
     requireGate(binding.clinical_use === false, binding.evidence_id + ' must set clinical_use:false');
     requireGate(binding.acceptance_state?.status === 'candidate-public-evidence', binding.evidence_id + ' must remain candidate public evidence');
     requireGate(binding.provenance?.binding_generated_for === hypothesis.hypothesis_id, binding.evidence_id + ' is not bound to ' + hypothesis.hypothesis_id);
-    requireGate(isPublicHttpUrl(binding.canonical_source_url), binding.evidence_id + ' canonical source must be public http(s)');
+    requireGate(isPublicSourceUrl(binding.canonical_source_url), binding.evidence_id + ' canonical source must use a public http(s) URL without embedded credentials or non-public hosts');
   }
 
   const mechanismEvidenceRefs = (hypothesis.mechanism?.relationships || [])

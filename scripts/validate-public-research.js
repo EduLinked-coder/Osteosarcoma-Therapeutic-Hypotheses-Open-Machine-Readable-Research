@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { isPathSafeEvidenceId, validateEvidenceBindingIdentity } = require('./lib/evidence-binding-integrity');
 const { validateContradictoryEvidenceIntegrity } = require('./lib/contradictory-evidence-integrity');
+const { isPublicSourceUrl } = require('./lib/public-source-url');
 
 const root = process.cwd();
 const fail = (message) => {
@@ -96,10 +97,9 @@ for (const file of evidenceFiles) {
   if (binding.clinical_use !== false) fail(relativePath + ' must explicitly set clinical_use:false.');
   if (binding.acceptance_state && binding.acceptance_state.status !== 'candidate-public-evidence') fail(relativePath + ' must remain candidate evidence until reviewed.');
   if (!binding.provenance || !binding.provenance.retrieval_date) fail(relativePath + ' missing provenance retrieval date.');
-  try {
-    const url = new URL(binding.canonical_source_url);
-    if (!['http:', 'https:'].includes(url.protocol)) fail(relativePath + ' canonical source must use http(s).');
-  } catch { fail(relativePath + ' canonical source URL is invalid.'); }
+  if (!isPublicSourceUrl(binding.canonical_source_url)) {
+    fail(relativePath + ' canonical source must use a public http(s) URL without embedded credentials or non-public hosts.');
+  }
 }
 
 const seen = new Set();
