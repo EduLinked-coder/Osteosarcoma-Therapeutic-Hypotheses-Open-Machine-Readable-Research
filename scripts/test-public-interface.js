@@ -225,6 +225,41 @@ runFixture('ordinary referenced media still passes', validHtml({ extra:
   '<audio src="clip.ogg"></audio>' }), true,
   { 'data.json': '{}', 'clip.ogg': 'synthetic' });
 
+// Governing URL/style attributes must remain quoted. Otherwise the existing
+// quoted-value resource and navigation checks can silently ignore them.
+runFixture('unquoted executable anchor fails closed', validHtml({ extra:
+  '<a href=javascript:alert(1)>Synthetic unsafe link</a>' }), false);
+runFixture('unquoted local anchor fails closed even when target exists', validHtml({ extra:
+  '<a href=data.json>Synthetic link</a>' }), false);
+runFixture('unquoted image source fails closed even when file exists', validHtml({ img:
+  '<img src=figure.svg alt="Synthetic figure">' }), false,
+  { 'data.json': '{}', 'figure.svg': '<svg></svg>' });
+runFixture('unquoted script source fails closed', validHtml({ extra:
+  '<script src=missing.js></script>' }), false);
+runFixture('unquoted responsive source fails closed', validHtml({ img:
+  '<img srcset=missing.svg alt="Synthetic figure">' }), false);
+runFixture('unquoted video poster fails closed', validHtml({ extra:
+  '<video poster=missing.svg></video>' }), false);
+runFixture('unquoted style attribute fails closed', validHtml({ extra:
+  '<div style=background:url(missing.svg)>Synthetic content</div>' }), false);
+runFixture('unquoted stylesheet relation fails closed', validHtml({ extra:
+  '<link rel=stylesheet href="missing.css">' }), false);
+runFixture('unquoted stylesheet href fails closed', validHtml({ extra:
+  '<link rel="stylesheet" href=missing.css>' }), false);
+runFixture('unquoted blank-window target fails closed', validHtml({ extra:
+  '<a href="https://example.org" target=_blank>External</a>' }), false);
+runFixture('unquoted object data fails closed', validHtml({ extra:
+  '<object data=missing.pdf></object>' }), false);
+runFixture('missing unquoted attribute value fails closed', validHtml({ img:
+  '<img src= alt="Synthetic figure">' }), false);
+runFixture('quoted resource attributes with spaces still work', validHtml({ extra:
+  '<link rel = "stylesheet" href = "site.css">' }), true,
+  { 'data.json': '{}', 'site.css': 'body { color: inherit; }' });
+runFixture('attribute-like text inside a quoted style remains accepted', validHtml({ extra:
+  "<div style=\"content: 'src=missing.svg'\">Synthetic text</div>" }), true);
+runFixture('attribute-like text and angle bracket inside a quoted title remain accepted', validHtml({ extra:
+  '<p title="<img src=missing.svg>">Synthetic text</p>' }), true);
+
 runFixture('positive tabindex', validHtml({ extra: '<button tabindex="2">Unsafe order</button>' }), false);
 runFixture('labelled form control', validHtml({ extra: '<label for="query">Search</label><input id="query" type="search">' }), true);
 runFixture('aria-labelled form control', validHtml({ extra: '<span id="query-label">Search</span><input type="search" aria-labelledby="query-label">' }), true);

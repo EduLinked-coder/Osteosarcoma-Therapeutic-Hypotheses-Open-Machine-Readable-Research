@@ -130,6 +130,15 @@ fragment-only asset references, and `srcset` lists without any candidates,
 fail the existing staged-artifact validator. This is an asset-integrity check,
 not a complete browser parser, accessibility certification or release approval.
 
+The static validator also requires quoted values for HTML resource and
+link-policy attributes (`href`, `src`, `srcset`, `poster`, `data`,
+`style`, `rel` and `target`). Unquoted values could otherwise bypass
+its quoted-value URL, resource-integrity and safe-new-window checks. It
+rejects those attributes before validating resources, without echoing URL
+values. This conservative guard is not a complete HTML parser or a review
+of runtime-generated markup; browser behaviour and release authority still
+require separate human assessment.
+
 ## What agents may publish
 
 Agents may open pull requests that add or update:

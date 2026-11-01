@@ -170,6 +170,16 @@ for (const htmlPath of htmlFiles) {
     validateCssText(match[2], htmlPath);
   }
 
+  // The resource, CSS and anchor checks below intentionally read quoted attributes.
+  // Unquoted governing attributes would otherwise be skipped by those checks.
+  // Ignore complete quoted values, including attribute-like text inside them.
+  for (const tag of html.matchAll(/<[a-z][\w:-]*(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi)) {
+    const withoutQuotedValues = tag[0].replace(/=\s*(?:"[^"]*"|'[^']*')/g, '=""');
+    if (/\s(?:href|src|srcset|poster|data|style|rel|target)\s*=\s*(?:(?!["'])\S|(?=>))/i.test(withoutQuotedValues)) {
+      fail(rel + ' contains an unquoted resource, style or link-policy attribute.');
+    }
+  }
+
   if (!/^\s*<!doctype html>/i.test(html)) fail(rel + ' is missing an HTML5 doctype.');
   if (!/<html\b[^>]*\blang=["'][^"']+["'][^>]*>/i.test(html)) fail(rel + ' is missing a non-empty html[lang] attribute.');
   if (!/<meta\b[^>]*name=["']viewport["'][^>]*content=["'][^"']+["'][^>]*>/i.test(html)) fail(rel + ' is missing a viewport meta element.');
