@@ -234,3 +234,7 @@ A review may:
 - mark a replication attempt failed or mixed
 - propose a successor hypothesis
 - block publication for safety, privacy or authority reasons
+
+## Quote-aware public HTML attributes
+
+The staged public-interface validator inspects actual opening-tag attributes. Attribute-like text inside another quoted value must not impersonate image alt text, form labels, ARIA targets, navigation URLs, resources or new-window protections. Synthetic pass/fail fixtures cover these distinctions. This bounded lexical check is not a full HTML parser, security certification, scientific review or publication authority.

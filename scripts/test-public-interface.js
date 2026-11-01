@@ -115,6 +115,24 @@ runFixture('duplicate HTML ids invalidate accessible references', validHtml({ ex
 runFixture('unique HTML ids remain accepted', validHtml({ extra:
   '<div id="first">First</div><span id="second">Second</span>' }), true);
 
+
+runFixture('data text cannot spoof an image alt', validHtml({ img:
+  "<img src=\"https://example.org/figure.svg\" data-note=' alt=\"Fake description\" '>" }), false);
+runFixture('data text cannot spoof a form aria-label', validHtml({ extra:
+  "<input type=\"search\" data-note=' aria-label=\"Fake label\" '>" }), false);
+runFixture('data text cannot spoof an aria-labelledby target', validHtml({ extra:
+  "<span data-note=' id=\"phantom\" '>Fixture</span><input type=\"search\" aria-labelledby=\"phantom\">" }), false);
+runFixture('data text cannot spoof a label-for association', validHtml({ extra:
+  "<label data-note=' for=\"query\" '>Search</label><input type=\"search\" id=\"query\">" }), false);
+runFixture('data text cannot spoof target blank rel protection', validHtml({ extra:
+  "<a href=\"https://example.org\" target=\"_blank\" data-note=' rel=\"noopener noreferrer\" '>Research</a>" }), false);
+runFixture('data text cannot spoof an absent local navigation link', validHtml({ extra:
+  "<a data-note=' href=\"missing.json\" ' href=\"https://example.org\">Research</a>" }), true);
+runFixture('data text cannot spoof an absent script source', validHtml({ extra:
+  "<script data-note=' src=\"missing.js\" ' src=\"https://example.org/real.js\"></script>" }), true);
+runFixture('actual accessible attributes remain accepted', validHtml({ img:
+  "<img src=\"https://example.org/figure.svg\" alt=\"Real description\" data-note=' alt=\"Fake\" '>" }), true);
+
 runFixture('missing image alt', validHtml({ img: '<img src="figure.png">' }), false);
 
 

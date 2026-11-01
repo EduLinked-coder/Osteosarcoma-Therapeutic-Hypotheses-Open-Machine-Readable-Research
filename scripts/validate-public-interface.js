@@ -90,6 +90,34 @@ const parseSrcsetUrls = (value) => {
 
 // A lexically in-root reference can still leave the staged artifact through a
 // symbolic-link file or parent directory. Check each existing path component.
+// Read actual opening-tag attributes, not attribute-like text in quoted values.
+// This bounded lexical check is not a general HTML parser or sanitizer.
+const readAttribute = (tag, name) => {
+  const opening = tag.match(/^<[a-z][\w:-]*/i);
+  if (!opening) return undefined;
+  let offset = opening[0].length;
+  while (offset < tag.length) {
+    while (/\s/.test(tag[offset])) offset += 1;
+    if (tag[offset] === '>' || tag[offset] === '/') break;
+    const match = tag.slice(offset).match(
+      /^([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>]+)))?/
+    );
+    if (!match) break;
+    if (match[1].toLowerCase() === name.toLowerCase()) {
+      return {
+        value: match[2] ?? match[3] ?? match[4] ?? null,
+        quoted: match[2] !== undefined || match[3] !== undefined
+      };
+    }
+    offset += match[0].length;
+  }
+  return undefined;
+};
+const quotedAttribute = (tag, name) => {
+  const attribute = readAttribute(tag, name);
+  return attribute?.quoted ? attribute.value : undefined;
+};
+
 const containsSymlink = (candidate) => {
   let current = root;
   const parts = path.relative(root, candidate).split(path.sep).filter(Boolean);
@@ -251,72 +279,77 @@ for (const htmlPath of htmlFiles) {
   if (positiveTabindex.length) fail(rel + ' uses positive tabindex, which can break logical keyboard order.');
 
   for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
-    if (!/\salt\s*=\s*["'][^"']*["']/i.test(match[0])) fail(rel + ' contains an img without an explicit alt attribute.');
+    if (quotedAttribute(match[0], 'alt') === undefined) {
+      fail(rel + ' contains an img without an explicit alt attribute.');
+    }
   }
 
   // Only genuine id attributes on opening tags can name a label/ARIA target.
   // data-id is not an id; duplicate ids make those references ambiguous.
   const elementIds = new Set();
   for (const tag of html.matchAll(/<[a-z][\w:-]*(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi)) {
-    const id = tag[0].match(/\sid\s*=\s*(["'])([^"']+)\1/i)?.[2];
-    if (id === undefined) continue;
+    const id = quotedAttribute(tag[0], 'id');
+    if (!id) continue;
     if (elementIds.has(id)) fail(rel + ' contains duplicate HTML ids.');
     elementIds.add(id);
   }
-  const labelForIds = new Set([...html.matchAll(/<label\b[^>]*\sfor\s*=\s*["']([^"']+)["'][^>]*>/gi)].map((match) => match[1]));
+  const labelForIds = new Set([...html.matchAll(/<label\b[^>]*>/gi)]
+    .map((match) => quotedAttribute(match[0], 'for'))
+    .filter(Boolean));
 
   for (const match of html.matchAll(/<(input|select|textarea)\b[^>]*>/gi)) {
     const tagName = match[1].toLowerCase();
     const markup = match[0];
-    const typeMatch = markup.match(/\btype\s*=\s*["']?([^"'\s>]+)/i);
-    const inputType = typeMatch ? typeMatch[1].toLowerCase() : '';
+    const inputType = (readAttribute(markup, 'type')?.value || '').toLowerCase();
     if (tagName === 'input' && inputType === 'hidden') continue;
-
-    const idMatch = markup.match(/\sid\s*=\s*["']([^"']+)["']/i);
-    const ariaLabel = markup.match(/\saria-label\s*=\s*["']([^"']+)["']/i);
-    const ariaLabelledby = markup.match(/\saria-labelledby\s*=\s*["']([^"']+)["']/i);
-    const labelledByIds = ariaLabelledby ? ariaLabelledby[1].trim().split(/\s+/).filter(Boolean) : [];
+    const id = quotedAttribute(markup, 'id');
+    const ariaLabel = quotedAttribute(markup, 'aria-label');
+    const ariaLabelledby = quotedAttribute(markup, 'aria-labelledby');
+    const labelledByIds = ariaLabelledby ? ariaLabelledby.trim().split(/\s+/).filter(Boolean) : [];
     const labelledByExistingIds = labelledByIds.length > 0 && labelledByIds.every((id) => elementIds.has(id));
-    const intrinsicButtonName = tagName === 'input' && ['submit', 'reset', 'button'].includes(inputType) && /\bvalue\s*=\s*["'][^"']+\S[^"']*["']/i.test(markup);
+    const intrinsicButtonName = tagName === 'input' &&
+      ['submit', 'reset', 'button'].includes(inputType) &&
+      Boolean(quotedAttribute(markup, 'value')?.trim());
     const isLabelled = Boolean(
-      (idMatch && labelForIds.has(idMatch[1])) ||
-      (ariaLabel && ariaLabel[1].trim()) ||
+      (id && labelForIds.has(id)) ||
+      (ariaLabel && ariaLabel.trim()) ||
       labelledByExistingIds ||
       intrinsicButtonName
     );
-
     if (!isLabelled) fail(rel + ' contains an unlabelled ' + tagName + ' form control.');
   }
 
   for (const match of html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)) {
     const openingMarkup = '<button' + match[1] + '>';
-    const ariaLabel = openingMarkup.match(/\saria-label\s*=\s*["']([^"']+)["']/i);
-    const ariaLabelledby = openingMarkup.match(/\saria-labelledby\s*=\s*["']([^"']+)["']/i);
-    const labelledByIds = ariaLabelledby ? ariaLabelledby[1].trim().split(/\s+/).filter(Boolean) : [];
+    const ariaLabel = quotedAttribute(openingMarkup, 'aria-label');
+    const ariaLabelledby = quotedAttribute(openingMarkup, 'aria-labelledby');
+    const labelledByIds = ariaLabelledby ? ariaLabelledby.trim().split(/\s+/).filter(Boolean) : [];
     const labelledByExistingIds = labelledByIds.length > 0 && labelledByIds.every((id) => elementIds.has(id));
     const textName = match[2].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-    if (!(textName || (ariaLabel && ariaLabel[1].trim()) || labelledByExistingIds)) {
+    if (!(textName || ariaLabel?.trim() || labelledByExistingIds)) {
       fail(rel + ' contains a button without an accessible name.');
     }
   }
 
-  for (const match of html.matchAll(/<a\b[^>]*\btarget\s*=\s*["']_blank["'][^>]*>/gi)) {
-    const relMatch = match[0].match(/\brel\s*=\s*["']([^"']*)["']/i);
-    const tokens = new Set((relMatch ? relMatch[1] : '').toLowerCase().split(/\s+/).filter(Boolean));
-    if (!tokens.has('noopener') || !tokens.has('noreferrer')) {
-      fail(rel + ' contains target="_blank" without rel="noopener noreferrer".');
+  for (const match of html.matchAll(/<a\b[^>]*>/gi)) {
+    const target = quotedAttribute(match[0], 'target');
+    if (target?.toLowerCase() === '_blank') {
+      const relValue = quotedAttribute(match[0], 'rel') || '';
+      const tokens = new Set(relValue.toLowerCase().split(/\s+/).filter(Boolean));
+      if (!tokens.has('noopener') || !tokens.has('noreferrer')) {
+        fail(rel + ' contains target="_blank" without rel="noopener noreferrer".');
+      }
     }
-  }
-
-  for (const match of html.matchAll(/<a\b[^>]*\bhref\s*=\s*["']([^"']*)["'][^>]*>/gi)) {
-    const href = match[1].trim();
-    if (isUnsafeAnchorUrl(href)) {
+    const href = quotedAttribute(match[0], 'href');
+    if (href === undefined) continue;
+    const url = href.trim();
+    if (isUnsafeAnchorUrl(url)) {
       fail(rel + ' contains an unsafe inline-data or executable anchor URL.');
       continue;
     }
-    if (!href || href.startsWith('#') || isExternal(href)) continue;
-    const target = resolveLocalTarget(htmlPath, href);
-    if (target && !fs.existsSync(target)) {
+    if (!url || url.startsWith('#') || isExternal(url)) continue;
+    const resolved = resolveLocalTarget(htmlPath, url);
+    if (resolved && !fs.existsSync(resolved)) {
       fail(rel + ' contains a broken local navigation link.');
     }
   }
@@ -341,12 +374,12 @@ for (const htmlPath of htmlFiles) {
   };
 
   for (const match of html.matchAll(/<(img|script|source|video|audio|track)\b[^>]*>/gi)) {
-    const src = match[0].match(/\ssrc\s*=\s*["']([^"']*)["']/i)?.[1];
+    const src = quotedAttribute(match[0], 'src');
     if (src !== undefined) validateResourceUrl(src, match[1].toLowerCase() + ' resource');
   }
 
   for (const match of html.matchAll(/<(img|source)\b[^>]*>/gi)) {
-    const srcset = match[0].match(/\ssrcset\s*=\s*["']([^"']*)["']/i)?.[1];
+    const srcset = quotedAttribute(match[0], 'srcset');
     if (srcset !== undefined) {
       const candidates = parseSrcsetUrls(srcset);
       if (!candidates.length) fail(rel + ' contains an unusable responsive image candidate list.');
@@ -355,7 +388,7 @@ for (const htmlPath of htmlFiles) {
   }
 
   for (const match of html.matchAll(/<video\b[^>]*>/gi)) {
-    const poster = match[0].match(/\sposter\s*=\s*["']([^"']*)["']/i)?.[1];
+    const poster = quotedAttribute(match[0], 'poster');
     if (poster !== undefined) validateResourceUrl(poster, 'video poster resource');
   }
 
@@ -364,12 +397,10 @@ for (const htmlPath of htmlFiles) {
   for (const match of html.matchAll(/<(iframe|object|embed)\b[^>]*>/gi)) {
     const tag = match[1].toLowerCase();
     const markup = match[0];
-    if (tag === 'iframe' && /\ssrcdoc\s*=/i.test(markup)) {
+    if (tag === 'iframe' && readAttribute(markup, 'srcdoc') !== undefined) {
       fail(rel + ' contains an inline iframe document without a separately reviewed artifact.');
     }
-    const resource = tag === 'object'
-      ? markup.match(/\sdata\s*=\s*["']([^"']*)["']/i)?.[1]
-      : markup.match(/\ssrc\s*=\s*["']([^"']*)["']/i)?.[1];
+    const resource = quotedAttribute(markup, tag === 'object' ? 'data' : 'src');
     if (resource === undefined || !resource.trim() || resource.trim().startsWith('#')) {
       fail(rel + ' contains an embedded document without a usable resource URL.');
       continue;
@@ -384,10 +415,10 @@ for (const htmlPath of htmlFiles) {
     'apple-touch-icon', 'mask-icon', 'manifest'
   ]);
   for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
-    const relValue = match[0].match(/\brel\s*=\s*["']([^"']+)["']/i)?.[1] || '';
+    const relValue = quotedAttribute(match[0], 'rel') || '';
     const assetRels = relValue.toLowerCase().split(/\s+/).filter((token) => assetLinkRels.has(token));
     if (!assetRels.length) continue;
-    const href = match[0].match(/\shref\s*=\s*["']([^"']*)["']/i)?.[1];
+    const href = quotedAttribute(match[0], 'href');
     if (!href || !href.trim() || href.trim().startsWith('#')) {
       fail(rel + ' contains a public asset link without a usable href.');
       continue;
