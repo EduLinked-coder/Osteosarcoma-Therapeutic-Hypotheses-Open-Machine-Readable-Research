@@ -47,6 +47,59 @@ class PublicationTransactionBlocked extends Error {}
 
 const readJson = (relativeOrAbsolute) => JSON.parse(fs.readFileSync(path.isAbsolute(relativeOrAbsolute) ? relativeOrAbsolute : path.join(root, relativeOrAbsolute), 'utf8'));
 
+// lstat detects dangling symlinks that existsSync would incorrectly treat as absent.
+function lstatIfPresent(targetPath) {
+  try { return fs.lstatSync(targetPath); }
+  catch (error) {
+    if (error.code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
+// Physical identity checks make rollback conservative when a staging path is
+// replaced. These are bounded checks, not an atomic filesystem transaction.
+function samePhysicalEntry(targetPath, identity, kind) {
+  if (!identity) return false;
+  const current = lstatIfPresent(targetPath);
+  return Boolean(current && !current.isSymbolicLink()
+    && (kind === 'directory' ? current.isDirectory() : current.isFile())
+    && current.dev === identity.dev && current.ino === identity.ino);
+}
+
+// Track ownership immediately after exclusive creation, before any bytes are written.
+function writeTrackedExclusiveFile(targetPath, content, createdFiles) {
+  const descriptor = fs.openSync(targetPath, 'wx');
+  const staged = { targetPath, identity: fs.fstatSync(descriptor), digest: null };
+  createdFiles.push(staged);
+  try {
+    fs.writeFileSync(descriptor, content, 'utf8');
+    // A completed write has known bytes. A later same-inode change is unowned.
+    // Keep digest null for partial-write cleanup if the write itself throws.
+    staged.digest = crypto.createHash('sha256').update(content, 'utf8').digest('hex');
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
+// Only delete a renderer output whose physical identity was observed after a
+// completed render and before validation. Unknown or replaced files are unowned.
+// Retain even same-inode generated pages if their bytes changed after the
+// completed-render checkpoint. Content checks remain best-effort, not atomic.
+function removeKnownGeneratedHtml(targetPath, expectedSnapshot, cleanupErrors) {
+  const entry = lstatIfPresent(targetPath);
+  if (!entry) return;
+  if (!expectedSnapshot || !samePhysicalEntry(targetPath, expectedSnapshot.identity, 'file')) {
+    cleanupErrors.push('generated-page ownership unknown or changed; preserving ' + path.relative(root, targetPath));
+    return;
+  }
+  const currentDigest = crypto.createHash('sha256').update(fs.readFileSync(targetPath)).digest('hex');
+  if (currentDigest !== expectedSnapshot.digest) {
+    cleanupErrors.push('generated-page contents changed after render; preserving ' + path.relative(root, targetPath));
+    return;
+  }
+  fs.rmSync(targetPath, { force: true });
+}
+
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === 'object') {
@@ -180,21 +233,31 @@ function restoreCanonicalProjections() {
   runNodePipeline(PROJECTION_RENDER_PIPELINE);
 }
 
-function runPostStagePipeline() {
+function runPostStagePipeline(recordRenderedHtml) {
   runNodePipeline(PROJECTION_RENDER_PIPELINE);
+  if (recordRenderedHtml) recordRenderedHtml();
   runNodePipeline(POST_STAGE_VALIDATION_PIPELINE);
 }
 
 function stageHandoff(envelope, options = {}) {
   const { hypothesis, bindings } = validateHandoff(envelope);
   const hypothesisPath = path.join(root, 'hypotheses', hypothesis.hypothesis_id, 'hypothesis.json');
-  requireGate(!fs.existsSync(hypothesisPath), hypothesis.hypothesis_id + ' already exists; autonomous overwrite/revision is blocked');
+  const hypothesisDir = path.dirname(hypothesisPath);
+  const directoryIdentity = {};
+  for (const name of ['hypotheses', 'evidence-bindings']) {
+    const entry = lstatIfPresent(path.join(root, name));
+    requireGate(entry && entry.isDirectory() && !entry.isSymbolicLink(), name + ' must be a real repository directory');
+    directoryIdentity[name] = entry;
+  }
+  requireGate(!lstatIfPresent(hypothesisDir), hypothesis.hypothesis_id + ' directory already exists; refusing to modify or remove pre-existing research files');
 
   const newEvidence = [];
   for (const binding of bindings) {
     const relative = path.join('evidence-bindings', binding.evidence_id + '.json');
     const targetPath = path.join(root, relative);
-    if (fs.existsSync(targetPath)) {
+    const existingEntry = lstatIfPresent(targetPath);
+    if (existingEntry) {
+      requireGate(existingEntry.isFile() && !existingEntry.isSymbolicLink(), relative + ' is not a regular file; symbolic links are blocked');
       const existing = readJson(relative);
       requireGate(canonicalJson(existing) === canonicalJson(binding), binding.evidence_id + ' conflicts with existing public evidence binding');
     } else {
@@ -202,29 +265,154 @@ function stageHandoff(envelope, options = {}) {
     }
   }
 
-  fs.mkdirSync(path.dirname(hypothesisPath), { recursive: true });
-  fs.writeFileSync(hypothesisPath, JSON.stringify(hypothesis, null, 2) + '\n', 'utf8');
-  for (const { targetPath, binding } of newEvidence) fs.writeFileSync(targetPath, JSON.stringify(binding, null, 2) + '\n', 'utf8');
-
   const executePipeline = options.executePipeline || runPostStagePipeline;
   const restoreProjections = options.restoreProjections || restoreCanonicalProjections;
+  const createdFiles = [];
+  let directoryCreated = false;
+  let candidateDirectoryIdentity = null;
+  let pipelineStarted = false;
+  const generatedPages = new Map();
+  let easyReadDirectoryIdentity = null;
+  const generatedHypothesisPage = path.join(hypothesisDir, 'index.html');
+  const generatedEasyReadDir = path.join(hypothesisDir, 'easy-read');
+  const generatedEasyReadPage = path.join(generatedEasyReadDir, 'index.html');
+  const recordRenderedHtml = () => {
+    requireGate(samePhysicalEntry(hypothesisDir, candidateDirectoryIdentity, 'directory'),
+      'candidate directory changed before generated-page ownership could be recorded');
+    const easyReadEntry = lstatIfPresent(generatedEasyReadDir);
+    requireGate(easyReadEntry && easyReadEntry.isDirectory() && !easyReadEntry.isSymbolicLink(),
+      'generated Easy Read directory is missing or unsafe');
+    for (const pagePath of [generatedHypothesisPage, generatedEasyReadPage]) {
+      const entry = lstatIfPresent(pagePath);
+      requireGate(entry && entry.isFile() && !entry.isSymbolicLink(),
+        'generated page is missing or unsafe: ' + path.relative(root, pagePath));
+      generatedPages.set(pagePath, {
+        identity: entry,
+        digest: crypto.createHash('sha256').update(fs.readFileSync(pagePath)).digest('hex')
+      });
+    }
+    easyReadDirectoryIdentity = easyReadEntry;
+  };
   try {
-    executePipeline();
+    fs.mkdirSync(hypothesisDir);
+    directoryCreated = true;
+    candidateDirectoryIdentity = fs.lstatSync(hypothesisDir);
+    requireGate(candidateDirectoryIdentity.isDirectory() && !candidateDirectoryIdentity.isSymbolicLink(),
+      'candidate directory must remain a physical directory after creation');
+    // Preflight checks are not sufficient if a canonical parent was swapped during staging.
+    requireGate(samePhysicalEntry(path.join(root, 'hypotheses'), directoryIdentity.hypotheses, 'directory'),
+      'hypotheses repository directory changed before candidate write');
+    writeTrackedExclusiveFile(hypothesisPath, JSON.stringify(hypothesis, null, 2) + '\n', createdFiles);
+    for (const { targetPath, binding } of newEvidence) {
+      requireGate(samePhysicalEntry(path.join(root, 'evidence-bindings'), directoryIdentity['evidence-bindings'], 'directory'),
+        'evidence-bindings repository directory changed before staged evidence write');
+      writeTrackedExclusiveFile(targetPath, JSON.stringify(binding, null, 2) + '\n', createdFiles);
+    }
+    pipelineStarted = true;
+    executePipeline(recordRenderedHtml);
   } catch (error) {
-    fs.rmSync(path.dirname(hypothesisPath), { recursive: true, force: true });
-    for (const { targetPath } of newEvidence) fs.rmSync(targetPath, { force: true });
-
-    let restorationError = null;
-    try {
-      restoreProjections();
-    } catch (restoreError) {
-      restorationError = restoreError;
+    // A raced directory must never be deleted when mkdir itself failed.
+    if (!directoryCreated) {
+      throw new PublicationTransactionBlocked('candidate directory creation failed without staging files: ' + error.message);
     }
 
-    const restorationMessage = restorationError
-      ? ' Projection restoration also failed: ' + restorationError.message
-      : ' Candidate files were removed and canonical generated projections were restored.';
-    throw new PublicationTransactionBlocked('post-stage rendering or validation failed; candidate staging was rolled back: ' + error.message + restorationMessage);
+    const cleanupErrors = [];
+    const hypothesesRootSafe = samePhysicalEntry(path.join(root, 'hypotheses'), directoryIdentity.hypotheses, 'directory');
+    const evidenceRootSafe = samePhysicalEntry(path.join(root, 'evidence-bindings'), directoryIdentity['evidence-bindings'], 'directory');
+    const candidateDirectorySafe = hypothesesRootSafe
+      && samePhysicalEntry(hypothesisDir, candidateDirectoryIdentity, 'directory');
+
+    // Never delete a file after another process has replaced its original inode.
+    // Likewise, do not traverse a swapped parent directory or symbolic link.
+    for (const staged of [...createdFiles].reverse()) {
+      const parentSafe = staged.targetPath === hypothesisPath ? candidateDirectorySafe : evidenceRootSafe;
+      if (!parentSafe) {
+        cleanupErrors.push('staging parent changed; preserving ' + path.relative(root, staged.targetPath));
+        continue;
+      }
+      try {
+        const entry = lstatIfPresent(staged.targetPath);
+        if (!entry) continue;
+        if (!samePhysicalEntry(staged.targetPath, staged.identity, 'file')) {
+          cleanupErrors.push('staged file identity changed; preserving ' + path.relative(root, staged.targetPath));
+          continue;
+        }
+        if (staged.digest) {
+          const currentDigest = crypto.createHash('sha256').update(fs.readFileSync(staged.targetPath)).digest('hex');
+          if (currentDigest !== staged.digest) {
+            cleanupErrors.push('staged file contents changed after write; preserving ' + path.relative(root, staged.targetPath));
+            continue;
+          }
+        }
+        fs.rmSync(staged.targetPath, { force: true });
+      } catch (cleanupError) {
+        cleanupErrors.push(cleanupError.message);
+      }
+    }
+
+    // A replaced candidate directory can redirect path-based cleanup outside
+    // the checkout. Retain it for human inspection instead of following it.
+    if (pipelineStarted) {
+      if (!candidateDirectorySafe) {
+        cleanupErrors.push('candidate directory identity changed; generated output cleanup skipped');
+      } else {
+        try {
+          removeKnownGeneratedHtml(generatedHypothesisPage, generatedPages.get(generatedHypothesisPage), cleanupErrors);
+        } catch (cleanupError) {
+          cleanupErrors.push(cleanupError.message);
+        }
+        const easyReadDir = generatedEasyReadDir;
+        try {
+          const easyReadEntry = lstatIfPresent(easyReadDir);
+          if (easyReadEntry) {
+            if (!easyReadDirectoryIdentity || !samePhysicalEntry(easyReadDir, easyReadDirectoryIdentity, 'directory')) {
+              cleanupErrors.push('generated Easy Read directory ownership unknown or changed; preserving it');
+            } else {
+              removeKnownGeneratedHtml(generatedEasyReadPage, generatedPages.get(generatedEasyReadPage), cleanupErrors);
+              fs.rmdirSync(easyReadDir);
+            }
+          }
+        } catch (cleanupError) {
+          cleanupErrors.push(cleanupError.message);
+        }
+      }
+    }
+    if (candidateDirectorySafe) {
+      try {
+        // Removal fails closed when unrelated material remains.
+        fs.rmdirSync(hypothesisDir);
+      } catch (cleanupError) {
+        cleanupErrors.push(cleanupError.message);
+      }
+    } else {
+      cleanupErrors.push('candidate directory identity changed; directory removal skipped');
+    }
+
+    // Re-rendering against a partially cleaned working tree could consume or
+    // overwrite unowned data. Resume projections only after complete cleanup.
+    let restorationError = null;
+    if (pipelineStarted) {
+      if (!hypothesesRootSafe || !evidenceRootSafe || !candidateDirectorySafe || cleanupErrors.length > 0) {
+        restorationError = new Error(cleanupErrors.length > 0
+          ? 'candidate cleanup incomplete; projection restoration skipped pending inspection'
+          : 'canonical data directory identity changed; projection restoration skipped for safety');
+      } else {
+        try {
+          restoreProjections();
+        } catch (restoreError) {
+          restorationError = restoreError;
+        }
+      }
+    }
+
+    const phase = pipelineStarted ? 'post-stage rendering or validation failed' : 'initial candidate write failed';
+    const complete = cleanupErrors.length === 0 && !restorationError;
+    const message = phase + (complete ? '; candidate staging was rolled back: ' : '; candidate cleanup incomplete: ')
+      + error.message
+      + (pipelineStarted && !restorationError ? ' Canonical generated projections were restored.' : '')
+      + (cleanupErrors.length ? ' Cleanup errors: ' + cleanupErrors.join(' | ') : '')
+      + (restorationError ? ' Projection restoration also failed: ' + restorationError.message : '');
+    throw new PublicationTransactionBlocked(message);
   }
 
   return {
