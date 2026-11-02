@@ -299,8 +299,13 @@ function stageHandoff(envelope, options = {}) {
     candidateDirectoryIdentity = fs.lstatSync(hypothesisDir);
     requireGate(candidateDirectoryIdentity.isDirectory() && !candidateDirectoryIdentity.isSymbolicLink(),
       'candidate directory must remain a physical directory after creation');
+    // Preflight checks are not sufficient if a canonical parent was swapped during staging.
+    requireGate(samePhysicalEntry(path.join(root, 'hypotheses'), directoryIdentity.hypotheses, 'directory'),
+      'hypotheses repository directory changed before candidate write');
     writeTrackedExclusiveFile(hypothesisPath, JSON.stringify(hypothesis, null, 2) + '\n', createdFiles);
     for (const { targetPath, binding } of newEvidence) {
+      requireGate(samePhysicalEntry(path.join(root, 'evidence-bindings'), directoryIdentity['evidence-bindings'], 'directory'),
+        'evidence-bindings repository directory changed before staged evidence write');
       writeTrackedExclusiveFile(targetPath, JSON.stringify(binding, null, 2) + '\n', createdFiles);
     }
     pipelineStarted = true;

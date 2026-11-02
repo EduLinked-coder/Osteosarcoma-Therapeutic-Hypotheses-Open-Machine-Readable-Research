@@ -407,6 +407,56 @@ function assertPartialWriteRollback(failAt) {
 assertPartialWriteRollback(1); // hypothesis.json is partially written
 assertPartialWriteRollback(2); // new evidence binding is partially written
 
+// A parent directory may be exchanged after initial preflight but before a
+// staged write. Simulate a changed physical device without touching real roots.
+// Reject the write; no generated output, external target or cleanup is trusted.
+function assertStagingParentIdentityChangeBlocked(parent) {
+  const parentPath = path.join(root, parent);
+  const guardedPath = parent === 'hypotheses'
+    ? path.join(rollbackHypothesisDir, 'hypothesis.json')
+    : rollbackEvidencePath;
+  const originalLstat = fs.lstatSync;
+  const originalOpenForParentTest = fs.openSync;
+  let parentChecks = 0;
+  let guardedOpens = 0;
+  let pipelineCalls = 0;
+  fs.lstatSync = (targetPath, ...args) => {
+    const entry = originalLstat(targetPath, ...args);
+    if (targetPath === parentPath && ++parentChecks >= 2) {
+      // Change dev rather than ino: large inode numbers can lose +1 precision.
+      return new Proxy(entry, {
+        get(target, key) {
+          if (key === 'dev') return target.dev + 1;
+          return Reflect.get(target, key, target);
+        }
+      });
+    }
+    return entry;
+  };
+  fs.openSync = (targetPath, flags, ...args) => {
+    if (targetPath === guardedPath && flags === 'wx') guardedOpens += 1;
+    return originalOpenForParentTest(targetPath, flags, ...args);
+  };
+  try {
+    expectBlocked(() => stageHandoff(rollback, {
+      executePipeline: () => { pipelineCalls += 1; },
+      restoreProjections: () => {}
+    }), parent === 'hypotheses'
+      ? /hypotheses repository directory changed before candidate write/
+      : /evidence-bindings repository directory changed before staged evidence write/);
+    assert.equal(guardedOpens, 0, 'a changed canonical parent must block new file creation');
+    assert.equal(pipelineCalls, 0, 'a changed parent must block rendering');
+    assert(parentChecks >= 2, 'parent identity must be checked again after preflight');
+  } finally {
+    fs.lstatSync = originalLstat;
+    fs.openSync = originalOpenForParentTest;
+    fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic candidate cleanup only
+    fs.rmSync(rollbackEvidencePath, { force: true }); // synthetic evidence cleanup only
+  }
+}
+assertStagingParentIdentityChangeBlocked('hypotheses');
+assertStagingParentIdentityChangeBlocked('evidence-bindings');
+
 // A file created by another writer after preflight must not be deleted by rollback.
 const originalOpen = fs.openSync;
 const racedEvidenceMarker = 'synthetic concurrent evidence - not owned by transaction';
