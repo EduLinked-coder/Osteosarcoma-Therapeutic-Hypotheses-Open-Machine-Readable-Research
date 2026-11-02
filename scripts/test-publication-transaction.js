@@ -458,6 +458,38 @@ try {
   fs.rmSync(parkedEvidencePath, { force: true });
 }
 
+// In-place mutation of a staged JSON file retains device/inode but changes
+// the bytes. Do not delete those unowned bytes or resume projections.
+function assertStagedFileInPlaceMutationPreserved(whichFile) {
+  const mutatedPath = whichFile === 'evidence'
+    ? rollbackEvidencePath
+    : path.join(rollbackHypothesisDir, 'hypothesis.json');
+  const replacement = 'synthetic unowned in-place staged ' + whichFile + ' bytes';
+  let restorationCalls = 0;
+  try {
+    expectBlocked(() => stageHandoff(rollback, {
+      executePipeline: () => {
+        const before = fs.lstatSync(mutatedPath);
+        fs.writeFileSync(mutatedPath, replacement, 'utf8');
+        const after = fs.lstatSync(mutatedPath);
+        assert.equal(after.dev, before.dev, 'synthetic mutation must keep the device');
+        assert.equal(after.ino, before.ino, 'synthetic mutation must keep the inode');
+        throw new Error('synthetic staged file mutated in place');
+      },
+      restoreProjections: () => { restorationCalls += 1; }
+    }), /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic staged file mutated in place/);
+    assert.equal(fs.readFileSync(mutatedPath, 'utf8'), replacement,
+      'same-inode staged-file replacement must survive rollback');
+    assert.equal(restorationCalls, 0,
+      'changed staged-file content must block projection regeneration');
+  } finally {
+    fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic test cleanup only
+    fs.rmSync(rollbackEvidencePath, { force: true });
+  }
+}
+assertStagedFileInPlaceMutationPreserved('hypothesis');
+assertStagedFileInPlaceMutationPreserved('evidence');
+
 // A candidate-directory symlink replacement must not redirect cleanup into
 // an external directory or permit projection restoration from that directory.
 const replacedCandidateDir = rollbackHypothesisDir + '-owned-original-fixture';

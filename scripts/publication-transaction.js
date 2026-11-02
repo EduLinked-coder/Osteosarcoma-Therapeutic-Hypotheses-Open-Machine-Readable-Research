@@ -69,9 +69,13 @@ function samePhysicalEntry(targetPath, identity, kind) {
 // Track ownership immediately after exclusive creation, before any bytes are written.
 function writeTrackedExclusiveFile(targetPath, content, createdFiles) {
   const descriptor = fs.openSync(targetPath, 'wx');
-  createdFiles.push({ targetPath, identity: fs.fstatSync(descriptor) });
+  const staged = { targetPath, identity: fs.fstatSync(descriptor), digest: null };
+  createdFiles.push(staged);
   try {
     fs.writeFileSync(descriptor, content, 'utf8');
+    // A completed write has known bytes. A later same-inode change is unowned.
+    // Keep digest null for partial-write cleanup if the write itself throws.
+    staged.digest = crypto.createHash('sha256').update(content, 'utf8').digest('hex');
   } finally {
     fs.closeSync(descriptor);
   }
@@ -327,6 +331,13 @@ function stageHandoff(envelope, options = {}) {
         if (!samePhysicalEntry(staged.targetPath, staged.identity, 'file')) {
           cleanupErrors.push('staged file identity changed; preserving ' + path.relative(root, staged.targetPath));
           continue;
+        }
+        if (staged.digest) {
+          const currentDigest = crypto.createHash('sha256').update(fs.readFileSync(staged.targetPath)).digest('hex');
+          if (currentDigest !== staged.digest) {
+            cleanupErrors.push('staged file contents changed after write; preserving ' + path.relative(root, staged.targetPath));
+            continue;
+          }
         }
         fs.rmSync(staged.targetPath, { force: true });
       } catch (cleanupError) {
