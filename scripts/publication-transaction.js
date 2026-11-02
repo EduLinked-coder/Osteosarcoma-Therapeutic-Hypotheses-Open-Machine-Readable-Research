@@ -79,11 +79,18 @@ function writeTrackedExclusiveFile(targetPath, content, createdFiles) {
 
 // Only delete a renderer output whose physical identity was observed after a
 // completed render and before validation. Unknown or replaced files are unowned.
-function removeKnownGeneratedHtml(targetPath, expectedIdentity, cleanupErrors) {
+// Retain even same-inode generated pages if their bytes changed after the
+// completed-render checkpoint. Content checks remain best-effort, not atomic.
+function removeKnownGeneratedHtml(targetPath, expectedSnapshot, cleanupErrors) {
   const entry = lstatIfPresent(targetPath);
   if (!entry) return;
-  if (!expectedIdentity || !samePhysicalEntry(targetPath, expectedIdentity, 'file')) {
+  if (!expectedSnapshot || !samePhysicalEntry(targetPath, expectedSnapshot.identity, 'file')) {
     cleanupErrors.push('generated-page ownership unknown or changed; preserving ' + path.relative(root, targetPath));
+    return;
+  }
+  const currentDigest = crypto.createHash('sha256').update(fs.readFileSync(targetPath)).digest('hex');
+  if (currentDigest !== expectedSnapshot.digest) {
+    cleanupErrors.push('generated-page contents changed after render; preserving ' + path.relative(root, targetPath));
     return;
   }
   fs.rmSync(targetPath, { force: true });
@@ -275,7 +282,10 @@ function stageHandoff(envelope, options = {}) {
       const entry = lstatIfPresent(pagePath);
       requireGate(entry && entry.isFile() && !entry.isSymbolicLink(),
         'generated page is missing or unsafe: ' + path.relative(root, pagePath));
-      generatedPages.set(pagePath, entry);
+      generatedPages.set(pagePath, {
+        identity: entry,
+        digest: crypto.createHash('sha256').update(fs.readFileSync(pagePath)).digest('hex')
+      });
     }
     easyReadDirectoryIdentity = easyReadEntry;
   };

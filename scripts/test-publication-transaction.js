@@ -597,6 +597,43 @@ function assertGeneratedRegularPageReplacementPreserved(whichPage) {
 assertGeneratedRegularPageReplacementPreserved('hypothesis');
 assertGeneratedRegularPageReplacementPreserved('easy-read');
 
+// Mutating a generated page in place can preserve dev/inode. Such bytes are
+// not the observed renderer output and must survive for inspection.
+function assertGeneratedPageInPlaceMutationPreserved(whichPage) {
+  const canonicalPage = path.join(rollbackHypothesisDir, 'index.html');
+  const easyReadDir = path.join(rollbackHypothesisDir, 'easy-read');
+  const easyReadPage = path.join(easyReadDir, 'index.html');
+  const mutatedPage = whichPage === 'easy-read' ? easyReadPage : canonicalPage;
+  const mutation = 'synthetic unowned in-place page mutation - preserve';
+  let restorationCalls = 0;
+  try {
+    expectBlocked(() => stageHandoff(rollback, {
+      executePipeline: (recordRenderedHtml) => {
+        fs.writeFileSync(canonicalPage, 'synthetic generated hypothesis page', 'utf8');
+        fs.mkdirSync(easyReadDir);
+        fs.writeFileSync(easyReadPage, 'synthetic generated Easy Read page', 'utf8');
+        recordRenderedHtml();
+        const before = fs.lstatSync(mutatedPage);
+        fs.writeFileSync(mutatedPage, mutation, 'utf8');
+        const after = fs.lstatSync(mutatedPage);
+        assert.equal(after.dev, before.dev, 'in-place fixture must keep the same device');
+        assert.equal(after.ino, before.ino, 'in-place fixture must keep the same inode');
+        throw new Error('synthetic generated page mutated in place');
+      },
+      restoreProjections: () => { restorationCalls += 1; }
+    }), /post-stage rendering or validation failed; candidate cleanup incomplete: synthetic generated page mutated in place/);
+    assert.equal(fs.readFileSync(mutatedPage, 'utf8'), mutation,
+      'same-inode page content changed after render must survive rollback');
+    assert.equal(restorationCalls, 0, 'incomplete cleanup must prevent projection restoration');
+    assert.equal(fs.existsSync(rollbackEvidencePath), false, 'owned evidence must still be removed');
+  } finally {
+    fs.rmSync(rollbackHypothesisDir, { recursive: true, force: true }); // synthetic test cleanup only
+    fs.rmSync(rollbackEvidencePath, { force: true });
+  }
+}
+assertGeneratedPageInPlaceMutationPreserved('hypothesis');
+assertGeneratedPageInPlaceMutationPreserved('easy-read');
+
 // If rendering fails before the ownership checkpoint, even an ordinary HTML
 // file at the expected path must be retained for inspection, not deleted.
 const unverifiedRendererPage = path.join(rollbackHypothesisDir, 'index.html');
