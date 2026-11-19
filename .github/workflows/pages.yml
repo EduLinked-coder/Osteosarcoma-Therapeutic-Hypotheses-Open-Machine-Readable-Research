@@ -143,7 +143,7 @@ jobs:
       - name: Verify governed GitHub App configuration for Core receipt dispatch
         id: core-app-config
         env:
-          CLIENT_ID: ${{ vars.CLIENT_ID }}
+          CLIENT_ID: 'Iv23ctX6k1n4xNRzn6s9'
           EDULINKED_APP_ID: ${{ vars.EDULINKED_APP_ID }}
           ENTERPRISE_APP_PRIVATE_KEY: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
         shell: bash
@@ -171,7 +171,7 @@ jobs:
         continue-on-error: true
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ vars.CLIENT_ID }}
+          client-id: 'Iv23ctX6k1n4xNRzn6s9'
           private-key: ${{ secrets.ENTERPRISE_APP_PRIVATE_KEY }}
           owner: EduLinked-Pty-Ltd
           repositories: core-machine-objects
